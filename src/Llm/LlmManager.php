@@ -57,6 +57,23 @@ class LlmManager extends Manager implements LlmDriver
     }
 
     /**
+     * Create a driver with a custom model override.
+     * Useful for tasks like grading that need a specific model.
+     */
+    public function driverWithModel(string $driver, string $model): LlmDriver
+    {
+        $config = $this->config->get("sql-agent.llm.drivers.{$driver}", []);
+        $config['model'] = $model;
+
+        return match ($driver) {
+            'openai' => new OpenAiDriver($config),
+            'anthropic' => new AnthropicDriver($config),
+            'ollama' => new OllamaDriver($config),
+            default => throw new InvalidArgumentException("Unsupported driver: {$driver}"),
+        };
+    }
+
+    /**
      * Proxy chat call to the default driver.
      */
     public function chat(array $messages, array $tools = []): LlmResponse

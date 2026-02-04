@@ -14,8 +14,11 @@ class GradeResult extends Data
         public string $reasoning,
     ) {}
 
-    public static function fromLlmResponse(string $response): self
+    public static function fromLlmResponse(string $response, ?float $passThreshold = null): self
     {
+        // Use config threshold or default to 0.6
+        $threshold = $passThreshold ?? config('sql-agent.evaluation.pass_threshold', 0.6);
+
         // Parse structured response from LLM
         // Expected format:
         // SCORE: 0.8
@@ -62,7 +65,7 @@ class GradeResult extends Data
 
                 if ($positiveCount + $negativeCount > 0) {
                     $score = $positiveCount / ($positiveCount + $negativeCount);
-                    $passed = $score >= 0.6;
+                    $passed = $score >= $threshold;
                 }
             }
         }

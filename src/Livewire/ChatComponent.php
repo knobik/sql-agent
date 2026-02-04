@@ -211,6 +211,7 @@ class ChatComponent extends Component
     /**
      * Get conversation history formatted for the LLM.
      * Excludes the most recent user message (the current question).
+     * Limits history to the configured chat_history_length.
      */
     protected function getConversationHistory(): array
     {
@@ -226,6 +227,12 @@ class ChatComponent extends Component
         // Remove the last message if it's the current user question
         if ($messages->isNotEmpty() && $messages->last()->role === MessageRole::User) {
             $messages = $messages->slice(0, -1);
+        }
+
+        // Limit to configured chat history length (take most recent messages)
+        $historyLength = config('sql-agent.agent.chat_history_length', 10);
+        if ($messages->count() > $historyLength) {
+            $messages = $messages->slice(-$historyLength);
         }
 
         // Format for the LLM

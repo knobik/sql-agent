@@ -38,5 +38,9 @@ abstract class TestCase extends Orchestra
 
         // Set app key for Livewire tests
         $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+
+        // Set dummy API keys to prevent service provider failures during tests
+        $app['config']->set('sql-agent.llm.drivers.openai.api_key', 'test-openai-key');
+        $app['config']->set('sql-agent.llm.drivers.anthropic.api_key', 'test-anthropic-key');
     }
 }

@@ -181,8 +181,9 @@ class LearningMachine
     /**
      * Prune old learnings.
      */
-    public function prune(int $daysOld = 90, bool $keepUsed = true): int
+    public function prune(?int $daysOld = null, bool $keepUsed = true): int
     {
+        $daysOld ??= config('sql-agent.learning.prune_after_days', 90);
         $cutoffDate = now()->subDays($daysOld);
 
         $builder = Learning::where('created_at', '<', $cutoffDate);

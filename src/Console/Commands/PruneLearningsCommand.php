@@ -10,7 +10,7 @@ use Knobik\SqlAgent\Services\LearningMachine;
 class PruneLearningsCommand extends Command
 {
     protected $signature = 'sql-agent:prune-learnings
-                            {--days=90 : Remove learnings older than this many days}
+                            {--days= : Remove learnings older than this many days (default from config)}
                             {--duplicates : Only remove duplicate learnings}
                             {--include-used : Also remove learnings that have been used}
                             {--dry-run : Show what would be removed without actually removing}';
@@ -19,7 +19,12 @@ class PruneLearningsCommand extends Command
 
     public function handle(LearningMachine $learningMachine): int
     {
-        $days = (int) $this->option('days');
+        // Use config value as default when --days is not provided
+        $daysOption = $this->option('days');
+        $days = $daysOption !== null
+            ? (int) $daysOption
+            : config('sql-agent.learning.prune_after_days', 90);
+
         $duplicatesOnly = (bool) $this->option('duplicates');
         $includeUsed = (bool) $this->option('include-used');
         $dryRun = (bool) $this->option('dry-run');

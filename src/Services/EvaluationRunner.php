@@ -11,6 +11,7 @@ use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Data\EvaluationReport;
 use Knobik\SqlAgent\Data\GradeResult;
 use Knobik\SqlAgent\Data\TestResult;
+use Knobik\SqlAgent\Exceptions\TestTimeoutException;
 use Knobik\SqlAgent\Models\TestCase;
 use Throwable;
 
@@ -62,11 +63,19 @@ class EvaluationRunner
         ?string $connection = null,
     ): TestResult {
         $startTime = microtime(true);
+        $timeout = config('sql-agent.evaluation.timeout', 60);
 
         try {
             // Run the agent
             $agentResponse = $this->agent->run($testCase->question, $connection);
             $duration = microtime(true) - $startTime;
+
+            // Check if we've exceeded the timeout
+            if ($duration > $timeout) {
+                throw new TestTimeoutException(
+                    "Test case exceeded timeout of {$timeout} seconds (took {$duration}s)"
+                );
+            }
 
             // String matching (always runs)
             $expectedStrings = $testCase->expected_values ?? [];

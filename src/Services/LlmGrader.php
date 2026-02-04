@@ -64,16 +64,17 @@ MSG;
 
         // Use the configured grader model
         $graderModel = config('sql-agent.evaluation.grader_model', 'gpt-4o-mini');
+        $passThreshold = config('sql-agent.evaluation.pass_threshold', 0.6);
 
-        // Create a temporary driver with the grader model
+        // Create a driver with the grader model
         $llmResponse = $this->llmManager
-            ->driver('openai')
+            ->driverWithModel('openai', $graderModel)
             ->chat([
                 ['role' => 'system', 'content' => self::GRADER_SYSTEM_PROMPT],
                 ['role' => 'user', 'content' => $userMessage],
             ]);
 
-        return GradeResult::fromLlmResponse($llmResponse->content);
+        return GradeResult::fromLlmResponse($llmResponse->content, $passThreshold);
     }
 
     /**
