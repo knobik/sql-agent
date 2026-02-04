@@ -22,7 +22,7 @@
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^2.0|^3.0",
         "pestphp/pest-plugin-laravel": "^2.0|^3.0",
-        "phpstan/phpstan": "^1.10"
+        "phpstan/phpstan": "^2.1"
     },
     "suggest": {
         "openai-php/laravel": "Required for OpenAI LLM driver",
