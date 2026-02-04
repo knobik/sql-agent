@@ -18,7 +18,7 @@
     },
     "require-dev": {
         "laravel/pint": "^1.27",
-        "livewire/livewire": "^3.0",
+        "livewire/livewire": "^4.1",
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^2.0|^3.0",
         "pestphp/pest-plugin-laravel": "^2.0|^3.0",
