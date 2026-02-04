@@ -206,6 +206,7 @@ class SqlAgent implements Agent
                     'introspect_schema' => 'Inspecting schema',
                     'search_knowledge' => 'Searching knowledge base',
                     'save_learning' => 'Saving learning',
+                    'save_validated_query' => 'Saving query pattern',
                     default => $toolCall->name,
                 };
                 $toolType = match($toolCall->name) {
@@ -213,6 +214,7 @@ class SqlAgent implements Agent
                     'introspect_schema' => 'schema',
                     'search_knowledge' => 'search',
                     'save_learning' => 'save',
+                    'save_validated_query' => 'save',
                     default => 'default',
                 };
 
