@@ -6,6 +6,27 @@ A self-learning text-to-SQL agent for Laravel that converts natural language que
 
 This package is based on [Dash](https://github.com/agno-agi/dash) and [OpenAI's in-house data agent](https://openai.com/index/inside-our-in-house-data-agent/).
 
+## Why This Package?
+
+Raw LLMs writing SQL hit a wall fast. The problems:
+
+- **Schemas lack meaning** — Column names like `status` or `type` don't convey business context
+- **Types are misleading** — A `position` column might be TEXT, not INTEGER
+- **Tribal knowledge is missing** — "Active customer" means different things to different teams
+- **No learning from mistakes** — The same errors repeat endlessly
+- **Results lack interpretation** — You get data, not answers
+
+The root cause is **missing context and missing memory**.
+
+This package solves it with:
+
+1. **Knowledge Base** — Curated table metadata, business rules, and query patterns that give the LLM the context it needs
+2. **Self-Learning** — When a query fails and the agent recovers, it saves that learning. Next time, it knows.
+3. **Multi-Layer Context** — Schema introspection, semantic search over knowledge, conversation history, and accumulated learnings
+4. **SQL Safety** — Configurable guardrails to prevent destructive operations
+
+This package provides the foundation to build reliable, context-aware data agents for Laravel applications.
+
 ## Table of Contents
 
 - [Features](#features)
