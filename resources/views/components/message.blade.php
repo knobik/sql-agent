@@ -36,7 +36,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                             </svg>
-                            <span x-text="showSql ? 'Hide SQL' : 'Show SQL'"></span>
+                            <span x-text="showSql ? 'Hide Final SQL' : 'Show Final SQL'"></span>
                         </button>
                     @endif
 
