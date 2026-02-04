@@ -17,6 +17,7 @@
         "doctrine/dbal": "^3.0|^4.0"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.27",
         "livewire/livewire": "^4.1",
         "orchestra/testbench": "^9.0|^10.0",
