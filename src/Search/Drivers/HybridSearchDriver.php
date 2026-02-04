@@ -105,7 +105,7 @@ class HybridSearchDriver implements SearchDriver
         // Add primary results first (higher priority)
         foreach ($primary as $result) {
             $modelId = $result->model->getKey();
-            $indexKey = $result->index . ':' . $modelId;
+            $indexKey = $result->index.':'.$modelId;
 
             if (! isset($seenIds[$indexKey])) {
                 $seenIds[$indexKey] = true;
@@ -116,7 +116,7 @@ class HybridSearchDriver implements SearchDriver
         // Add fallback results that weren't in primary
         foreach ($fallback as $result) {
             $modelId = $result->model->getKey();
-            $indexKey = $result->index . ':' . $modelId;
+            $indexKey = $result->index.':'.$modelId;
 
             if (! isset($seenIds[$indexKey])) {
                 $seenIds[$indexKey] = true;

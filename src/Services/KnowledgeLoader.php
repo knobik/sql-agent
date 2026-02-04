@@ -340,9 +340,9 @@ class KnowledgeLoader
         $basePath = $basePath ?? config('sql-agent.knowledge.path');
 
         return [
-            'tables' => $this->loadTables($basePath . '/tables'),
-            'business_rules' => $this->loadBusinessRules($basePath . '/business'),
-            'query_patterns' => $this->loadQueryPatterns($basePath . '/queries'),
+            'tables' => $this->loadTables($basePath.'/tables'),
+            'business_rules' => $this->loadBusinessRules($basePath.'/business'),
+            'query_patterns' => $this->loadQueryPatterns($basePath.'/queries'),
         ];
     }
 }

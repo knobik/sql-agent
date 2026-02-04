@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Search\Strategies;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Knobik\SqlAgent\Contracts\FullTextSearchStrategy;
 
 /**
@@ -35,7 +34,7 @@ class PostgresFullTextStrategy implements FullTextSearchStrategy
             fn ($column) => "coalesce({$column}, '')",
             $columns
         );
-        $tsvectorExpression = "to_tsvector('{$language}', " . implode(" || ' ' || ", $tsvectorParts) . ')';
+        $tsvectorExpression = "to_tsvector('{$language}', ".implode(" || ' ' || ", $tsvectorParts).')';
 
         // Build tsquery with OR between words for broader matching
         $tsqueryExpression = "plainto_tsquery('{$language}', ?)";

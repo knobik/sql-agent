@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use DateTimeImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Data\EvaluationReport;
-use Knobik\SqlAgent\Data\GradeResult;
 use Knobik\SqlAgent\Data\TestResult;
 use Knobik\SqlAgent\Exceptions\TestTimeoutException;
 use Knobik\SqlAgent\Models\TestCase;
@@ -49,7 +47,7 @@ class EvaluationRunner
         return new EvaluationReport(
             results: $results,
             totalDuration: $totalDuration,
-            completedAt: new DateTimeImmutable(),
+            completedAt: new DateTimeImmutable,
             category: $category,
             usedLlmGrader: $useLlmGrader,
             usedGoldenSql: $useGoldenSql,

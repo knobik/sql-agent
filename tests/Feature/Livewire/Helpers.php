@@ -31,6 +31,7 @@ class Helpers
 class TestUser
 {
     public int $id;
+
     public string $email;
 
     public function __construct(array $attributes, int $id)
@@ -48,6 +49,7 @@ class TestUser
 class AuthenticatedTestUser implements \Illuminate\Contracts\Auth\Authenticatable
 {
     public int $id;
+
     public string $email;
 
     public function __construct(array $attributes, int $id)
@@ -76,9 +78,7 @@ class AuthenticatedTestUser implements \Illuminate\Contracts\Auth\Authenticatabl
         return null;
     }
 
-    public function setRememberToken($value)
-    {
-    }
+    public function setRememberToken($value) {}
 
     public function getRememberTokenName()
     {

@@ -39,7 +39,7 @@ describe('RunEvalsCommand', function () {
 
     it('validates category option', function () {
         // First seed test cases
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         $this->artisan('sql-agent:eval', ['--category' => 'invalid_category'])
             ->expectsOutputToContain('Invalid category')
@@ -48,7 +48,7 @@ describe('RunEvalsCommand', function () {
 
     it('filters by category', function () {
         // Seed test cases
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         // Mock the agent
         $agent = Mockery::mock(Agent::class);
@@ -63,7 +63,7 @@ describe('RunEvalsCommand', function () {
 
     it('outputs JSON when requested', function () {
         // Seed test cases
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         // Mock the agent
         $agent = Mockery::mock(Agent::class);
@@ -80,7 +80,7 @@ describe('RunEvalsCommand', function () {
 
     it('generates HTML report when requested', function () {
         // Seed test cases
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         // Mock the agent
         $agent = Mockery::mock(Agent::class);
@@ -109,7 +109,7 @@ describe('RunEvalsCommand', function () {
 
     it('runs with LLM grader mode', function () {
         // Seed test cases
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         // Mock the agent
         $agent = Mockery::mock(Agent::class);
@@ -129,13 +129,13 @@ describe('RunEvalsCommand', function () {
 
 describe('TestCaseSeeder', function () {
     it('creates all 18 test cases', function () {
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         expect(TestCase::count())->toBe(18);
     });
 
     it('creates test cases in correct categories', function () {
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         $categories = TestCase::distinct()->pluck('category')->sort()->values();
 
@@ -149,7 +149,7 @@ describe('TestCaseSeeder', function () {
     });
 
     it('sets expected_values as arrays', function () {
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         $testCase = TestCase::where('name', 'race_winner_2019')->first();
 
@@ -159,7 +159,7 @@ describe('TestCaseSeeder', function () {
     });
 
     it('includes golden SQL where applicable', function () {
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         $withGoldenSql = TestCase::withGoldenSql()->count();
         $withoutGoldenSql = TestCase::whereNull('golden_sql')->count();
@@ -169,11 +169,11 @@ describe('TestCaseSeeder', function () {
     });
 
     it('can update existing test cases', function () {
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
         $initialCount = TestCase::count();
 
         // Run seeder again
-        (new TestCaseSeeder())->run();
+        (new TestCaseSeeder)->run();
 
         // Should not duplicate
         expect(TestCase::count())->toBe($initialCount);

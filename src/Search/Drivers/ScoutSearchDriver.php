@@ -117,7 +117,7 @@ class ScoutSearchDriver implements SearchDriver
         $mapping = array_merge($this->defaultIndexMapping, $customMapping);
 
         if (! isset($mapping[$index])) {
-            throw new RuntimeException("Unknown search index: {$index}. Available indexes: " . implode(', ', array_keys($mapping)));
+            throw new RuntimeException("Unknown search index: {$index}. Available indexes: ".implode(', ', array_keys($mapping)));
         }
 
         $class = $mapping[$index];

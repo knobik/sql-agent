@@ -30,7 +30,7 @@ class ImportLearningsCommand extends Command
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->error("Invalid JSON in file: " . json_last_error_msg());
+            $this->error('Invalid JSON in file: '.json_last_error_msg());
 
             return self::FAILURE;
         }
@@ -63,7 +63,7 @@ class ImportLearningsCommand extends Command
         $imported = $learningMachine->import($learnings, $skipDuplicates);
         $skipped = $total - $imported;
 
-        $this->components->info("Import complete!");
+        $this->components->info('Import complete!');
         $this->line("  Imported: {$imported}");
 
         if ($skipped > 0) {

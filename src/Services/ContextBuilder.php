@@ -111,10 +111,10 @@ class ContextBuilder
         $query = Learning::query();
 
         foreach ($keywords as $keyword) {
-            $term = '%' . strtolower($keyword) . '%';
+            $term = '%'.strtolower($keyword).'%';
             $query->where(function ($q) use ($term) {
                 $q->whereRaw('LOWER(title) LIKE ?', [$term])
-                  ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
             });
         }
 
@@ -125,9 +125,9 @@ class ContextBuilder
             $query = Learning::query();
             $query->where(function ($q) use ($keywords) {
                 foreach ($keywords as $keyword) {
-                    $term = '%' . strtolower($keyword) . '%';
+                    $term = '%'.strtolower($keyword).'%';
                     $q->orWhereRaw('LOWER(title) LIKE ?', [$term])
-                      ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+                        ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
                 }
             });
             $results = $query->limit($limit)->get();

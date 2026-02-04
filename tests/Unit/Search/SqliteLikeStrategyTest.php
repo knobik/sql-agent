@@ -7,7 +7,7 @@ use Knobik\SqlAgent\Search\Strategies\SqliteLikeStrategy;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->strategy = new SqliteLikeStrategy();
+    $this->strategy = new SqliteLikeStrategy;
 });
 
 test('strategy name is sqlite_like', function () {

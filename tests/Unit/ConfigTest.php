@@ -9,13 +9,10 @@
  */
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Knobik\SqlAgent\Agent\SqlAgent;
 use Knobik\SqlAgent\Data\GradeResult;
 use Knobik\SqlAgent\Llm\Drivers\OpenAiDriver;
 use Knobik\SqlAgent\Llm\LlmManager;
-use Knobik\SqlAgent\Livewire\ChatComponent;
 use Knobik\SqlAgent\Models\Learning;
-use Knobik\SqlAgent\Models\Model;
 use Knobik\SqlAgent\Search\Drivers\DatabaseSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\HybridSearchDriver;
 use Knobik\SqlAgent\Search\SearchManager;
@@ -34,7 +31,7 @@ describe('Database Configuration', function () {
     it('uses configured database connection', function () {
         config(['sql-agent.database.connection' => 'custom_connection']);
 
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
         $reflection = new ReflectionProperty($tool, 'connection');
         $reflection->setAccessible(true);
 
@@ -48,7 +45,7 @@ describe('Database Configuration', function () {
     it('models use storage_connection config', function () {
         config(['sql-agent.database.storage_connection' => 'storage_db']);
 
-        $learning = new Learning();
+        $learning = new Learning;
         $connectionName = $learning->getConnectionName();
 
         expect($connectionName)->toBe('storage_db');
@@ -179,7 +176,7 @@ describe('Agent Configuration', function () {
     it('default_limit is mentioned in system prompt', function () {
         config(['sql-agent.agent.default_limit' => 50]);
 
-        $promptPath = __DIR__ . '/../../resources/prompts/system.blade.php';
+        $promptPath = __DIR__.'/../../resources/prompts/system.blade.php';
         $promptContent = file_get_contents($promptPath);
 
         expect($promptContent)->toContain("config('sql-agent.agent.default_limit'");
@@ -298,7 +295,7 @@ describe('SQL Safety Configuration', function () {
     it('RunSqlTool uses max_rows config', function () {
         config(['sql-agent.sql.max_rows' => 100]);
 
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         // Verify the config is accessible where the tool would use it
         expect(config('sql-agent.sql.max_rows'))->toBe(100);

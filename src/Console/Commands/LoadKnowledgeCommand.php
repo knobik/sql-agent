@@ -62,7 +62,7 @@ class LoadKnowledgeCommand extends Command
         // Load tables
         if ($loadTables) {
             $this->components->task('Loading table metadata', function () use ($loader, $path, &$results) {
-                $results['tables'] = $loader->loadTables($path . '/tables');
+                $results['tables'] = $loader->loadTables($path.'/tables');
 
                 return true;
             });
@@ -72,7 +72,7 @@ class LoadKnowledgeCommand extends Command
         // Load business rules
         if ($loadRules) {
             $this->components->task('Loading business rules', function () use ($loader, $path, &$results) {
-                $results['rules'] = $loader->loadBusinessRules($path . '/business');
+                $results['rules'] = $loader->loadBusinessRules($path.'/business');
 
                 return true;
             });
@@ -82,7 +82,7 @@ class LoadKnowledgeCommand extends Command
         // Load query patterns
         if ($loadQueries) {
             $this->components->task('Loading query patterns', function () use ($loader, $path, &$results) {
-                $results['queries'] = $loader->loadQueryPatterns($path . '/queries');
+                $results['queries'] = $loader->loadQueryPatterns($path.'/queries');
 
                 return true;
             });

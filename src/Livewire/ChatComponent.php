@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Livewire;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Agent\SqlAgent;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Models\Conversation;

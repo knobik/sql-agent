@@ -64,7 +64,7 @@ class QueryPatternSearch
      */
     protected function searchDatabase(string $question, int $limit): Collection
     {
-        $driver = config('database.connections.' . config('sql-agent.database.storage_connection') . '.driver');
+        $driver = config('database.connections.'.config('sql-agent.database.storage_connection').'.driver');
 
         // Use full-text search for MySQL
         if ($driver === 'mysql') {
@@ -119,11 +119,11 @@ class QueryPatternSearch
         $query = QueryPattern::query();
 
         foreach ($keywords as $keyword) {
-            $term = '%' . strtolower($keyword) . '%';
+            $term = '%'.strtolower($keyword).'%';
             $query->where(function ($q) use ($term) {
                 $q->whereRaw('LOWER(name) LIKE ?', [$term])
-                  ->orWhereRaw('LOWER(question) LIKE ?', [$term])
-                  ->orWhereRaw('LOWER(summary) LIKE ?', [$term]);
+                    ->orWhereRaw('LOWER(question) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(summary) LIKE ?', [$term]);
             });
         }
 
@@ -140,7 +140,7 @@ class QueryPatternSearch
      */
     protected function loadAllFromFiles(): Collection
     {
-        $path = config('sql-agent.knowledge.path') . '/queries';
+        $path = config('sql-agent.knowledge.path').'/queries';
 
         if (! File::isDirectory($path)) {
             return collect();
@@ -297,7 +297,7 @@ class QueryPatternSearch
             return 0;
         }
 
-        $patternText = strtolower($pattern->name . ' ' . $pattern->question . ' ' . ($pattern->summary ?? ''));
+        $patternText = strtolower($pattern->name.' '.$pattern->question.' '.($pattern->summary ?? ''));
         $patternWords = $this->extractKeywords($patternText);
 
         if (empty($patternWords)) {

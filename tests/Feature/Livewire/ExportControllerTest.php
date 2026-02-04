@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Models\Conversation;
 use Knobik\SqlAgent\Models\Message;
-use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Tests\Feature\Livewire\Helpers;
 
 uses(RefreshDatabase::class);

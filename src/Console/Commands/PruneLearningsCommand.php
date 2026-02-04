@@ -59,7 +59,7 @@ class PruneLearningsCommand extends Command
         $headers = ['ID', 'Title', 'Category', 'Created'];
         $rows = $duplicates->map(fn ($l) => [
             $l->id,
-            mb_substr($l->title, 0, 50) . (mb_strlen($l->title) > 50 ? '...' : ''),
+            mb_substr($l->title, 0, 50).(mb_strlen($l->title) > 50 ? '...' : ''),
             $l->category->label(),
             $l->created_at->format('Y-m-d H:i'),
         ])->all();

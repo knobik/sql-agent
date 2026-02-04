@@ -45,9 +45,9 @@ PROMPT;
         ?array $goldenResult = null,
     ): GradeResult {
         // Build the expected answer context
-        $expectedContext = 'Expected values to appear: ' . implode(', ', $expectedStrings);
+        $expectedContext = 'Expected values to appear: '.implode(', ', $expectedStrings);
         if ($goldenResult !== null) {
-            $expectedContext .= "\n\nGolden SQL result:\n" . $this->formatResult($goldenResult);
+            $expectedContext .= "\n\nGolden SQL result:\n".$this->formatResult($goldenResult);
         }
 
         $userMessage = <<<MSG
@@ -185,7 +185,7 @@ MSG;
         if (! empty($missing)) {
             return [
                 'matches' => false,
-                'explanation' => 'Missing expected values: ' . implode(', ', $missing),
+                'explanation' => 'Missing expected values: '.implode(', ', $missing),
             ];
         }
 
@@ -212,7 +212,7 @@ MSG;
         }
 
         if (count($result) > 10) {
-            $lines[] = '... and ' . (count($result) - 10) . ' more rows';
+            $lines[] = '... and '.(count($result) - 10).' more rows';
         }
 
         return implode("\n", $lines);

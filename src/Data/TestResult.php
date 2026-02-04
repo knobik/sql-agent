@@ -10,7 +10,9 @@ use Spatie\LaravelData\Data;
 class TestResult extends Data
 {
     public const STATUS_PASS = 'pass';
+
     public const STATUS_FAIL = 'fail';
+
     public const STATUS_ERROR = 'error';
 
     public function __construct(

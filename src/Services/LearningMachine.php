@@ -323,7 +323,7 @@ class LearningMachine
         }
 
         if (! empty($data['sql'])) {
-            return Learning::whereRaw("MD5(sql) = ?", [md5($data['sql'])])->exists();
+            return Learning::whereRaw('MD5(sql) = ?', [md5($data['sql'])])->exists();
         }
 
         return false;

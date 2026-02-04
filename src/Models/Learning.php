@@ -69,11 +69,11 @@ class Learning extends Model implements Searchable
 
     public function scopeSearch($query, string $term)
     {
-        $term = '%' . strtolower($term) . '%';
+        $term = '%'.strtolower($term).'%';
 
         return $query->where(function ($q) use ($term) {
             $q->whereRaw('LOWER(title) LIKE ?', [$term])
-              ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+                ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
         });
     }
 

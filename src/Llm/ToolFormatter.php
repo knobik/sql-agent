@@ -11,7 +11,7 @@ class ToolFormatter
     /**
      * Convert tools to OpenAI format.
      *
-     * @param Tool[] $tools
+     * @param  Tool[]  $tools
      */
     public static function toOpenAi(array $tools): array
     {
@@ -28,7 +28,7 @@ class ToolFormatter
     /**
      * Convert tools to Anthropic format.
      *
-     * @param Tool[] $tools
+     * @param  Tool[]  $tools
      */
     public static function toAnthropic(array $tools): array
     {
@@ -42,7 +42,7 @@ class ToolFormatter
     /**
      * Convert tools to Ollama format (OpenAI-compatible).
      *
-     * @param Tool[] $tools
+     * @param  Tool[]  $tools
      */
     public static function toOllama(array $tools): array
     {

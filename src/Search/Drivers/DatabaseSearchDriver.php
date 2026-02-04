@@ -107,7 +107,7 @@ class DatabaseSearchDriver implements SearchDriver
             'mysql', 'mariadb' => new MysqlFullTextStrategy($this->config['mysql'] ?? []),
             'pgsql' => new PostgresFullTextStrategy($this->config['pgsql'] ?? []),
             'sqlsrv' => new SqlServerFullTextStrategy($this->config['sqlsrv'] ?? []),
-            default => new SqliteLikeStrategy(),
+            default => new SqliteLikeStrategy,
         };
     }
 
@@ -122,7 +122,7 @@ class DatabaseSearchDriver implements SearchDriver
         $mapping = array_merge($this->defaultIndexMapping, $customMapping);
 
         if (! isset($mapping[$index])) {
-            throw new RuntimeException("Unknown search index: {$index}. Available indexes: " . implode(', ', array_keys($mapping)));
+            throw new RuntimeException("Unknown search index: {$index}. Available indexes: ".implode(', ', array_keys($mapping)));
         }
 
         $class = $mapping[$index];

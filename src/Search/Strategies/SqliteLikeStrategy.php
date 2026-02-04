@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Search\Strategies;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Knobik\SqlAgent\Contracts\FullTextSearchStrategy;
 
 /**
@@ -48,10 +47,10 @@ class SqliteLikeStrategy implements FullTextSearchStrategy
         $scoreExpression = $this->buildScoreExpression($columns, $keywords);
 
         return $query
-            ->selectRaw('*, (' . $scoreExpression . ') as search_score')
+            ->selectRaw('*, ('.$scoreExpression.') as search_score')
             ->where(function ($q) use ($keywords, $columns) {
                 foreach ($keywords as $keyword) {
-                    $term = '%' . strtolower($keyword) . '%';
+                    $term = '%'.strtolower($keyword).'%';
                     $q->where(function ($inner) use ($term, $columns) {
                         foreach ($columns as $column) {
                             $inner->orWhereRaw("LOWER({$column}) LIKE ?", [$term]);
@@ -98,7 +97,7 @@ class SqliteLikeStrategy implements FullTextSearchStrategy
         $cases = [];
 
         foreach ($keywords as $keyword) {
-            $term = '%' . strtolower($keyword) . '%';
+            $term = '%'.strtolower($keyword).'%';
             foreach ($columns as $column) {
                 $cases[] = "CASE WHEN LOWER({$column}) LIKE '{$term}' THEN 1 ELSE 0 END";
             }

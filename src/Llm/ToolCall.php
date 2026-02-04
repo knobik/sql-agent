@@ -73,7 +73,7 @@ class ToolCall
     {
         // Ensure arguments is an object (stdClass) not an array
         // This prevents PHP from encoding [] as array instead of {}
-        $arguments = empty($this->arguments) ? new \stdClass() : (object) $this->arguments;
+        $arguments = empty($this->arguments) ? new \stdClass : (object) $this->arguments;
 
         return [
             'id' => $this->id,

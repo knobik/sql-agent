@@ -68,7 +68,7 @@ class Conversation extends Model
         $content = $firstUserMessage->content;
 
         return strlen($content) > 50
-            ? substr($content, 0, 47) . '...'
+            ? substr($content, 0, 47).'...'
             : $content;
     }
 

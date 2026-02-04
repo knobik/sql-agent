@@ -27,7 +27,7 @@ class ToolRegistry
     /**
      * Register multiple tools.
      *
-     * @param Tool[] $tools
+     * @param  Tool[]  $tools
      */
     public function registerMany(array $tools): self
     {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Knobik\SqlAgent\Data\ColumnInfo;
 use Knobik\SqlAgent\Data\RelationshipInfo;

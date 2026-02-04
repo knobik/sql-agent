@@ -66,7 +66,7 @@ class SearchManager extends Manager implements SearchDriver
      */
     public function createNullDriver(): NullSearchDriver
     {
-        return new NullSearchDriver();
+        return new NullSearchDriver;
     }
 
     /**
@@ -74,7 +74,7 @@ class SearchManager extends Manager implements SearchDriver
      */
     protected function createDriverInstance(string $name): SearchDriver
     {
-        $method = 'create' . ucfirst($name) . 'Driver';
+        $method = 'create'.ucfirst($name).'Driver';
 
         if (method_exists($this, $method)) {
             return $this->$method();

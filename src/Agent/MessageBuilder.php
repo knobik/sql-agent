@@ -29,8 +29,8 @@ class MessageBuilder
     /**
      * Add conversation history to messages.
      *
-     * @param array $messages Current messages
-     * @param array $history Array of historical messages with 'role' and 'content'
+     * @param  array  $messages  Current messages
+     * @param  array  $history  Array of historical messages with 'role' and 'content'
      */
     public function withHistory(array $messages, array $history): array
     {
@@ -86,7 +86,7 @@ class MessageBuilder
     /**
      * Create an assistant message with tool calls.
      *
-     * @param ToolCall[] $toolCalls
+     * @param  ToolCall[]  $toolCalls
      */
     public function assistantWithToolCalls(string $content, array $toolCalls): array
     {

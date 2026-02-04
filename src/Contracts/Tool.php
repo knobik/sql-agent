@@ -24,7 +24,7 @@ interface Tool
     /**
      * Execute the tool with the given parameters.
      *
-     * @param array $parameters The parameters passed to the tool
+     * @param  array  $parameters  The parameters passed to the tool
      */
     public function execute(array $parameters): ToolResult;
 }

@@ -40,7 +40,7 @@ class RunEvalsCommand extends Command
         // Seed test cases if requested
         if ($this->option('seed')) {
             info('Seeding test cases...');
-            $seeder = new TestCaseSeeder();
+            $seeder = new TestCaseSeeder;
             $seeder->run();
             info('Test cases seeded successfully.');
         }
@@ -51,7 +51,7 @@ class RunEvalsCommand extends Command
             $availableCategories = $this->evaluationRunner->getCategories();
             if (! in_array($category, $availableCategories, true)) {
                 warning("Invalid category: {$category}");
-                warning('Available categories: ' . implode(', ', $availableCategories));
+                warning('Available categories: '.implode(', ', $availableCategories));
 
                 return self::FAILURE;
             }
@@ -109,7 +109,7 @@ class RunEvalsCommand extends Command
         if ($this->option('golden-sql')) {
             $modes[] = 'Golden SQL comparison';
         }
-        info('Modes: ' . implode(', ', $modes));
+        info('Modes: '.implode(', ', $modes));
         info('');
     }
 
@@ -167,12 +167,12 @@ class RunEvalsCommand extends Command
                 $result->getStatusEmoji(),
                 $result->testCaseName,
                 $result->category,
-                number_format($result->duration, 2) . 's',
+                number_format($result->duration, 2).'s',
             ];
 
             // Add LLM score if grading was used
             if ($report->usedLlmGrader && $result->gradeResult !== null) {
-                $row[] = number_format($result->gradeResult->score * 100, 0) . '%';
+                $row[] = number_format($result->gradeResult->score * 100, 0).'%';
             } elseif ($report->usedLlmGrader) {
                 $row[] = '-';
             }
@@ -228,7 +228,7 @@ class RunEvalsCommand extends Command
         }
 
         if (! empty($result->missingStrings)) {
-            $this->line('  <fg=yellow>Missing strings:</> ' . implode(', ', $result->missingStrings));
+            $this->line('  <fg=yellow>Missing strings:</> '.implode(', ', $result->missingStrings));
         }
 
         if ($result->gradeResult !== null && ! $result->gradeResult->passed) {
@@ -241,7 +241,7 @@ class RunEvalsCommand extends Command
 
         if ($result->response !== null) {
             $truncatedResponse = strlen($result->response) > 200
-                ? substr($result->response, 0, 200) . '...'
+                ? substr($result->response, 0, 200).'...'
                 : $result->response;
             $this->line("  Response: {$truncatedResponse}");
         }
@@ -265,7 +265,7 @@ class RunEvalsCommand extends Command
         $this->line("<fg=red>Failed:</> {$report->getFailedCount()}");
         $this->line("<fg=yellow>Errors:</> {$report->getErrorCount()}");
         $this->line("<fg={$passColor}>Pass Rate:</> {$passRate}%");
-        $this->line('Duration: ' . number_format($report->totalDuration, 2) . 's');
+        $this->line('Duration: '.number_format($report->totalDuration, 2).'s');
 
         if ($report->usedLlmGrader && $report->getAverageLlmScore() !== null) {
             $avgScore = number_format($report->getAverageLlmScore() * 100, 1);

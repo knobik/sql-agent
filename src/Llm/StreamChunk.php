@@ -63,7 +63,7 @@ class StreamChunk
     /**
      * Create a tool calls chunk.
      *
-     * @param ToolCall[] $toolCalls
+     * @param  ToolCall[]  $toolCalls
      */
     public static function toolCalls(array $toolCalls): self
     {

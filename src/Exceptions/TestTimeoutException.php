@@ -6,6 +6,4 @@ namespace Knobik\SqlAgent\Exceptions;
 
 use RuntimeException;
 
-class TestTimeoutException extends RuntimeException
-{
-}
+class TestTimeoutException extends RuntimeException {}

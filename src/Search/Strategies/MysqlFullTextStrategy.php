@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Search\Strategies;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Knobik\SqlAgent\Contracts\FullTextSearchStrategy;
 
 /**

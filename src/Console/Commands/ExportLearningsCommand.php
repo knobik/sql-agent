@@ -26,7 +26,7 @@ class ExportLearningsCommand extends Command
             $category = LearningCategory::tryFrom($categoryValue);
             if ($category === null) {
                 $this->error("Invalid category: {$categoryValue}");
-                $this->info('Valid categories: ' . implode(', ', array_map(
+                $this->info('Valid categories: '.implode(', ', array_map(
                     fn ($c) => $c->value,
                     LearningCategory::cases(),
                 )));

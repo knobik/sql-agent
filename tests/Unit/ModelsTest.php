@@ -118,7 +118,7 @@ describe('BusinessRule', function () {
 
 describe('QueryPattern', function () {
     it('implements Searchable interface', function () {
-        $pattern = new QueryPattern();
+        $pattern = new QueryPattern;
 
         expect($pattern)->toBeInstanceOf(\Knobik\SqlAgent\Contracts\Searchable::class);
     });
@@ -145,7 +145,7 @@ describe('QueryPattern', function () {
     });
 
     it('returns searchable columns', function () {
-        $pattern = new QueryPattern();
+        $pattern = new QueryPattern;
 
         expect($pattern->getSearchableColumns())->toBe(['name', 'question', 'summary']);
     });
@@ -153,7 +153,7 @@ describe('QueryPattern', function () {
 
 describe('Learning', function () {
     it('implements Searchable interface', function () {
-        $learning = new Learning();
+        $learning = new Learning;
 
         expect($learning)->toBeInstanceOf(\Knobik\SqlAgent\Contracts\Searchable::class);
     });

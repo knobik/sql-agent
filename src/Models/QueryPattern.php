@@ -51,12 +51,12 @@ class QueryPattern extends Model implements Searchable
 
     public function scopeSearch($query, string $term)
     {
-        $term = '%' . strtolower($term) . '%';
+        $term = '%'.strtolower($term).'%';
 
         return $query->where(function ($q) use ($term) {
             $q->whereRaw('LOWER(name) LIKE ?', [$term])
-              ->orWhereRaw('LOWER(question) LIKE ?', [$term])
-              ->orWhereRaw('LOWER(summary) LIKE ?', [$term]);
+                ->orWhereRaw('LOWER(question) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(summary) LIKE ?', [$term]);
         });
     }
 

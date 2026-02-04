@@ -236,7 +236,7 @@ describe('EvaluationReport', function () {
         $emptyReport = new EvaluationReport(
             results: collect(),
             totalDuration: 0.0,
-            completedAt: new DateTimeImmutable(),
+            completedAt: new DateTimeImmutable,
         );
 
         expect($emptyReport->getTotalTests())->toBe(0);

@@ -7,16 +7,16 @@ namespace Knobik\SqlAgent;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Knobik\SqlAgent\Agent\MessageBuilder;
-use Knobik\SqlAgent\Livewire\ChatComponent;
-use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Agent\PromptRenderer;
 use Knobik\SqlAgent\Agent\SqlAgent;
 use Knobik\SqlAgent\Agent\ToolRegistry;
 use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Contracts\LlmDriver;
+use Knobik\SqlAgent\Contracts\SearchDriver;
 use Knobik\SqlAgent\Events\SqlErrorOccurred;
 use Knobik\SqlAgent\Listeners\AutoLearnFromError;
-use Knobik\SqlAgent\Contracts\SearchDriver;
+use Knobik\SqlAgent\Livewire\ChatComponent;
+use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Llm\LlmManager;
 use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Services\BusinessRulesLoader;
@@ -39,7 +39,7 @@ class SqlAgentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/sql-agent.php', 'sql-agent');
+        $this->mergeConfigFrom(__DIR__.'/../config/sql-agent.php', 'sql-agent');
 
         // Register services as singletons
         $this->app->singleton(SemanticModelLoader::class);
@@ -91,13 +91,13 @@ class SqlAgentServiceProvider extends ServiceProvider
 
         // Tool Registry with default tools
         $this->app->singleton(ToolRegistry::class, function ($app) {
-            $registry = new ToolRegistry();
+            $registry = new ToolRegistry;
 
             $registry->registerMany([
-                new RunSqlTool(),
+                new RunSqlTool,
                 new IntrospectSchemaTool($app->make(SchemaIntrospector::class)),
-                new SaveLearningTool(),
-                new SaveQueryTool(),
+                new SaveLearningTool,
+                new SaveQueryTool,
                 new SearchKnowledgeTool($app->make(SearchManager::class)),
             ]);
 
@@ -141,17 +141,17 @@ class SqlAgentServiceProvider extends ServiceProvider
         Event::listen(SqlErrorOccurred::class, AutoLearnFromError::class);
 
         // Migrations
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // Views (includes prompts)
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'sql-agent');
-        $this->loadViewsFrom(__DIR__ . '/../resources/prompts', 'sql-agent-prompts');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'sql-agent');
+        $this->loadViewsFrom(__DIR__.'/../resources/prompts', 'sql-agent-prompts');
 
         // Register Livewire components if Livewire is available and UI is enabled
         $this->registerLivewireComponents();
 
         // Routes
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         // Commands
         if ($this->app->runningInConsole()) {
@@ -166,23 +166,23 @@ class SqlAgentServiceProvider extends ServiceProvider
 
             // Publishables
             $this->publishes([
-                __DIR__ . '/../config/sql-agent.php' => config_path('sql-agent.php'),
+                __DIR__.'/../config/sql-agent.php' => config_path('sql-agent.php'),
             ], 'sql-agent-config');
 
             $this->publishes([
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
+                __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'sql-agent-migrations');
 
             $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/sql-agent'),
+                __DIR__.'/../resources/views' => resource_path('views/vendor/sql-agent'),
             ], 'sql-agent-views');
 
             $this->publishes([
-                __DIR__ . '/../resources/sql-agent/knowledge' => resource_path('sql-agent/knowledge'),
+                __DIR__.'/../resources/sql-agent/knowledge' => resource_path('sql-agent/knowledge'),
             ], 'sql-agent-knowledge');
 
             $this->publishes([
-                __DIR__ . '/../resources/prompts' => resource_path('views/vendor/sql-agent/prompts'),
+                __DIR__.'/../resources/prompts' => resource_path('views/vendor/sql-agent/prompts'),
             ], 'sql-agent-prompts');
         }
     }

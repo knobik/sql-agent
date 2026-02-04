@@ -201,7 +201,7 @@ class SqlAgent implements Agent
 
             foreach ($toolCalls as $toolCall) {
                 // Yield a chunk indicating tool execution (using a marker that can be styled)
-                $toolLabel = match($toolCall->name) {
+                $toolLabel = match ($toolCall->name) {
                     'run_sql' => 'Running SQL query',
                     'introspect_schema' => 'Inspecting schema',
                     'search_knowledge' => 'Searching knowledge base',
@@ -209,7 +209,7 @@ class SqlAgent implements Agent
                     'save_validated_query' => 'Saving query pattern',
                     default => $toolCall->name,
                 };
-                $toolType = match($toolCall->name) {
+                $toolType = match ($toolCall->name) {
                     'run_sql' => 'sql',
                     'introspect_schema' => 'schema',
                     'search_knowledge' => 'search',
@@ -222,7 +222,7 @@ class SqlAgent implements Agent
                 $sqlData = '';
                 if ($toolCall->name === 'run_sql') {
                     $sql = $toolCall->arguments['sql'] ?? $toolCall->arguments['query'] ?? '';
-                    $sqlData = ' data-sql="' . htmlspecialchars($sql, ENT_QUOTES, 'UTF-8') . '"';
+                    $sqlData = ' data-sql="'.htmlspecialchars($sql, ENT_QUOTES, 'UTF-8').'"';
                 }
 
                 yield new StreamChunk(
@@ -371,9 +371,9 @@ class SqlAgent implements Agent
                 $parts[] = "**{$key}**: {$value}";
             }
 
-            return 'Here is the result: ' . implode(', ', $parts);
+            return 'Here is the result: '.implode(', ', $parts);
         }
 
-        return "The query returned **{$rowCount}** " . ($rowCount === 1 ? 'row' : 'rows') . '.';
+        return "The query returned **{$rowCount}** ".($rowCount === 1 ? 'row' : 'rows').'.';
     }
 }

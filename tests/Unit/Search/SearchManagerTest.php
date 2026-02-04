@@ -2,9 +2,7 @@
 
 use Knobik\SqlAgent\Contracts\SearchDriver;
 use Knobik\SqlAgent\Search\Drivers\DatabaseSearchDriver;
-use Knobik\SqlAgent\Search\Drivers\HybridSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\NullSearchDriver;
-use Knobik\SqlAgent\Search\Drivers\ScoutSearchDriver;
 use Knobik\SqlAgent\Search\SearchManager;
 
 beforeEach(function () {

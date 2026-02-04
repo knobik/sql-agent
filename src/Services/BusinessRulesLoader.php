@@ -46,21 +46,21 @@ class BusinessRulesLoader
         $sections = [];
 
         if ($metrics->isNotEmpty()) {
-            $sections[] = "## Metrics & Definitions\n\n" . $metrics
-                    ->map(fn (BusinessRuleData $r) => $r->toPromptString())
-                    ->implode("\n\n");
+            $sections[] = "## Metrics & Definitions\n\n".$metrics
+                ->map(fn (BusinessRuleData $r) => $r->toPromptString())
+                ->implode("\n\n");
         }
 
         if ($businessRules->isNotEmpty()) {
-            $sections[] = "## Business Rules\n\n" . $businessRules
-                    ->map(fn (BusinessRuleData $r) => $r->toPromptString())
-                    ->implode("\n");
+            $sections[] = "## Business Rules\n\n".$businessRules
+                ->map(fn (BusinessRuleData $r) => $r->toPromptString())
+                ->implode("\n");
         }
 
         if ($gotchas->isNotEmpty()) {
-            $sections[] = "## Common Gotchas\n\n" . $gotchas
-                    ->map(fn (BusinessRuleData $r) => $r->toPromptString())
-                    ->implode("\n\n");
+            $sections[] = "## Common Gotchas\n\n".$gotchas
+                ->map(fn (BusinessRuleData $r) => $r->toPromptString())
+                ->implode("\n\n");
         }
 
         return implode("\n\n", $sections);
@@ -73,7 +73,7 @@ class BusinessRulesLoader
      */
     protected function loadFromFiles(): Collection
     {
-        $path = config('sql-agent.knowledge.path') . '/business';
+        $path = config('sql-agent.knowledge.path').'/business';
 
         if (! File::isDirectory($path)) {
             return collect();

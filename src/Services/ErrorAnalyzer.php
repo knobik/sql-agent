@@ -122,7 +122,7 @@ class ErrorAnalyzer
 
         // Truncate to max 100 characters
         if (mb_strlen($error) > 100) {
-            $error = mb_substr($error, 0, 97) . '...';
+            $error = mb_substr($error, 0, 97).'...';
         }
 
         return $error ?: 'SQL Error';
@@ -140,11 +140,11 @@ class ErrorAnalyzer
         $description .= "Original query:\n```sql\n{$sql}\n```\n\n";
 
         if (! empty($tables)) {
-            $description .= "Tables involved: " . implode(', ', $tables) . "\n\n";
+            $description .= 'Tables involved: '.implode(', ', $tables)."\n\n";
         }
 
         $description .= "Category: {$category->label()}\n";
-        $description .= "This learning was auto-generated from a SQL error.";
+        $description .= 'This learning was auto-generated from a SQL error.';
 
         return $description;
     }

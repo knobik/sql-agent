@@ -35,8 +35,8 @@ afterEach(function () {
 
 describe('ToolRegistry', function () {
     it('can register a tool', function () {
-        $registry = new ToolRegistry();
-        $tool = new RunSqlTool();
+        $registry = new ToolRegistry;
+        $tool = new RunSqlTool;
 
         $registry->register($tool);
 
@@ -45,11 +45,11 @@ describe('ToolRegistry', function () {
     });
 
     it('can register multiple tools', function () {
-        $registry = new ToolRegistry();
+        $registry = new ToolRegistry;
 
         $registry->registerMany([
-            new RunSqlTool(),
-            new SaveLearningTool(),
+            new RunSqlTool,
+            new SaveLearningTool,
         ]);
 
         expect($registry->count())->toBe(2);
@@ -58,10 +58,10 @@ describe('ToolRegistry', function () {
     });
 
     it('returns all tool names', function () {
-        $registry = new ToolRegistry();
+        $registry = new ToolRegistry;
         $registry->registerMany([
-            new RunSqlTool(),
-            new SaveLearningTool(),
+            new RunSqlTool,
+            new SaveLearningTool,
         ]);
 
         $names = $registry->names();
@@ -71,10 +71,10 @@ describe('ToolRegistry', function () {
     });
 
     it('returns all tools', function () {
-        $registry = new ToolRegistry();
+        $registry = new ToolRegistry;
         $registry->registerMany([
-            new RunSqlTool(),
-            new SaveLearningTool(),
+            new RunSqlTool,
+            new SaveLearningTool,
         ]);
 
         $tools = $registry->all();
@@ -84,14 +84,14 @@ describe('ToolRegistry', function () {
     });
 
     it('throws exception for unregistered tool', function () {
-        $registry = new ToolRegistry();
+        $registry = new ToolRegistry;
 
         $registry->get('non_existent');
     })->throws(InvalidArgumentException::class, "Tool 'non_existent' is not registered.");
 
     it('can remove a tool', function () {
-        $registry = new ToolRegistry();
-        $registry->register(new RunSqlTool());
+        $registry = new ToolRegistry;
+        $registry->register(new RunSqlTool);
 
         expect($registry->has('run_sql'))->toBeTrue();
 
@@ -101,10 +101,10 @@ describe('ToolRegistry', function () {
     });
 
     it('can clear all tools', function () {
-        $registry = new ToolRegistry();
+        $registry = new ToolRegistry;
         $registry->registerMany([
-            new RunSqlTool(),
-            new SaveLearningTool(),
+            new RunSqlTool,
+            new SaveLearningTool,
         ]);
 
         expect($registry->count())->toBe(2);
@@ -118,7 +118,7 @@ describe('ToolRegistry', function () {
 
 describe('RunSqlTool', function () {
     it('executes valid SELECT queries', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => 'SELECT * FROM test_users']);
 
@@ -128,7 +128,7 @@ describe('RunSqlTool', function () {
     });
 
     it('executes WITH statements', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute([
             'sql' => 'WITH user_names AS (SELECT name FROM test_users) SELECT * FROM user_names',
@@ -139,7 +139,7 @@ describe('RunSqlTool', function () {
     });
 
     it('rejects empty SQL', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => '']);
 
@@ -148,7 +148,7 @@ describe('RunSqlTool', function () {
     });
 
     it('rejects INSERT statements', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => "INSERT INTO test_users (name) VALUES ('Test')"]);
 
@@ -157,7 +157,7 @@ describe('RunSqlTool', function () {
     });
 
     it('rejects DROP statements', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => 'DROP TABLE test_users']);
 
@@ -166,7 +166,7 @@ describe('RunSqlTool', function () {
     });
 
     it('rejects SELECT with DELETE keyword', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => 'SELECT * FROM test_users; DELETE FROM test_users']);
 
@@ -174,7 +174,7 @@ describe('RunSqlTool', function () {
     });
 
     it('rejects UPDATE statements', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => "UPDATE test_users SET name = 'Test'"]);
 
@@ -182,7 +182,7 @@ describe('RunSqlTool', function () {
     });
 
     it('returns ToolResult', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->execute(['sql' => 'SELECT * FROM test_users']);
 
@@ -190,14 +190,14 @@ describe('RunSqlTool', function () {
     });
 
     it('has correct name and description', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         expect($tool->name())->toBe('run_sql');
         expect($tool->description())->toContain('Execute');
     });
 
     it('has correct parameters schema', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
         $params = $tool->parameters();
 
         expect($params['type'])->toBe('object');
@@ -206,7 +206,7 @@ describe('RunSqlTool', function () {
     });
 
     it('can set connection', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $result = $tool->setConnection('testing');
 
@@ -214,7 +214,7 @@ describe('RunSqlTool', function () {
     });
 
     it('can set and get question', function () {
-        $tool = new RunSqlTool();
+        $tool = new RunSqlTool;
 
         $tool->setQuestion('How many users?');
 
@@ -286,7 +286,7 @@ describe('IntrospectSchemaTool', function () {
 
 describe('SaveLearningTool', function () {
     it('saves a learning', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => 'Test Learning',
@@ -303,7 +303,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('saves a learning with SQL', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => 'SQL Pattern',
@@ -319,7 +319,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('requires title', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'description' => 'Test description',
@@ -331,7 +331,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('requires description', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => 'Test',
@@ -343,7 +343,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('requires valid category', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => 'Test',
@@ -356,7 +356,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('validates title length', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => str_repeat('a', 101),
@@ -369,7 +369,7 @@ describe('SaveLearningTool', function () {
     });
 
     it('has correct name', function () {
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         expect($tool->name())->toBe('save_learning');
     });
@@ -377,7 +377,7 @@ describe('SaveLearningTool', function () {
     it('respects disabled learning config', function () {
         config(['sql-agent.learning.enabled' => false]);
 
-        $tool = new SaveLearningTool();
+        $tool = new SaveLearningTool;
 
         $result = $tool->execute([
             'title' => 'Test',
@@ -394,7 +394,7 @@ describe('SaveLearningTool', function () {
 
 describe('SaveQueryTool', function () {
     it('saves a query pattern', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -415,7 +415,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('saves with data quality notes', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'Active Users',
@@ -433,7 +433,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('requires name', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'question' => 'How many users?',
@@ -447,7 +447,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('requires question', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -461,7 +461,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('requires sql', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -475,7 +475,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('requires summary', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -489,7 +489,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('requires tables_used', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -503,7 +503,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('rejects empty tables_used array', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'User Count',
@@ -518,7 +518,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('validates name length', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => str_repeat('a', 101),
@@ -533,7 +533,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('only allows SELECT or WITH statements', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'Bad Query',
@@ -548,7 +548,7 @@ describe('SaveQueryTool', function () {
     });
 
     it('accepts WITH statements', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         $result = $tool->execute([
             'name' => 'Complex Query',
@@ -562,13 +562,13 @@ describe('SaveQueryTool', function () {
     });
 
     it('has correct name', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
 
         expect($tool->name())->toBe('save_validated_query');
     });
 
     it('has correct parameters schema', function () {
-        $tool = new SaveQueryTool();
+        $tool = new SaveQueryTool;
         $params = $tool->parameters();
 
         expect($params['type'])->toBe('object');

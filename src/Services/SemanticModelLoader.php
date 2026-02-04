@@ -52,7 +52,7 @@ class SemanticModelLoader
      */
     protected function loadFromFiles(?string $connection = null): Collection
     {
-        $path = config('sql-agent.knowledge.path') . '/tables';
+        $path = config('sql-agent.knowledge.path').'/tables';
 
         if (! File::isDirectory($path)) {
             return collect();

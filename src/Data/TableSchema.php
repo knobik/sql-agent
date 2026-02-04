@@ -15,10 +15,10 @@ class TableSchema extends Data
         public ?string $description = null,
         /** @var Collection<int, ColumnInfo> */
         #[DataCollectionOf(ColumnInfo::class)]
-        public Collection $columns = new Collection(),
+        public Collection $columns = new Collection,
         /** @var Collection<int, RelationshipInfo> */
         #[DataCollectionOf(RelationshipInfo::class)]
-        public Collection $relationships = new Collection(),
+        public Collection $relationships = new Collection,
         /** @var array<string> */
         public array $dataQualityNotes = [],
         /** @var array<string> */
