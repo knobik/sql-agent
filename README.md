@@ -4,7 +4,7 @@
 
 A self-learning text-to-SQL agent for Laravel that converts natural language questions into SQL queries using LLMs.
 
-This package is based on the [Dash](https://github.com/agno-agi/dash) project.
+This package is based on [Dash](https://github.com/agno-agi/dash) and [OpenAI's in-house data agent](https://openai.com/index/inside-our-in-house-data-agent/).
 
 ## Table of Contents
 
