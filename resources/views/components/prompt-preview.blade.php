@@ -9,6 +9,7 @@
     $timing = $debugData['timing'] ?? [];
     $errorDetails = $debugData['error_details'] ?? null;
     $toolsFull = $promptData['tools_full'] ?? [];
+    $thinking = $debugData['thinking'] ?? null;
 @endphp
 
 <div class="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 overflow-hidden">
@@ -67,6 +68,15 @@
                     class="px-4 py-2 text-xs font-medium border-b-2 transition-colors"
                 >
                     Tools Schema ({{ count($toolsFull) }})
+                </button>
+            @endif
+            @if($thinking)
+                <button
+                    @click="activeTab = 'thinking'"
+                    :class="activeTab === 'thinking' ? 'border-purple-500 text-purple-700 dark:text-purple-300' : 'border-transparent text-purple-500 hover:text-purple-700 dark:hover:text-purple-300'"
+                    class="px-4 py-2 text-xs font-medium border-b-2 transition-colors"
+                >
+                    Thinking
                 </button>
             @endif
             @if($errorDetails)
@@ -212,11 +222,13 @@
                                     <tr class="{{ $chunk['isComplete'] ?? false ? 'bg-green-50 dark:bg-green-900/20' : '' }}">
                                         <td class="px-2 py-1 text-gray-500">{{ $index + 1 }}</td>
                                         <td class="px-2 py-1 text-gray-500">{{ $chunk['time'] ?? '?' }}</td>
-                                        <td class="px-2 py-1 font-mono text-gray-700 dark:text-gray-300 max-w-xs truncate" title="{{ $chunk['content'] ?? '' }}">
+                                        <td class="px-2 py-1 font-mono text-gray-700 dark:text-gray-300 max-w-xs truncate" title="{{ $chunk['content'] ?? $chunk['thinking'] ?? '' }}">
                                             @if(!empty($chunk['content']))
                                                 {{ Str::limit($chunk['content'], 50) }}
+                                            @elseif(!empty($chunk['thinking']))
+                                                <span class="text-purple-600 dark:text-purple-400">{{ Str::limit($chunk['thinking'], 50) }}</span>
                                             @elseif(!empty($chunk['toolCalls']))
-                                                <span class="text-purple-600 dark:text-purple-400">[{{ count($chunk['toolCalls']) }} tool call(s)]</span>
+                                                <span class="text-amber-600 dark:text-amber-400">[{{ count($chunk['toolCalls']) }} tool call(s)]</span>
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
@@ -225,6 +237,11 @@
                                             @if($chunk['isComplete'] ?? false)
                                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                                                     complete: {{ $chunk['finishReason'] ?? '?' }}
+                                                </span>
+                                            @endif
+                                            @if($chunk['hasThinking'] ?? false)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                                                    thinking
                                                 </span>
                                             @endif
                                             @if($chunk['hasContent'] ?? false)
@@ -257,6 +274,18 @@
                             <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 rounded p-2 max-h-48 overflow-y-auto custom-scrollbar">{{ json_encode($tool['parameters'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
                         </div>
                     @endforeach
+                </div>
+            @endif
+
+            {{-- Thinking Tab --}}
+            @if($thinking)
+                <div x-show="activeTab === 'thinking'" x-cloak class="space-y-3">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        LLM's internal reasoning process (from models with thinking mode enabled)
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800 max-h-96 overflow-y-auto custom-scrollbar">
+                        <div class="prose prose-sm prose-purple dark:prose-invert max-w-none text-purple-800 dark:text-purple-200" x-data x-html="marked.parse(@js($thinking))"></div>
+                    </div>
                 </div>
             @endif
 

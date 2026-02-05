@@ -10,7 +10,16 @@ class StreamChunk
         public readonly ?string $content = null,
         public readonly array $toolCalls = [],
         public readonly ?string $finishReason = null,
+        public readonly ?string $thinking = null,
     ) {}
+
+    /**
+     * Check if this chunk has thinking content.
+     */
+    public function hasThinking(): bool
+    {
+        return $this->thinking !== null && $this->thinking !== '';
+    }
 
     /**
      * Check if this chunk has text content.
@@ -58,6 +67,14 @@ class StreamChunk
     public static function content(string $content): self
     {
         return new self(content: $content);
+    }
+
+    /**
+     * Create a thinking chunk.
+     */
+    public static function thinking(string $thinking): self
+    {
+        return new self(thinking: $thinking);
     }
 
     /**

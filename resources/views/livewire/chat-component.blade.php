@@ -437,6 +437,8 @@ function chatStream() {
                 this.conversationId = data.id;
                 this.$wire.conversationId = data.id;
                 this.$dispatch('conversation-updated');
+            } else if (data.thinking !== undefined) {
+                // Thinking event - ignored in UI (only saved for debug panel)
             } else if (data.text !== undefined) {
                 // Content event
                 this.streamedContent += data.text;

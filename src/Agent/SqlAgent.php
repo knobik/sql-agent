@@ -172,6 +172,12 @@ class SqlAgent implements Agent
 
             foreach ($this->llm->stream($messages, $tools) as $chunk) {
                 /** @var StreamChunk $chunk */
+
+                // Pass through thinking chunks
+                if ($chunk->hasThinking()) {
+                    yield $chunk;
+                }
+
                 if ($chunk->hasContent()) {
                     $content .= $chunk->content;
                     yield $chunk;

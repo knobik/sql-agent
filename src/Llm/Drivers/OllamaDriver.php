@@ -246,6 +246,11 @@ class OllamaDriver implements LlmDriver
 
             $message = $event['message'] ?? [];
 
+            // Handle thinking
+            if (! empty($message['thinking'])) {
+                yield StreamChunk::thinking($message['thinking']);
+            }
+
             // Handle content
             if (! empty($message['content'])) {
                 yield StreamChunk::content($message['content']);

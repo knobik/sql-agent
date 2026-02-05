@@ -72,12 +72,36 @@ class StreamController extends Controller
             $history = $this->getConversationHistory($conversationId);
 
             $fullContent = '';
+            $fullThinking = '';
             $lastSql = null;
             $lastResults = null;
             $cancelled = false;
+            $chunks = [];
+            $debugEnabled = config('sql-agent.debug.enabled', false);
+            $startTime = hrtime(true);
 
             try {
                 foreach ($agent->stream($question, $connection, $history) as $chunk) {
+                    // Capture chunk for debug panel
+                    if ($debugEnabled) {
+                        $chunks[] = [
+                            'time' => round((hrtime(true) - $startTime) / 1e6), // ms
+                            'content' => $chunk->content,
+                            'thinking' => $chunk->thinking,
+                            'toolCalls' => $chunk->toolCalls,
+                            'isComplete' => $chunk->isComplete(),
+                            'finishReason' => $chunk->finishReason,
+                            'hasContent' => $chunk->hasContent(),
+                            'hasThinking' => $chunk->hasThinking(),
+                        ];
+                    }
+
+                    // Handle thinking chunks (from models that support thinking mode)
+                    if ($chunk->hasThinking()) {
+                        $fullThinking .= $chunk->thinking;
+                        $this->sendEvent('thinking', ['thinking' => $chunk->thinking]);
+                    }
+
                     if ($chunk->hasContent()) {
                         $fullContent .= $chunk->content;
                         $this->sendEvent('content', ['text' => $chunk->content]);
@@ -105,9 +129,16 @@ class StreamController extends Controller
 
                     // Save assistant message
                     $metadata = [];
-                    if (config('sql-agent.debug.enabled', false)) {
+                    if ($debugEnabled) {
                         $metadata['prompt'] = $agent->getLastPrompt();
                         $metadata['iterations'] = $agent->getIterations();
+                        $metadata['chunks'] = $chunks;
+                        $metadata['timing'] = [
+                            'total_ms' => round((hrtime(true) - $startTime) / 1e6),
+                        ];
+                    }
+                    if ($fullThinking !== '') {
+                        $metadata['thinking'] = $fullThinking;
                     }
 
                     Message::create([
