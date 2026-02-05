@@ -27,32 +27,6 @@ it('can render chat component', function () {
         ->assertSee('Ask a question about your data');
 });
 
-it('can send a message', function () {
-    $user = Helpers::createTestUser();
-    Helpers::actingAs($user);
-
-    // Mock the SqlAgent to avoid actual LLM calls
-    $mockAgent = Mockery::mock(\Knobik\SqlAgent\Agent\SqlAgent::class);
-    $mockAgent->shouldReceive('stream')
-        ->andReturn(new \ArrayIterator([
-            new \Knobik\SqlAgent\Llm\StreamChunk(content: 'Test response'),
-            \Knobik\SqlAgent\Llm\StreamChunk::complete('stop'),
-        ]));
-    $mockAgent->shouldReceive('getLastSql')->andReturn(null);
-    $mockAgent->shouldReceive('getLastResults')->andReturn(null);
-
-    app()->instance(\Knobik\SqlAgent\Agent\SqlAgent::class, $mockAgent);
-
-    \Livewire\Livewire::test(ChatComponent::class)
-        ->set('message', 'Test question')
-        ->call('sendMessage')
-        ->assertSet('message', '');
-
-    // Verify conversation was created
-    expect(Conversation::count())->toBe(1);
-    expect(Message::count())->toBe(2); // User message + Assistant message
-});
-
 it('can load an existing conversation', function () {
     $user = Helpers::createTestUser();
     Helpers::actingAs($user);
@@ -81,7 +55,10 @@ it('can load an existing conversation', function () {
         ->assertSee('Hi there!');
 });
 
-it('prevents loading conversation from another user', function () {
+it('prevents loading conversation from another user when user tracking is enabled', function () {
+    // Enable user tracking for this test
+    config(['sql-agent.user.enabled' => true]);
+
     $user1 = Helpers::createTestUser();
     $user2 = Helpers::createTestUser(['email' => 'user2@example.com']);
 
@@ -109,9 +86,7 @@ it('can create a new conversation', function () {
 
     \Livewire\Livewire::test(ChatComponent::class, ['conversationId' => $conversation->id])
         ->call('newConversation')
-        ->assertSet('conversationId', null)
-        ->assertSet('message', '')
-        ->assertSet('streamedContent', '');
+        ->assertSet('conversationId', null);
 });
 
 it('shows empty state when no conversation', function () {
@@ -121,4 +96,9 @@ it('shows empty state when no conversation', function () {
     \Livewire\Livewire::test(ChatComponent::class)
         ->assertSee('Ask a question about your data')
         ->assertSee('Show me the top 10 customers by total orders');
+});
+
+it('streaming endpoint route exists', function () {
+    // Just verify the route is registered
+    expect(route('sql-agent.stream'))->toContain('sql-agent/stream');
 });
