@@ -25,6 +25,22 @@ class ToolRegistry
     }
 
     /**
+     * Register a single tool, throwing if a tool with the same name already exists.
+     *
+     * @throws InvalidArgumentException
+     */
+    public function registerStrict(Tool $tool): self
+    {
+        if ($this->has($tool->name())) {
+            throw new InvalidArgumentException("Tool '{$tool->name()}' is already registered.");
+        }
+
+        $this->tools[$tool->name()] = $tool;
+
+        return $this;
+    }
+
+    /**
      * Register multiple tools.
      *
      * @param  Tool[]  $tools

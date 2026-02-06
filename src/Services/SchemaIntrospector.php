@@ -197,14 +197,14 @@ class SchemaIntrospector
     {
         try {
             $tables = Schema::connection($connection)->getTables();
-
-            foreach ($tables as $table) {
-                if ($table['name'] === $tableName) {
-                    return $table['comment'] ?? null;
-                }
-            }
         } catch (Throwable) {
-            // Table comments not supported or error occurred
+            return null;
+        }
+
+        foreach ($tables as $table) {
+            if ($table['name'] === $tableName) {
+                return $table['comment'] ?? null;
+            }
         }
 
         return null;
@@ -291,13 +291,13 @@ class SchemaIntrospector
 
         try {
             $tables = Schema::connection($connection)->getTables();
-
-            return array_map(fn (array $table) => $table['name'], $tables);
         } catch (Throwable $e) {
             report($e);
 
             return [];
         }
+
+        return array_map(fn (array $table) => $table['name'], $tables);
     }
 
     /**

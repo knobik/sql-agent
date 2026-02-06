@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Tools;
 
 use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
+use RuntimeException;
 
 class IntrospectSchemaTool extends BaseTool
 {
@@ -75,18 +76,17 @@ class IntrospectSchemaTool extends BaseTool
     {
         // Check if table exists
         if (! $this->introspector->tableExists($tableName, $connection)) {
-            return [
-                'error' => "Table '{$tableName}' does not exist.",
-                'available_tables' => $this->introspector->getTableNames($connection),
-            ];
+            $available = $this->introspector->getTableNames($connection);
+
+            throw new RuntimeException(
+                "Table '{$tableName}' does not exist. Available tables: ".implode(', ', $available)
+            );
         }
 
         $schema = $this->introspector->introspectTable($tableName, $connection);
 
         if ($schema === null) {
-            return [
-                'error' => "Could not introspect table '{$tableName}'.",
-            ];
+            throw new RuntimeException("Could not introspect table '{$tableName}'.");
         }
 
         $result = [

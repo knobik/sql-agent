@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Knobik\SqlAgent\Enums\LearningCategory;
 use Knobik\SqlAgent\Events\LearningCreated;
 use Knobik\SqlAgent\Models\Learning;
@@ -13,8 +12,6 @@ use Knobik\SqlAgent\Support\UserResolver;
 
 class LearningMachine
 {
-    protected const AUTO_LEARN_CACHE_KEY = 'sql_agent_auto_learnings_today';
-
     public function __construct(
         protected ErrorAnalyzer $errorAnalyzer,
     ) {}
@@ -87,11 +84,6 @@ class LearningMachine
             return null;
         }
 
-        // Check if we've hit the daily limit
-        if (! $this->canAutoLearnToday()) {
-            return null;
-        }
-
         // Check for existing similar learning
         if ($this->hasSimilarLearning($sql, $error)) {
             return null;
@@ -112,8 +104,6 @@ class LearningMachine
             ],
         );
 
-        $this->incrementAutoLearnCount();
-
         return $learning;
     }
 
@@ -124,30 +114,6 @@ class LearningMachine
     {
         return config('sql-agent.learning.enabled', true)
             && config('sql-agent.learning.auto_save_errors', true);
-    }
-
-    /**
-     * Check if we can auto-learn today (rate limiting).
-     */
-    protected function canAutoLearnToday(): bool
-    {
-        $maxPerDay = config('sql-agent.learning.max_auto_learnings_per_day', 50);
-        $count = Cache::get(self::AUTO_LEARN_CACHE_KEY, 0);
-
-        return $count < $maxPerDay;
-    }
-
-    /**
-     * Increment the auto-learn counter for today.
-     */
-    protected function incrementAutoLearnCount(): void
-    {
-        $count = Cache::get(self::AUTO_LEARN_CACHE_KEY, 0);
-        Cache::put(
-            self::AUTO_LEARN_CACHE_KEY,
-            $count + 1,
-            now()->endOfDay(),
-        );
     }
 
     /**

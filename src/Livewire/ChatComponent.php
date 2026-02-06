@@ -7,7 +7,7 @@ namespace Knobik\SqlAgent\Livewire;
 use Illuminate\Contracts\View\View;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Models\Conversation;
-use Knobik\SqlAgent\Support\UserResolver;
+use Knobik\SqlAgent\Services\ConversationService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -28,12 +28,9 @@ class ChatComponent extends Component
 
         // Verify conversation belongs to current user (if user tracking enabled)
         if ($this->conversationId) {
-            $conversation = Conversation::find($this->conversationId);
-            $userResolver = app(UserResolver::class);
+            $conversation = app(ConversationService::class)->findForCurrentUser($this->conversationId);
 
             if (! $conversation) {
-                $this->conversationId = null;
-            } elseif ($userResolver->isEnabled() && $conversation->user_id !== $userResolver->id()) {
                 $this->conversationId = null;
             }
         }
@@ -74,15 +71,9 @@ class ChatComponent extends Component
     #[On('load-conversation')]
     public function loadConversation(int $conversationId): void
     {
-        $conversation = Conversation::find($conversationId);
-        $userResolver = app(UserResolver::class);
+        $conversation = app(ConversationService::class)->findForCurrentUser($conversationId);
 
         if (! $conversation) {
-            return;
-        }
-
-        // Check ownership only if user tracking is enabled
-        if ($userResolver->isEnabled() && $conversation->user_id !== $userResolver->id()) {
             return;
         }
 

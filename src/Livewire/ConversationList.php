@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Livewire;
 
 use Illuminate\Contracts\View\View;
 use Knobik\SqlAgent\Models\Conversation;
+use Knobik\SqlAgent\Services\ConversationService;
 use Knobik\SqlAgent\Support\UserResolver;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -81,17 +82,9 @@ class ConversationList extends Component
             return;
         }
 
-        $conversation = Conversation::find($this->deleteConversationId);
-        $userResolver = app(UserResolver::class);
+        $conversation = app(ConversationService::class)->findForCurrentUser($this->deleteConversationId);
 
         if (! $conversation) {
-            $this->cancelDelete();
-
-            return;
-        }
-
-        // Check ownership only if user tracking is enabled
-        if ($userResolver->isEnabled() && $conversation->user_id !== $userResolver->id()) {
             $this->cancelDelete();
 
             return;

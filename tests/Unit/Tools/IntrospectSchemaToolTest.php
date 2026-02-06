@@ -59,13 +59,11 @@ describe('IntrospectSchemaTool', function () {
 
         $result = $tool->execute(['table_name' => 'non_existent_table_xyz123']);
 
-        // The tool should return a result
+        // Non-existent tables should return a failure result
         expect($result)->toBeInstanceOf(ToolResult::class);
-
-        if ($result->success) {
-            // If success, should have error message about non-existent table
-            expect($result->data)->toBeArray();
-        }
+        expect($result->success)->toBeFalse();
+        expect($result->error)->toContain('non_existent_table_xyz123');
+        expect($result->error)->toContain('does not exist');
     });
 
     it('has correct name', function () {

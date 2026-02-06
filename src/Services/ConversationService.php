@@ -34,6 +34,24 @@ class ConversationService
     }
 
     /**
+     * Find a conversation with messages that belongs to the current user.
+     */
+    public function findForCurrentUserWithMessages(int $id): ?Conversation
+    {
+        $conversation = Conversation::with('messages')->find($id);
+
+        if (! $conversation) {
+            return null;
+        }
+
+        if ($this->userResolver->isEnabled() && $conversation->user_id !== $this->userResolver->id()) {
+            return null;
+        }
+
+        return $conversation;
+    }
+
+    /**
      * Create a new conversation for the current user.
      */
     public function createForCurrentUser(string $connection): Conversation

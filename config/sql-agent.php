@@ -191,7 +191,6 @@ return [
         'enabled' => env('SQL_AGENT_LEARNING_ENABLED', true),
         'auto_save_errors' => env('SQL_AGENT_AUTO_SAVE_ERRORS', true),
         'prune_after_days' => env('SQL_AGENT_LEARNING_PRUNE_DAYS', 90),
-        'max_auto_learnings_per_day' => env('SQL_AGENT_MAX_AUTO_LEARNINGS', 50),
     ],
 
     /*

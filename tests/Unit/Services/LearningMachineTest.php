@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Knobik\SqlAgent\Enums\LearningCategory;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Services\LearningMachine;
@@ -69,7 +68,6 @@ describe('learnFromError', function () {
         config([
             'sql-agent.learning.enabled' => true,
             'sql-agent.learning.auto_save_errors' => true,
-            'sql-agent.learning.max_auto_learnings_per_day' => 50,
         ]);
 
         $learning = $this->learningMachine->learnFromError(
@@ -85,24 +83,6 @@ describe('learnFromError', function () {
 
     it('returns null when auto learning is disabled', function () {
         config(['sql-agent.learning.enabled' => false]);
-
-        $learning = $this->learningMachine->learnFromError(
-            sql: 'SELECT 1',
-            error: 'error',
-            question: 'test',
-        );
-
-        expect($learning)->toBeNull();
-    });
-
-    it('returns null when daily limit is reached', function () {
-        config([
-            'sql-agent.learning.enabled' => true,
-            'sql-agent.learning.auto_save_errors' => true,
-            'sql-agent.learning.max_auto_learnings_per_day' => 0,
-        ]);
-
-        Cache::put('sql_agent_auto_learnings_today', 1, now()->endOfDay());
 
         $learning = $this->learningMachine->learnFromError(
             sql: 'SELECT 1',

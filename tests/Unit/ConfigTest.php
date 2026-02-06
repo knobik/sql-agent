@@ -230,11 +230,6 @@ describe('Learning Configuration', function () {
         expect($params[0]->allowsNull())->toBeTrue();
     });
 
-    it('max_auto_learnings_per_day config is read', function () {
-        config(['sql-agent.learning.max_auto_learnings_per_day' => 10]);
-
-        expect(config('sql-agent.learning.max_auto_learnings_per_day'))->toBe(10);
-    });
 });
 
 describe('Knowledge Configuration', function () {

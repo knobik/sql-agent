@@ -9,6 +9,7 @@ use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Contracts\AgentResponse;
 use Knobik\SqlAgent\Contracts\LlmDriver;
 use Knobik\SqlAgent\Contracts\Tool;
+use Knobik\SqlAgent\Contracts\ToolResult;
 use Knobik\SqlAgent\Llm\StreamChunk;
 use Knobik\SqlAgent\Llm\ToolCall;
 use Knobik\SqlAgent\Services\ContextBuilder;
@@ -51,71 +52,28 @@ class SqlAgent implements Agent
             for ($i = 0; $i < $loop->maxIterations; $i++) {
                 $response = $this->llm->chat($messages, $loop->tools);
 
-                $iterationData = [
-                    'iteration' => $i + 1,
-                    'response' => $response->content,
-                    'tool_calls' => array_map(
-                        fn (ToolCall $tc) => ['name' => $tc->name, 'arguments' => $tc->arguments],
-                        $response->toolCalls
-                    ),
-                    'finish_reason' => $response->finishReason,
-                    'tool_results' => [],
-                ];
+                $iterationData = $this->buildIterationData($i, $response->content, $response->toolCalls, $response->finishReason);
 
                 // If no tool calls, we're done
                 if (! $response->hasToolCalls()) {
                     $this->iterations[] = $iterationData;
 
-                    return new AgentResponse(
-                        answer: $response->content,
-                        sql: $this->lastSql,
-                        results: $this->lastResults,
-                        toolCalls: $this->collectToolCalls(),
-                        iterations: $this->iterations,
-                    );
+                    return $this->buildResponse($response->content);
                 }
 
                 // Execute tool calls
-                $messages = $this->messageBuilder->append(
-                    $messages,
-                    $this->messageBuilder->assistantWithToolCalls($response->content, $response->toolCalls)
-                );
-
-                foreach ($response->toolCalls as $toolCall) {
-                    $result = $this->executeTool($toolCall);
-                    $iterationData['tool_results'][] = [
-                        'tool' => $toolCall->name,
-                        'success' => $result->success,
-                        'data' => $result->data,
-                        'error' => $result->error,
-                    ];
-                    $messages = $this->messageBuilder->append(
-                        $messages,
-                        $this->messageBuilder->toolResult($toolCall, $result)
-                    );
-                }
+                $this->processToolCalls($response->toolCalls, $response->content, $messages, $iterationData);
 
                 $this->iterations[] = $iterationData;
             }
 
             // Max iterations reached
-            return new AgentResponse(
-                answer: 'I was unable to complete the task within the maximum number of iterations.',
-                sql: $this->lastSql,
-                results: $this->lastResults,
-                toolCalls: $this->collectToolCalls(),
-                iterations: $this->iterations,
-                error: 'Maximum iterations reached',
+            return $this->buildResponse(
+                'I was unable to complete the task within the maximum number of iterations.',
+                'Maximum iterations reached',
             );
         } catch (Throwable $e) {
-            return new AgentResponse(
-                answer: "An error occurred: {$e->getMessage()}",
-                sql: $this->lastSql,
-                results: $this->lastResults,
-                toolCalls: $this->collectToolCalls(),
-                iterations: $this->iterations,
-                error: $e->getMessage(),
-            );
+            return $this->buildErrorResponse($e);
         }
     }
 
@@ -164,16 +122,7 @@ class SqlAgent implements Agent
                 }
             }
 
-            $iterationData = [
-                'iteration' => $i + 1,
-                'response' => $content,
-                'tool_calls' => array_map(
-                    fn (ToolCall $tc) => ['name' => $tc->name, 'arguments' => $tc->arguments],
-                    $toolCalls
-                ),
-                'finish_reason' => $finishReason,
-                'tool_results' => [],
-            ];
+            $iterationData = $this->buildIterationData($i, $content, $toolCalls, $finishReason);
 
             // If no tool calls, we're done
             if (empty($toolCalls)) {
@@ -190,7 +139,7 @@ class SqlAgent implements Agent
                 return;
             }
 
-            // Execute tool calls
+            // Execute tool calls with streaming labels
             $messages = $this->messageBuilder->append(
                 $messages,
                 $this->messageBuilder->assistantWithToolCalls($content, $toolCalls)
@@ -200,12 +149,7 @@ class SqlAgent implements Agent
                 yield $this->toolLabelResolver->buildStreamChunk($toolCall);
 
                 $result = $this->executeTool($toolCall);
-                $iterationData['tool_results'][] = [
-                    'tool' => $toolCall->name,
-                    'success' => $result->success,
-                    'data' => $result->data,
-                    'error' => $result->error,
-                ];
+                $iterationData['tool_results'][] = $this->buildToolResultData($toolCall, $result);
                 $messages = $this->messageBuilder->append(
                     $messages,
                     $this->messageBuilder->toolResult($toolCall, $result)
@@ -250,6 +194,86 @@ class SqlAgent implements Agent
     public function getLastPrompt(): ?array
     {
         return $this->lastPrompt;
+    }
+
+    /**
+     * Build iteration data structure shared by run() and stream().
+     *
+     * @param  ToolCall[]  $toolCalls
+     */
+    protected function buildIterationData(int $iteration, string $content, array $toolCalls, ?string $finishReason): array
+    {
+        return [
+            'iteration' => $iteration + 1,
+            'response' => $content,
+            'tool_calls' => array_map(
+                fn (ToolCall $tc) => ['name' => $tc->name, 'arguments' => $tc->arguments],
+                $toolCalls
+            ),
+            'finish_reason' => $finishReason,
+            'tool_results' => [],
+        ];
+    }
+
+    /**
+     * Build a tool result data entry for iteration tracking.
+     */
+    protected function buildToolResultData(ToolCall $toolCall, ToolResult $result): array
+    {
+        return [
+            'tool' => $toolCall->name,
+            'success' => $result->success,
+            'data' => $result->data,
+            'error' => $result->error,
+        ];
+    }
+
+    /**
+     * Process tool calls: append messages and record results (used by run()).
+     *
+     * @param  ToolCall[]  $toolCalls
+     */
+    protected function processToolCalls(array $toolCalls, string $content, array &$messages, array &$iterationData): void
+    {
+        $messages = $this->messageBuilder->append(
+            $messages,
+            $this->messageBuilder->assistantWithToolCalls($content, $toolCalls)
+        );
+
+        foreach ($toolCalls as $toolCall) {
+            $result = $this->executeTool($toolCall);
+            $iterationData['tool_results'][] = $this->buildToolResultData($toolCall, $result);
+            $messages = $this->messageBuilder->append(
+                $messages,
+                $this->messageBuilder->toolResult($toolCall, $result)
+            );
+        }
+    }
+
+    /**
+     * Build an AgentResponse with current state.
+     */
+    protected function buildResponse(string $answer, ?string $error = null): AgentResponse
+    {
+        return new AgentResponse(
+            answer: $answer,
+            sql: $this->lastSql,
+            results: $this->lastResults,
+            toolCalls: $this->collectToolCalls(),
+            iterations: $this->iterations,
+            error: $error,
+        );
+    }
+
+    /**
+     * Build an error AgentResponse from an exception.
+     */
+    protected function buildErrorResponse(Throwable $e): AgentResponse
+    {
+        return $this->buildResponse(
+            "An error occurred: {$e->getMessage()}",
+            $e->getMessage(),
+        );
     }
 
     protected function prepareLoop(string $question, ?string $connection, array $history = []): AgentLoopContext
@@ -297,10 +321,10 @@ class SqlAgent implements Agent
         return $tools;
     }
 
-    protected function executeTool(ToolCall $toolCall): \Knobik\SqlAgent\Contracts\ToolResult
+    protected function executeTool(ToolCall $toolCall): ToolResult
     {
         if (! $this->toolRegistry->has($toolCall->name)) {
-            return \Knobik\SqlAgent\Contracts\ToolResult::failure(
+            return ToolResult::failure(
                 "Unknown tool: {$toolCall->name}"
             );
         }

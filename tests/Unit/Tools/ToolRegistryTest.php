@@ -91,6 +91,33 @@ describe('ToolRegistry', function () {
         expect($registry->has('run_sql'))->toBeFalse();
     });
 
+    it('silently overwrites on register by default', function () {
+        $registry = new ToolRegistry;
+        $tool1 = new RunSqlTool;
+        $tool2 = new RunSqlTool;
+
+        $registry->register($tool1);
+        $registry->register($tool2);
+
+        expect($registry->count())->toBe(1);
+        expect($registry->get('run_sql'))->toBe($tool2);
+    });
+
+    it('throws when registering duplicate in strict mode', function () {
+        $registry = new ToolRegistry;
+        $registry->register(new RunSqlTool);
+
+        $registry->registerStrict(new RunSqlTool);
+    })->throws(InvalidArgumentException::class, "Tool 'run_sql' is already registered.");
+
+    it('registers in strict mode when no duplicate exists', function () {
+        $registry = new ToolRegistry;
+        $registry->registerStrict(new RunSqlTool);
+
+        expect($registry->has('run_sql'))->toBeTrue();
+        expect($registry->count())->toBe(1);
+    });
+
     it('can clear all tools', function () {
         $registry = new ToolRegistry;
         $registry->registerMany([

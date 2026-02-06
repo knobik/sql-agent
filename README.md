@@ -253,9 +253,6 @@ You can use a separate database for SqlAgent's internal tables by setting `SQL_A
 
     // Remove learnings older than this many days (via prune command)
     'prune_after_days' => env('SQL_AGENT_LEARNING_PRUNE_DAYS', 90),
-
-    // Maximum auto-generated learnings per day (prevents runaway learning)
-    'max_auto_learnings_per_day' => env('SQL_AGENT_MAX_AUTO_LEARNINGS', 50),
 ],
 ```
 
