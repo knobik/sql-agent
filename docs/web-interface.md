@@ -42,7 +42,9 @@ php artisan vendor:publish --tag=sql-agent-views
 
 Views will be published to `resources/views/vendor/sql-agent/`.
 
-## Using the Livewire Component Directly
+## Using the Livewire Components Directly
+
+### Chat Component
 
 ```blade
 <livewire:sql-agent-chat />
@@ -50,6 +52,37 @@ Views will be published to `resources/views/vendor/sql-agent/`.
 {{-- With a specific conversation --}}
 <livewire:sql-agent-chat :conversation-id="$conversationId" />
 ```
+
+### Conversation List Component
+
+```blade
+<livewire:sql-agent-conversation-list />
+```
+
+Displays a list of previous conversations for the current user.
+
+## Exporting Conversations
+
+Conversations can be exported as JSON or CSV via dedicated routes:
+
+| Route | Description |
+|-------|-------------|
+| `GET /sql-agent/export/{conversation}/json` | Download conversation as JSON |
+| `GET /sql-agent/export/{conversation}/csv` | Download conversation as CSV |
+
+These routes are named `sql-agent.export.json` and `sql-agent.export.csv` and share the same middleware as the UI.
+
+## Streaming (SSE)
+
+The chat interface uses Server-Sent Events (SSE) for real-time streaming. The streaming endpoint (`POST /sql-agent/stream`) returns `text/event-stream` responses with the following event types:
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `conversation` | `{"id": 123}` | Sent first with the conversation ID |
+| `thinking` | `{"thinking": "..."}` | LLM reasoning chunks (when thinking mode is enabled) |
+| `content` | `{"text": "..."}` | Response text chunks |
+| `done` | `{"sql": "...", "hasResults": true, "resultCount": 5}` | Sent when streaming completes |
+| `error` | `{"message": "..."}` | Sent if an error occurs |
 
 ## Debug Mode
 

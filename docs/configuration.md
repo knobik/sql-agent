@@ -49,10 +49,38 @@ You can use a separate database for SqlAgent's internal tables by setting `SQL_A
             'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
             'model' => env('SQL_AGENT_OLLAMA_MODEL', 'llama3.1'),
             'temperature' => 0.0,
+            // Enable thinking/reasoning mode for supported models.
+            // Most models accept true/false, but GPT-OSS requires "low", "medium", or "high".
+            'think' => env('SQL_AGENT_OLLAMA_THINK', true),
+            // Models that support tool/function calling.
+            // null = all models (wildcard), [] = none, ['model1', 'model2'] = specific models
+            'models_with_tool_support' => null,
         ],
     ],
 ],
 ```
+
+### Ollama Thinking Mode
+
+The `think` option enables reasoning/thinking mode for Ollama models that support it. Accepted values:
+
+| Value | Behavior |
+|-------|----------|
+| `true` | Enable thinking mode (default) |
+| `false` | Disable thinking mode |
+| `"low"`, `"medium"`, `"high"` | Budget levels for models that support it (e.g., GPT-OSS) |
+
+### Ollama Tool Support
+
+The `models_with_tool_support` option controls which models are allowed to use tool/function calling:
+
+| Value | Behavior |
+|-------|----------|
+| `null` | All models can use tools (default) |
+| `[]` | No models can use tools |
+| `['model1', 'model2']` | Only listed models can use tools |
+
+This is useful when running multiple models through Ollama where some don't support tool calling.
 
 ## Search Configuration
 

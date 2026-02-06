@@ -79,6 +79,23 @@ php artisan sql-agent:prune-learnings
 --dry-run         # Show what would be removed without removing
 ```
 
+### sql-agent:purge
+
+Purge SqlAgent data from the database. Truncates the selected tables.
+
+```bash
+php artisan sql-agent:purge
+
+# Options
+--conversations   # Only purge conversations and messages
+--learnings       # Only purge learnings
+--knowledge       # Only purge knowledge (query patterns, table metadata, business rules)
+--all             # Purge everything (default if no options specified)
+--force           # Skip confirmation prompt
+```
+
+When `--all` is used (or no options are specified), evaluation test cases are also purged.
+
 ## Programmatic Usage
 
 ### Basic Usage
@@ -113,6 +130,16 @@ foreach (SqlAgent::stream('Show me the top 5 customers') as $chunk) {
         // Stream finished
     }
 }
+```
+
+**Method signature:**
+
+```php
+SqlAgent::stream(
+    string $question,           // The natural language question
+    ?string $connection = null, // Database connection name (null for default)
+    array $history = [],        // Previous conversation messages for context
+): Generator
 ```
 
 ### Custom Connection

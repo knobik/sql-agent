@@ -23,6 +23,8 @@ class SqlErrorListener
 }
 ```
 
+> **Note:** SqlAgent automatically registers an `AutoLearnFromError` listener for this event that triggers self-learning when `learning.auto_save_errors` is enabled. You do not need to register it yourself.
+
 ## LearningCreated
 
 Dispatched when a new learning is created.
@@ -42,7 +44,7 @@ class LearningListener
 
 ## Registering Listeners
 
-Register listeners in `EventServiceProvider`:
+Register your own listeners in `EventServiceProvider`:
 
 ```php
 protected $listen = [

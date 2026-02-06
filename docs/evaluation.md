@@ -15,11 +15,13 @@ TestCase::create([
     'name' => 'Count active users',
     'category' => 'basic',
     'question' => 'How many active users are there?',
-    'expected_strings' => ['active', 'users'], // Strings that should appear in response
-    'golden_sql' => 'SELECT COUNT(*) FROM users WHERE status = "active"',
-    'metadata' => ['difficulty' => 'easy'],
+    'expected_values' => ['count' => 42], // Key-value pairs to match against results
+    'golden_sql' => 'SELECT COUNT(*) as count FROM users WHERE status = "active"',
+    'golden_result' => [['count' => 42]], // Expected full result set
 ]);
 ```
+
+**Available fields:** `category`, `name`, `question`, `expected_values` (array, supports dot notation for nested values), `golden_sql`, `golden_result` (array).
 
 ### Running Evaluations
 

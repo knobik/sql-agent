@@ -32,6 +32,31 @@ OLLAMA_BASE_URL=http://localhost:11434
 SQL_AGENT_OLLAMA_MODEL=llama3.1
 ```
 
+#### Thinking Mode
+
+Ollama supports a thinking/reasoning mode for models that provide it. Enable via config or environment:
+
+```env
+SQL_AGENT_OLLAMA_THINK=true
+```
+
+Accepted values: `true`, `false`, or a budget level string (`"low"`, `"medium"`, `"high"`) for models like GPT-OSS that support granular control.
+
+When thinking mode is active, the LLM's internal reasoning is captured and available in the streaming SSE events (`thinking` event) and stored in debug metadata.
+
+#### Tool Support Configuration
+
+Not all Ollama models support tool/function calling. Use `models_with_tool_support` in config to control which models are allowed to use tools:
+
+```php
+'ollama' => [
+    // ...
+    'models_with_tool_support' => null,        // null = all models (default)
+    // 'models_with_tool_support' => [],        // empty = no models
+    // 'models_with_tool_support' => ['llama3.1', 'qwen2.5'],  // specific models only
+],
+```
+
 ### Custom Drivers
 
 Implement the `Knobik\SqlAgent\Contracts\LlmDriver` interface:
