@@ -32,3 +32,7 @@ test('eval command is registered', function () {
     $this->artisan('sql-agent:eval', ['--help' => true])
         ->assertExitCode(0);
 });
+
+test('facade resolves correctly', function () {
+    expect(app('sql-agent'))->toBeInstanceOf(\Knobik\SqlAgent\Agent\SqlAgent::class);
+});

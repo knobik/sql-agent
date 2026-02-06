@@ -5,7 +5,19 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $connection
+ * @property string $table_name
+ * @property string|null $description
+ * @property array<int, array<string, mixed>>|null $columns
+ * @property array<int, array<string, mixed>>|null $relationships
+ * @property array<int, string>|null $data_quality_notes
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class TableMetadata extends Model
 {
     use HasFactory;

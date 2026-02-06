@@ -5,11 +5,12 @@
     $debugData = $metadata ?? ['prompt' => $prompt];
     $promptData = $debugData['prompt'] ?? $prompt ?? [];
     $iterations = $debugData['iterations'] ?? [];
-    $chunks = $debugData['chunks'] ?? [];
     $timing = $debugData['timing'] ?? [];
     $errorDetails = $debugData['error_details'] ?? null;
     $toolsFull = $promptData['tools_full'] ?? [];
     $thinking = $debugData['thinking'] ?? null;
+    $systemPrompt = $promptData['system'] ?? '';
+    $systemPromptSizeKb = $systemPrompt ? round(strlen($systemPrompt) / 1024, 1) : 0;
 @endphp
 
 <div class="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 overflow-hidden">
@@ -52,15 +53,6 @@
                     Iterations ({{ count($iterations) }})
                 </button>
             @endif
-            @if(count($chunks) > 0)
-                <button
-                    @click="activeTab = 'chunks'"
-                    :class="activeTab === 'chunks' ? 'border-amber-500 text-amber-700 dark:text-amber-300' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
-                    class="px-4 py-2 text-xs font-medium border-b-2 transition-colors"
-                >
-                    Raw Chunks ({{ count($chunks) }})
-                </button>
-            @endif
             @if(count($toolsFull) > 0)
                 <button
                     @click="activeTab = 'tools'"
@@ -95,10 +87,21 @@
             {{-- Prompt Tab --}}
             <div x-show="activeTab === 'prompt'" class="space-y-4">
                 {{-- System Prompt --}}
-                @if(!empty($promptData['system']))
-                    <div>
-                        <div class="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-2 uppercase tracking-wider">System Prompt</div>
-                        <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono bg-white dark:bg-gray-800 rounded-lg p-3 border border-amber-200 dark:border-gray-700 max-h-64 overflow-y-auto custom-scrollbar">{{ $promptData['system'] }}</pre>
+                @if(!empty($systemPrompt))
+                    <div x-data="{ rendered: false }">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">System Prompt</span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">({{ $systemPromptSizeKb }} KB)</span>
+                            </div>
+                            <button
+                                @click="rendered = !rendered"
+                                class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+                                x-text="rendered ? 'Raw' : 'Rendered'"
+                            ></button>
+                        </div>
+                        <pre x-show="!rendered" class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono bg-white dark:bg-gray-800 rounded-lg p-3 border border-amber-200 dark:border-gray-700 max-h-64 overflow-y-auto custom-scrollbar">{{ $systemPrompt }}</pre>
+                        <div x-show="rendered" x-cloak class="markdown-content text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg p-3 border border-amber-200 dark:border-gray-700 max-h-64 overflow-y-auto custom-scrollbar" x-html="marked.parse(@js($systemPrompt))"></div>
                     </div>
                 @endif
 
@@ -198,63 +201,6 @@
                             @endif
                         </div>
                     @endforeach
-                </div>
-            @endif
-
-            {{-- Raw Chunks Tab --}}
-            @if(count($chunks) > 0)
-                <div x-show="activeTab === 'chunks'" x-cloak class="space-y-2">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        Showing {{ count($chunks) }} raw chunks from the LLM stream
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-gray-700 overflow-hidden">
-                        <table class="w-full text-xs">
-                            <thead class="bg-gray-50 dark:bg-gray-900">
-                                <tr>
-                                    <th class="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-400">#</th>
-                                    <th class="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-400">Time (ms)</th>
-                                    <th class="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-400">Content</th>
-                                    <th class="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-400">Flags</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                @foreach($chunks as $index => $chunk)
-                                    <tr class="{{ $chunk['isComplete'] ?? false ? 'bg-green-50 dark:bg-green-900/20' : '' }}">
-                                        <td class="px-2 py-1 text-gray-500">{{ $index + 1 }}</td>
-                                        <td class="px-2 py-1 text-gray-500">{{ $chunk['time'] ?? '?' }}</td>
-                                        <td class="px-2 py-1 font-mono text-gray-700 dark:text-gray-300 max-w-xs truncate" title="{{ $chunk['content'] ?? $chunk['thinking'] ?? '' }}">
-                                            @if(!empty($chunk['content']))
-                                                {{ Str::limit($chunk['content'], 50) }}
-                                            @elseif(!empty($chunk['thinking']))
-                                                <span class="text-purple-600 dark:text-purple-400">{{ Str::limit($chunk['thinking'], 50) }}</span>
-                                            @elseif(!empty($chunk['toolCalls']))
-                                                <span class="text-amber-600 dark:text-amber-400">[{{ count($chunk['toolCalls']) }} tool call(s)]</span>
-                                            @else
-                                                <span class="text-gray-400">-</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-2 py-1">
-                                            @if($chunk['isComplete'] ?? false)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                                    complete: {{ $chunk['finishReason'] ?? '?' }}
-                                                </span>
-                                            @endif
-                                            @if($chunk['hasThinking'] ?? false)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                                                    thinking
-                                                </span>
-                                            @endif
-                                            @if($chunk['hasContent'] ?? false)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                                                    content
-                                                </span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             @endif
 

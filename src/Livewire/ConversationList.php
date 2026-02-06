@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Livewire;
 
+use Illuminate\Contracts\View\View;
 use Knobik\SqlAgent\Models\Conversation;
 use Knobik\SqlAgent\Support\UserResolver;
 use Livewire\Attributes\Computed;
@@ -115,7 +116,7 @@ class ConversationList extends Component
         unset($this->conversations);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('sql-agent::livewire.conversation-list');
     }

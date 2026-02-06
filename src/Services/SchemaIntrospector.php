@@ -105,9 +105,9 @@ class SchemaIntrospector
 
             return new ColumnInfo(
                 name: $columnName,
-                type: $column['type_name'] ?? $column['type'] ?? 'unknown',
+                type: $column['type_name'],
                 description: $column['comment'] ?? null,
-                nullable: $column['nullable'] ?? true,
+                nullable: $column['nullable'],
                 isPrimaryKey: in_array($columnName, $primaryKeyColumns),
                 isForeignKey: $fkInfo !== null,
                 foreignTable: $fkInfo['table'] ?? null,
@@ -199,7 +199,7 @@ class SchemaIntrospector
             $tables = Schema::connection($connection)->getTables();
 
             foreach ($tables as $table) {
-                if (($table['name'] ?? '') === $tableName) {
+                if ($table['name'] === $tableName) {
                     return $table['comment'] ?? null;
                 }
             }
@@ -254,7 +254,8 @@ class SchemaIntrospector
                 continue;
             }
 
-            // Singular/plural match
+            // Naive singular/plural match: strips trailing 's' only.
+            // Does not handle 'ies', 'es', etc. Sufficient for common table names.
             $singular = rtrim($tableNameLower, 's');
             if (str_contains($questionLower, $singular)) {
                 $potentialTables[] = $tableName;

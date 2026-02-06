@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Data\QueryPatternData;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Knobik\SqlAgent\Support\TextAnalyzer;
 
 class QueryPatternSearch
 {
@@ -44,7 +45,7 @@ class QueryPatternSearch
         }
 
         // Simple keyword-based similarity search
-        $questionWords = $this->extractKeywords($question);
+        $questionWords = TextAnalyzer::extractKeywords($question);
 
         return $patterns
             ->map(fn (QueryPatternData $pattern) => [
@@ -82,7 +83,7 @@ class QueryPatternSearch
      */
     protected function searchWithFullText(string $question, int $limit): Collection
     {
-        $searchTerm = $this->prepareFullTextSearchTerm($question);
+        $searchTerm = TextAnalyzer::prepareSearchTerm($question);
 
         if (empty($searchTerm)) {
             return QueryPattern::query()
@@ -107,7 +108,7 @@ class QueryPatternSearch
      */
     protected function searchWithLike(string $question, int $limit): Collection
     {
-        $keywords = $this->extractKeywords($question);
+        $keywords = TextAnalyzer::extractKeywords($question);
 
         if (empty($keywords)) {
             return QueryPattern::query()
@@ -186,11 +187,11 @@ class QueryPatternSearch
         if (preg_match_all($regex, $content, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $name = trim($match[1]);
-                $description = isset($match[2]) ? trim(preg_replace('/^--\s*/m', '', $match[2])) : '';
+                $description = trim(preg_replace('/^--\s*/m', '', $match[2]));
                 $sql = trim($match[3]);
 
                 // Extract tables from SQL
-                $tablesUsed = $this->extractTablesFromSql($sql);
+                $tablesUsed = TextAnalyzer::extractTablesFromSql($sql);
 
                 $patterns->push(new QueryPatternData(
                     name: $name,
@@ -255,40 +256,6 @@ class QueryPatternSearch
     }
 
     /**
-     * Extract keywords from a question for similarity matching.
-     *
-     * @return array<string>
-     */
-    protected function extractKeywords(string $text): array
-    {
-        // Common stop words to filter out
-        $stopWords = [
-            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'must', 'can', 'to', 'of', 'in', 'for',
-            'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during',
-            'before', 'after', 'above', 'below', 'between', 'under', 'again',
-            'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
-            'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such',
-            'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
-            'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while',
-            'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
-            'am', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves',
-            'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his',
-            'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself',
-            'they', 'them', 'their', 'theirs', 'themselves', 'show', 'get', 'find',
-            'list', 'give', 'tell', 'many', 'much',
-        ];
-
-        $words = preg_split('/[^a-zA-Z0-9]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY);
-
-        return array_values(array_filter(
-            $words,
-            fn (string $word) => strlen($word) > 2 && ! in_array($word, $stopWords)
-        ));
-    }
-
-    /**
      * Calculate similarity score between keywords and a pattern.
      */
     protected function calculateSimilarity(array $keywords, QueryPatternData $pattern): float
@@ -298,7 +265,7 @@ class QueryPatternSearch
         }
 
         $patternText = strtolower($pattern->name.' '.$pattern->question.' '.($pattern->summary ?? ''));
-        $patternWords = $this->extractKeywords($patternText);
+        $patternWords = TextAnalyzer::extractKeywords($patternText);
 
         if (empty($patternWords)) {
             return 0;
@@ -319,41 +286,6 @@ class QueryPatternSearch
         }
 
         return $matches / max(count($keywords), count($patternWords));
-    }
-
-    /**
-     * Prepare a search term for MySQL full-text search.
-     */
-    protected function prepareFullTextSearchTerm(string $question): string
-    {
-        $keywords = $this->extractKeywords($question);
-
-        return implode(' ', $keywords);
-    }
-
-    /**
-     * Extract table names from SQL.
-     *
-     * @return array<string>
-     */
-    protected function extractTablesFromSql(string $sql): array
-    {
-        $tables = [];
-
-        // Match FROM clause
-        if (preg_match_all('/\bFROM\s+([`"\[]?[\w]+[`"\]]?)/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Match JOIN clauses
-        if (preg_match_all('/\bJOIN\s+([`"\[]?[\w]+[`"\]]?)/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Clean up table names (remove quotes)
-        $tables = array_map(fn ($t) => trim($t, '`"[]'), $tables);
-
-        return array_unique($tables);
     }
 
     /**

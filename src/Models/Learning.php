@@ -6,9 +6,21 @@ namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Enums\LearningCategory;
 
+/**
+ * @property int $id
+ * @property int|string|null $user_id
+ * @property string $title
+ * @property string $description
+ * @property LearningCategory|null $category
+ * @property string|null $sql
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class Learning extends Model implements Searchable
 {
     use HasFactory;

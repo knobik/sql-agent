@@ -6,9 +6,11 @@ namespace Knobik\SqlAgent;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Knobik\SqlAgent\Agent\FallbackResponseGenerator;
 use Knobik\SqlAgent\Agent\MessageBuilder;
 use Knobik\SqlAgent\Agent\PromptRenderer;
 use Knobik\SqlAgent\Agent\SqlAgent;
+use Knobik\SqlAgent\Agent\ToolLabelResolver;
 use Knobik\SqlAgent\Agent\ToolRegistry;
 use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Contracts\LlmDriver;
@@ -21,10 +23,13 @@ use Knobik\SqlAgent\Llm\LlmManager;
 use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Services\BusinessRulesLoader;
 use Knobik\SqlAgent\Services\ContextBuilder;
+use Knobik\SqlAgent\Services\ConversationService;
 use Knobik\SqlAgent\Services\ErrorAnalyzer;
 use Knobik\SqlAgent\Services\EvaluationRunner;
 use Knobik\SqlAgent\Services\KnowledgeLoader;
+use Knobik\SqlAgent\Services\LearningImportExport;
 use Knobik\SqlAgent\Services\LearningMachine;
+use Knobik\SqlAgent\Services\LearningMaintenance;
 use Knobik\SqlAgent\Services\LlmGrader;
 use Knobik\SqlAgent\Services\QueryPatternSearch;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
@@ -42,56 +47,36 @@ class SqlAgentServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/sql-agent.php', 'sql-agent');
 
-        // User resolver for optional user tracking
+        // Auto-resolvable singletons (no explicit closures needed)
         $this->app->singleton(UserResolver::class);
-
-        // Register services as singletons
+        $this->app->singleton(ConversationService::class);
         $this->app->singleton(SemanticModelLoader::class);
         $this->app->singleton(BusinessRulesLoader::class);
         $this->app->singleton(QueryPatternSearch::class);
         $this->app->singleton(SchemaIntrospector::class);
         $this->app->singleton(KnowledgeLoader::class);
         $this->app->singleton(ErrorAnalyzer::class);
-        $this->app->singleton(LearningMachine::class, function ($app) {
-            return new LearningMachine(
-                $app->make(ErrorAnalyzer::class),
-            );
-        });
+        $this->app->singleton(LearningMachine::class);
+        $this->app->singleton(LearningImportExport::class);
+        $this->app->singleton(LearningMaintenance::class);
+        $this->app->singleton(ContextBuilder::class);
+        $this->app->singleton(PromptRenderer::class);
+        $this->app->singleton(MessageBuilder::class);
+        $this->app->singleton(ToolLabelResolver::class);
+        $this->app->singleton(FallbackResponseGenerator::class);
+        $this->app->singleton(EvaluationRunner::class);
 
-        // ContextBuilder depends on other services
-        $this->app->singleton(ContextBuilder::class, function ($app) {
-            return new ContextBuilder(
-                $app->make(SemanticModelLoader::class),
-                $app->make(BusinessRulesLoader::class),
-                $app->make(QueryPatternSearch::class),
-                $app->make(SchemaIntrospector::class),
-            );
-        });
-
-        // LLM Manager
-        $this->app->singleton(LlmManager::class, function ($app) {
-            return new LlmManager($app);
-        });
+        // LLM Manager (needs $app)
+        $this->app->singleton(LlmManager::class, fn ($app) => new LlmManager($app));
 
         // Bind LlmDriver interface to manager's default driver
-        $this->app->bind(LlmDriver::class, function ($app) {
-            return $app->make(LlmManager::class)->driver();
-        });
+        $this->app->bind(LlmDriver::class, fn ($app) => $app->make(LlmManager::class)->driver());
 
-        // Search Manager
-        $this->app->singleton(SearchManager::class, function ($app) {
-            return new SearchManager($app);
-        });
+        // Search Manager (needs $app)
+        $this->app->singleton(SearchManager::class, fn ($app) => new SearchManager($app));
 
         // Bind SearchDriver interface to manager's default driver
-        $this->app->bind(SearchDriver::class, function ($app) {
-            return $app->make(SearchManager::class)->driver();
-        });
-
-        // Register SearchKnowledgeTool for DI
-        $this->app->bind(SearchKnowledgeTool::class, function ($app) {
-            return new SearchKnowledgeTool($app->make(SearchManager::class));
-        });
+        $this->app->bind(SearchDriver::class, fn ($app) => $app->make(SearchManager::class)->driver());
 
         // Tool Registry with default tools
         $this->app->singleton(ToolRegistry::class, function ($app) {
@@ -108,11 +93,7 @@ class SqlAgentServiceProvider extends ServiceProvider
             return $registry;
         });
 
-        // Agent support classes
-        $this->app->singleton(PromptRenderer::class);
-        $this->app->singleton(MessageBuilder::class);
-
-        // SQL Agent
+        // SQL Agent (depends on interfaces that need explicit resolution)
         $this->app->singleton(SqlAgent::class, function ($app) {
             return new SqlAgent(
                 $app->make(LlmDriver::class),
@@ -120,23 +101,19 @@ class SqlAgentServiceProvider extends ServiceProvider
                 $app->make(ContextBuilder::class),
                 $app->make(PromptRenderer::class),
                 $app->make(MessageBuilder::class),
+                $app->make(ToolLabelResolver::class),
+                $app->make(FallbackResponseGenerator::class),
             );
         });
 
         // Bind Agent interface to SqlAgent
         $this->app->bind(Agent::class, SqlAgent::class);
 
-        // Evaluation services
-        $this->app->singleton(LlmGrader::class, function ($app) {
-            return new LlmGrader($app->make(LlmManager::class));
-        });
+        // Alias for facade accessor
+        $this->app->alias(Agent::class, 'sql-agent');
 
-        $this->app->singleton(EvaluationRunner::class, function ($app) {
-            return new EvaluationRunner(
-                $app->make(Agent::class),
-                $app->make(LlmGrader::class),
-            );
-        });
+        // LLM Grader (needs LlmManager, not LlmDriver interface)
+        $this->app->singleton(LlmGrader::class, fn ($app) => new LlmGrader($app->make(LlmManager::class)));
     }
 
     public function boot(): void

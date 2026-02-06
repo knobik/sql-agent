@@ -6,7 +6,7 @@ namespace Knobik\SqlAgent\Console\Commands;
 
 use Illuminate\Console\Command;
 use Knobik\SqlAgent\Enums\LearningCategory;
-use Knobik\SqlAgent\Services\LearningMachine;
+use Knobik\SqlAgent\Services\LearningImportExport;
 
 class ExportLearningsCommand extends Command
 {
@@ -16,7 +16,7 @@ class ExportLearningsCommand extends Command
 
     protected $description = 'Export learnings to a JSON file';
 
-    public function handle(LearningMachine $learningMachine): int
+    public function handle(LearningImportExport $importExport): int
     {
         $file = $this->argument('file') ?? storage_path('app/sql-agent-learnings.json');
         $categoryValue = $this->option('category');
@@ -37,7 +37,7 @@ class ExportLearningsCommand extends Command
 
         $this->info('Exporting learnings...');
 
-        $learnings = $learningMachine->export($category);
+        $learnings = $importExport->export($category);
 
         if (empty($learnings)) {
             $this->warn('No learnings found to export.');

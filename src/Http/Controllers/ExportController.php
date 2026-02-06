@@ -24,7 +24,7 @@ class ExportController extends Controller
         $data = [
             'id' => $conv->id,
             'title' => $conv->title,
-            'connection' => $conv->connection,
+            'connection' => $conv->getAttribute('connection'),
             'created_at' => $conv->created_at->toIso8601String(),
             'updated_at' => $conv->updated_at->toIso8601String(),
             'messages' => $conv->messages->map(function ($message) {

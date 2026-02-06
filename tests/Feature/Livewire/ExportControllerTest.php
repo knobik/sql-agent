@@ -10,6 +10,10 @@ use Knobik\SqlAgent\Tests\Feature\Livewire\Helpers;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    config()->set('sql-agent.user.enabled', true);
+});
+
 it('exports conversation as JSON', function () {
     $user = Helpers::createAuthenticatedUser();
 

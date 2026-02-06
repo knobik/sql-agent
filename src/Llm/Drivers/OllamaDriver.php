@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Knobik\SqlAgent\Contracts\LlmDriver;
 use Knobik\SqlAgent\Contracts\LlmResponse;
 use Knobik\SqlAgent\Llm\StreamChunk;
+use Knobik\SqlAgent\Llm\Support\StreamLineReader;
 use Knobik\SqlAgent\Llm\ToolCall;
 use Knobik\SqlAgent\Llm\ToolFormatter;
 use RuntimeException;
@@ -94,7 +95,7 @@ class OllamaDriver implements LlmDriver
             );
         }
 
-        yield from $this->parseStream($response->getBody());
+        yield from $this->parseStream($response->toPsrResponse()->getBody());
     }
 
     public function supportsToolCalling(): bool
@@ -238,7 +239,7 @@ class OllamaDriver implements LlmDriver
     {
         $toolCalls = [];
 
-        foreach ($this->readLines($body) as $line) {
+        foreach (StreamLineReader::readLines($body) as $line) {
             $event = json_decode($line, true);
             if ($event === null) {
                 continue;
@@ -280,29 +281,6 @@ class OllamaDriver implements LlmDriver
                 $finishReason = ! empty($toolCalls) ? 'tool_calls' : 'stop';
                 yield StreamChunk::complete($finishReason, null, $toolCalls);
             }
-        }
-    }
-
-    protected function readLines($stream): Generator
-    {
-        $buffer = '';
-
-        while (! $stream->eof()) {
-            $buffer .= $stream->read(1024);
-
-            while (($pos = strpos($buffer, "\n")) !== false) {
-                $line = substr($buffer, 0, $pos);
-                $buffer = substr($buffer, $pos + 1);
-
-                $line = trim($line);
-                if ($line !== '') {
-                    yield $line;
-                }
-            }
-        }
-
-        if (trim($buffer) !== '') {
-            yield trim($buffer);
         }
     }
 }

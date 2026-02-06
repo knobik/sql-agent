@@ -34,6 +34,8 @@ class SqlAgent implements Agent
         protected ContextBuilder $contextBuilder,
         protected PromptRenderer $promptRenderer,
         protected MessageBuilder $messageBuilder,
+        protected ToolLabelResolver $toolLabelResolver,
+        protected FallbackResponseGenerator $fallbackResponseGenerator,
     ) {}
 
     public function run(string $question, ?string $connection = null): AgentResponse
@@ -42,23 +44,12 @@ class SqlAgent implements Agent
         $this->currentQuestion = $question;
 
         try {
-            // Build context
-            $context = $this->contextBuilder->build($question, $connection);
+            $loop = $this->prepareLoop($question, $connection);
 
-            // Render system prompt
-            $systemPrompt = $this->promptRenderer->renderSystem($context->toPromptString());
+            $messages = $loop->messages;
 
-            // Build initial messages
-            $messages = $this->messageBuilder->build($systemPrompt, $question);
-
-            // Configure tools for the connection
-            $tools = $this->prepareTools($connection, $question);
-
-            // Run the agent loop
-            $maxIterations = config('sql-agent.agent.max_iterations', 10);
-
-            for ($i = 0; $i < $maxIterations; $i++) {
-                $response = $this->llm->chat($messages, $tools);
+            for ($i = 0; $i < $loop->maxIterations; $i++) {
+                $response = $this->llm->chat($messages, $loop->tools);
 
                 $iterationData = [
                     'iteration' => $i + 1,
@@ -133,44 +124,28 @@ class SqlAgent implements Agent
         $this->reset();
         $this->currentQuestion = $question;
 
-        // Build context
-        $context = $this->contextBuilder->build($question, $connection);
+        $loop = $this->prepareLoop($question, $connection, $history);
 
-        // Render system prompt
-        $systemPrompt = $this->promptRenderer->renderSystem($context->toPromptString());
-
-        // Build initial messages
-        $messages = $this->messageBuilder->build($systemPrompt, $question);
-
-        // Include conversation history if provided
-        if (! empty($history)) {
-            $messages = $this->messageBuilder->withHistory($messages, $history);
-        }
-
-        // Configure tools for the connection
-        $tools = $this->prepareTools($connection, $question);
+        $messages = $loop->messages;
 
         // Capture the initial prompt for debugging
         $this->lastPrompt = [
-            'system' => $systemPrompt,
+            'system' => $loop->systemPrompt,
             'messages' => $messages,
-            'tools' => array_map(fn (Tool $t) => $t->name(), $tools),
+            'tools' => array_map(fn (Tool $t) => $t->name(), $loop->tools),
             'tools_full' => array_map(fn (Tool $t) => [
                 'name' => $t->name(),
                 'description' => $t->description(),
                 'parameters' => $t->parameters(),
-            ], $tools),
+            ], $loop->tools),
         ];
 
-        // Run the agent loop with streaming
-        $maxIterations = config('sql-agent.agent.max_iterations', 10);
-
-        for ($i = 0; $i < $maxIterations; $i++) {
+        for ($i = 0; $i < $loop->maxIterations; $i++) {
             $content = '';
             $toolCalls = [];
             $finishReason = null;
 
-            foreach ($this->llm->stream($messages, $tools) as $chunk) {
+            foreach ($this->llm->stream($messages, $loop->tools) as $chunk) {
                 /** @var StreamChunk $chunk */
 
                 // Pass through thinking chunks
@@ -206,7 +181,7 @@ class SqlAgent implements Agent
 
                 // If content is empty but we have results, generate a fallback response
                 if (empty(trim($content)) && $this->lastSql !== null && $this->lastResults !== null) {
-                    $fallbackContent = $this->generateFallbackResponse();
+                    $fallbackContent = $this->fallbackResponseGenerator->generate($this->lastResults);
                     yield new StreamChunk(content: $fallbackContent);
                 }
 
@@ -222,34 +197,7 @@ class SqlAgent implements Agent
             );
 
             foreach ($toolCalls as $toolCall) {
-                // Yield a chunk indicating tool execution (using a marker that can be styled)
-                $toolLabel = match ($toolCall->name) {
-                    'run_sql' => 'Running SQL query',
-                    'introspect_schema' => 'Inspecting schema',
-                    'search_knowledge' => 'Searching knowledge base',
-                    'save_learning' => 'Saving learning',
-                    'save_validated_query' => 'Saving query pattern',
-                    default => $toolCall->name,
-                };
-                $toolType = match ($toolCall->name) {
-                    'run_sql' => 'sql',
-                    'introspect_schema' => 'schema',
-                    'search_knowledge' => 'search',
-                    'save_learning' => 'save',
-                    'save_validated_query' => 'save',
-                    default => 'default',
-                };
-
-                // For SQL tools, include the query in a data attribute
-                $sqlData = '';
-                if ($toolCall->name === 'run_sql') {
-                    $sql = $toolCall->arguments['sql'] ?? $toolCall->arguments['query'] ?? '';
-                    $sqlData = ' data-sql="'.htmlspecialchars($sql, ENT_QUOTES, 'UTF-8').'"';
-                }
-
-                yield new StreamChunk(
-                    content: "\n<tool data-type=\"{$toolType}\"{$sqlData}>{$toolLabel}</tool>\n",
-                );
+                yield $this->toolLabelResolver->buildStreamChunk($toolCall);
 
                 $result = $this->executeTool($toolCall);
                 $iterationData['tool_results'][] = [
@@ -302,6 +250,22 @@ class SqlAgent implements Agent
     public function getLastPrompt(): ?array
     {
         return $this->lastPrompt;
+    }
+
+    protected function prepareLoop(string $question, ?string $connection, array $history = []): AgentLoopContext
+    {
+        $context = $this->contextBuilder->build($question, $connection);
+        $systemPrompt = $this->promptRenderer->renderSystem($context->toPromptString());
+        $messages = $this->messageBuilder->build($systemPrompt, $question);
+
+        if (! empty($history)) {
+            $messages = $this->messageBuilder->withHistory($messages, $history);
+        }
+
+        $tools = $this->prepareTools($connection, $question);
+        $maxIterations = config('sql-agent.agent.max_iterations', 10);
+
+        return new AgentLoopContext($systemPrompt, $messages, $tools, $maxIterations);
     }
 
     protected function reset(): void
@@ -364,46 +328,5 @@ class SqlAgent implements Agent
         }
 
         return $toolCalls;
-    }
-
-    /**
-     * Generate a fallback response when the LLM returns empty content but we have results.
-     */
-    protected function generateFallbackResponse(): string
-    {
-        if ($this->lastResults === null) {
-            return 'The query was executed but returned no results.';
-        }
-
-        $rowCount = count($this->lastResults);
-
-        if ($rowCount === 0) {
-            return 'The query was executed successfully but returned no results.';
-        }
-
-        // For single-value results (like COUNT queries), provide a direct answer
-        if ($rowCount === 1 && count($this->lastResults[0]) === 1) {
-            $value = array_values($this->lastResults[0])[0];
-            $key = array_keys($this->lastResults[0])[0];
-
-            // Try to make a natural language response based on the column name
-            $key = str_replace('_', ' ', $key);
-
-            return "The result is **{$value}** ({$key}).";
-        }
-
-        // For multiple rows or columns, summarize
-        if ($rowCount === 1) {
-            $row = $this->lastResults[0];
-            $parts = [];
-            foreach ($row as $key => $value) {
-                $key = str_replace('_', ' ', $key);
-                $parts[] = "**{$key}**: {$value}";
-            }
-
-            return 'Here is the result: '.implode(', ', $parts);
-        }
-
-        return "The query returned **{$rowCount}** ".($rowCount === 1 ? 'row' : 'rows').'.';
     }
 }

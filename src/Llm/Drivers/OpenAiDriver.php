@@ -103,10 +103,10 @@ class OpenAiDriver implements LlmDriver
                     if (! empty($toolCallDelta->id)) {
                         $accumulatedToolCalls[$index]['id'] = $toolCallDelta->id;
                     }
-                    if (! empty($toolCallDelta->function?->name)) {
+                    if (! empty($toolCallDelta->function->name)) {
                         $accumulatedToolCalls[$index]['function']['name'] = $toolCallDelta->function->name;
                     }
-                    if (! empty($toolCallDelta->function?->arguments)) {
+                    if (! empty($toolCallDelta->function->arguments)) {
                         $accumulatedToolCalls[$index]['function']['arguments'] .= $toolCallDelta->function->arguments;
                     }
                 }
@@ -153,7 +153,7 @@ class OpenAiDriver implements LlmDriver
         }
 
         return new LlmResponse(
-            content: $content ?? '',
+            content: $content,
             toolCalls: $toolCalls,
             finishReason: $choice->finishReason ?? null,
             promptTokens: $response->usage?->promptTokens,

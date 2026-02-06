@@ -219,11 +219,11 @@ describe('Learning Configuration', function () {
     it('prune method reads from config', function () {
         config(['sql-agent.learning.prune_after_days' => 30]);
 
-        $machine = app(LearningMachine::class);
+        $maintenance = app(\Knobik\SqlAgent\Services\LearningMaintenance::class);
 
         // Call prune with null to use config
         // The prune method should use config default
-        $reflection = new ReflectionMethod($machine, 'prune');
+        $reflection = new ReflectionMethod($maintenance, 'prune');
         $params = $reflection->getParameters();
 
         // First parameter should be nullable int

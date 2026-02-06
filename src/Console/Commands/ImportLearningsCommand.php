@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Console\Commands;
 
 use Illuminate\Console\Command;
-use Knobik\SqlAgent\Services\LearningMachine;
+use Knobik\SqlAgent\Services\LearningImportExport;
 
 class ImportLearningsCommand extends Command
 {
@@ -16,7 +16,7 @@ class ImportLearningsCommand extends Command
 
     protected $description = 'Import learnings from a JSON file';
 
-    public function handle(LearningMachine $learningMachine): int
+    public function handle(LearningImportExport $importExport): int
     {
         $file = $this->argument('file');
 
@@ -60,7 +60,7 @@ class ImportLearningsCommand extends Command
 
         $this->newLine();
 
-        $imported = $learningMachine->import($learnings, $skipDuplicates);
+        $imported = $importExport->import($learnings, $skipDuplicates);
         $skipped = $total - $imported;
 
         $this->components->info('Import complete!');

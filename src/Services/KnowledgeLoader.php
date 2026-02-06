@@ -9,6 +9,7 @@ use Knobik\SqlAgent\Enums\BusinessRuleType;
 use Knobik\SqlAgent\Models\BusinessRule;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Models\TableMetadata;
+use Knobik\SqlAgent\Support\TextAnalyzer;
 
 class KnowledgeLoader
 {
@@ -245,11 +246,11 @@ class KnowledgeLoader
         if (preg_match_all($regex, $content, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $name = trim($match[1]);
-                $description = isset($match[2]) ? trim(preg_replace('/^--\s*/m', '', $match[2])) : '';
+                $description = trim(preg_replace('/^--\s*/m', '', $match[2]));
                 $sql = trim($match[3]);
 
                 // Extract tables from SQL
-                $tablesUsed = $this->extractTablesFromSql($sql);
+                $tablesUsed = TextAnalyzer::extractTablesFromSql($sql);
 
                 QueryPattern::updateOrCreate(
                     ['name' => $name],
@@ -292,7 +293,7 @@ class KnowledgeLoader
                         'question' => $pattern['question'] ?? $pattern['name'] ?? '',
                         'sql' => $sql,
                         'summary' => $pattern['summary'] ?? $pattern['description'] ?? null,
-                        'tables_used' => $pattern['tables_used'] ?? $pattern['tables'] ?? $this->extractTablesFromSql($sql),
+                        'tables_used' => $pattern['tables_used'] ?? $pattern['tables'] ?? TextAnalyzer::extractTablesFromSql($sql),
                         'data_quality_notes' => $pattern['data_quality_notes'] ?? $pattern['notes'] ?? null,
                     ]
                 );
@@ -305,31 +306,6 @@ class KnowledgeLoader
 
             return 0;
         }
-    }
-
-    /**
-     * Extract table names from SQL.
-     *
-     * @return array<string>
-     */
-    protected function extractTablesFromSql(string $sql): array
-    {
-        $tables = [];
-
-        // Match FROM clause
-        if (preg_match_all('/\bFROM\s+([`"\[]?[\w]+[`"\]]?)/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Match JOIN clauses
-        if (preg_match_all('/\bJOIN\s+([`"\[]?[\w]+[`"\]]?)/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Clean up table names (remove quotes)
-        $tables = array_map(fn ($t) => trim($t, '`"[]'), $tables);
-
-        return array_values(array_unique($tables));
     }
 
     /**

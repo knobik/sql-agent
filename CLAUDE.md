@@ -14,7 +14,7 @@ composer test                    # Run Pest tests
 composer test-coverage           # Run tests with coverage
 composer format                  # Format code with Laravel Pint
 composer format-check            # Check formatting without changes
-composer analyse                 # Run PHPStan (level 6)
+composer analyse                 # Run PHPStan (level 5)
 ```
 
 ### Run single test file
@@ -101,6 +101,6 @@ Uses Pest framework with Orchestra Testbench for Laravel package testing.
 ## Code Style
 
 - Laravel Pint with Laravel preset (`pint.json`)
-- PHPStan level 6 (`phpstan.neon`)
+- PHPStan level 5 (`phpstan.neon`)
 - Strict types required (`declare(strict_types=1)`)
 - Spatie Laravel Data for DTOs (`src/Data/`)

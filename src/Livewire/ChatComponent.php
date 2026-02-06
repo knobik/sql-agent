@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Livewire;
 
+use Illuminate\Contracts\View\View;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Models\Conversation;
 use Knobik\SqlAgent\Support\UserResolver;
@@ -11,6 +12,9 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
+/**
+ * @property-read Conversation|null $conversation
+ */
 class ChatComponent extends Component
 {
     public ?int $conversationId = null;
@@ -83,7 +87,7 @@ class ChatComponent extends Component
         }
 
         $this->conversationId = $conversationId;
-        $this->connection = $conversation->connection ?? config('database.default');
+        $this->connection = $conversation->connection ?: config('database.default');
     }
 
     #[On('new-conversation')]
@@ -97,7 +101,7 @@ class ChatComponent extends Component
         $this->dispatch('copy-to-clipboard', text: $text);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('sql-agent::livewire.chat-component');
     }

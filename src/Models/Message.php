@@ -6,8 +6,20 @@ namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Knobik\SqlAgent\Enums\MessageRole;
 
+/**
+ * @property int $id
+ * @property int $conversation_id
+ * @property MessageRole $role
+ * @property string $content
+ * @property string|null $sql
+ * @property array<int, mixed>|null $results
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class Message extends Model
 {
     use HasFactory;

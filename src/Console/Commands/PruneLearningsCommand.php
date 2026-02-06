@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Console\Commands;
 
 use Illuminate\Console\Command;
-use Knobik\SqlAgent\Services\LearningMachine;
+use Knobik\SqlAgent\Services\LearningMaintenance;
 
 class PruneLearningsCommand extends Command
 {
@@ -17,7 +17,7 @@ class PruneLearningsCommand extends Command
 
     protected $description = 'Remove old or duplicate learnings';
 
-    public function handle(LearningMachine $learningMachine): int
+    public function handle(LearningMaintenance $maintenance): int
     {
         // Use config value as default when --days is not provided
         $daysOption = $this->option('days');
@@ -35,17 +35,17 @@ class PruneLearningsCommand extends Command
         }
 
         if ($duplicatesOnly) {
-            return $this->handleDuplicates($learningMachine, $dryRun);
+            return $this->handleDuplicates($maintenance, $dryRun);
         }
 
-        return $this->handleOldLearnings($learningMachine, $days, $includeUsed, $dryRun);
+        return $this->handleOldLearnings($maintenance, $days, $includeUsed, $dryRun);
     }
 
-    protected function handleDuplicates(LearningMachine $learningMachine, bool $dryRun): int
+    protected function handleDuplicates(LearningMaintenance $maintenance, bool $dryRun): int
     {
         $this->info('Finding duplicate learnings...');
 
-        $duplicates = $learningMachine->findDuplicates();
+        $duplicates = $maintenance->findDuplicates();
 
         if ($duplicates->isEmpty()) {
             $this->components->info('No duplicates found.');
@@ -79,14 +79,14 @@ class PruneLearningsCommand extends Command
             return self::SUCCESS;
         }
 
-        $removed = $learningMachine->removeDuplicates();
+        $removed = $maintenance->removeDuplicates();
         $this->components->info("Removed {$removed} duplicate(s).");
 
         return self::SUCCESS;
     }
 
     protected function handleOldLearnings(
-        LearningMachine $learningMachine,
+        LearningMaintenance $maintenance,
         int $days,
         bool $includeUsed,
         bool $dryRun,
@@ -123,7 +123,7 @@ class PruneLearningsCommand extends Command
             return self::SUCCESS;
         }
 
-        $removed = $learningMachine->prune($days, $keepUsed);
+        $removed = $maintenance->prune($days, $keepUsed);
 
         if ($removed === 0) {
             $this->components->info('No learnings found matching criteria.');

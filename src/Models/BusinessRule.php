@@ -5,8 +5,18 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Knobik\SqlAgent\Enums\BusinessRuleType;
 
+/**
+ * @property int $id
+ * @property BusinessRuleType $type
+ * @property string $name
+ * @property string $description
+ * @property array<string, mixed>|null $conditions
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class BusinessRule extends Model
 {
     use HasFactory;

@@ -5,7 +5,19 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string|null $category
+ * @property string $name
+ * @property string $question
+ * @property array<string, mixed>|null $expected_values
+ * @property string|null $golden_sql
+ * @property array<int, mixed>|null $golden_result
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class TestCase extends Model
 {
     use HasFactory;

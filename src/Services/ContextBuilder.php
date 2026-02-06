@@ -7,6 +7,7 @@ namespace Knobik\SqlAgent\Services;
 use Illuminate\Support\Collection;
 use Knobik\SqlAgent\Data\Context;
 use Knobik\SqlAgent\Models\Learning;
+use Knobik\SqlAgent\Support\TextAnalyzer;
 
 class ContextBuilder
 {
@@ -93,7 +94,7 @@ class ContextBuilder
             return collect();
         }
 
-        $keywords = $this->extractKeywords($question);
+        $keywords = TextAnalyzer::extractKeywords($question);
 
         if (empty($keywords)) {
             return Learning::query()
@@ -139,39 +140,6 @@ class ContextBuilder
             'category' => $l->category?->value,
             'sql' => $l->sql,
         ]);
-    }
-
-    /**
-     * Extract keywords from a question.
-     *
-     * @return array<string>
-     */
-    protected function extractKeywords(string $text): array
-    {
-        $stopWords = [
-            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'must', 'can', 'to', 'of', 'in', 'for',
-            'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during',
-            'before', 'after', 'above', 'below', 'between', 'under', 'again',
-            'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
-            'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such',
-            'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
-            'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while',
-            'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
-            'am', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves',
-            'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his',
-            'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself',
-            'they', 'them', 'their', 'theirs', 'themselves', 'show', 'get', 'find',
-            'list', 'give', 'tell', 'many', 'much',
-        ];
-
-        $words = preg_split('/[^a-zA-Z0-9]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY);
-
-        return array_values(array_filter(
-            $words,
-            fn (string $word) => strlen($word) > 2 && ! in_array($word, $stopWords)
-        ));
     }
 
     /**

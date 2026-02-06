@@ -34,6 +34,7 @@ This package provides the foundation to build reliable, context-aware data agent
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
+- [Debug Mode](#debug-mode)
 - [Knowledge Base](#knowledge-base)
 - [LLM Drivers](#llm-drivers)
 - [Search Drivers](#search-drivers)
@@ -354,6 +355,51 @@ SQL_AGENT_USER_ENABLED=true
     'timeout' => env('SQL_AGENT_EVAL_TIMEOUT', 60),
 ],
 ```
+
+### Debug Configuration
+
+```php
+'debug' => [
+    // Store detailed metadata (system prompt, iterations, timing) per message
+    'enabled' => env('SQL_AGENT_DEBUG', false),
+],
+```
+
+See [Debug Mode](#debug-mode) for details on what gets stored.
+
+## Debug Mode
+
+When debug mode is enabled, SqlAgent stores additional metadata alongside each assistant message in the `sql_agent_messages` table. This is useful for development and troubleshooting but should be disabled in production.
+
+```env
+SQL_AGENT_DEBUG=true
+```
+
+### What gets stored
+
+With debug mode on, each assistant message's `metadata` JSON column will include:
+
+| Key | Description |
+|-----|-------------|
+| `prompt.system` | The full system prompt sent to the LLM (including rendered context) |
+| `prompt.tools` | List of tool names available to the agent |
+| `prompt.tools_full` | Full JSON schema for each tool |
+| `iterations` | Every tool-calling iteration: tool calls, arguments, results, and LLM responses |
+| `timing.total_ms` | Wall-clock time for the entire request |
+| `thinking` | The LLM's internal reasoning (for models with thinking mode) |
+
+### Web UI
+
+When debug mode is active, each assistant message in the chat UI shows a **"Debug: Show Prompt"** button that expands a panel with tabs for:
+
+- **Prompt** -- System prompt and available tools
+- **Iterations** -- Step-by-step tool calls and results
+- **Tools Schema** -- Full JSON schema sent to the LLM
+- **Thinking** -- LLM reasoning (when available)
+
+### Storage considerations
+
+Debug metadata can add significant size to the `metadata` column (roughly 50-60 KB per message depending on schema complexity and iteration count). Keep this in mind for long-running conversations and consider periodically pruning old conversations if storage is a concern.
 
 ## Knowledge Base
 

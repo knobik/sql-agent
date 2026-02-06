@@ -56,7 +56,7 @@
         "test-coverage": "pest --coverage",
         "format": "pint",
         "format-check": "pint --test",
-        "analyse": "phpstan analyse"
+        "analyse": "phpstan analyse --memory-limit=512M"
     },
     "config": {
         "sort-packages": true,

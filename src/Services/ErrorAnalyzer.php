@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Knobik\SqlAgent\Enums\LearningCategory;
+use Knobik\SqlAgent\Support\TextAnalyzer;
 
 class ErrorAnalyzer
 {
@@ -78,29 +79,7 @@ class ErrorAnalyzer
      */
     public function extractTableNames(string $sql): array
     {
-        $tables = [];
-
-        // Match table names after FROM
-        if (preg_match_all('/\bFROM\s+[`"\[]?(\w+)[`"\]]?/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Match table names after JOIN
-        if (preg_match_all('/\bJOIN\s+[`"\[]?(\w+)[`"\]]?/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Match table names after UPDATE (if applicable)
-        if (preg_match_all('/\bUPDATE\s+[`"\[]?(\w+)[`"\]]?/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        // Match table names after INTO
-        if (preg_match_all('/\bINTO\s+[`"\[]?(\w+)[`"\]]?/i', $sql, $matches)) {
-            $tables = array_merge($tables, $matches[1]);
-        }
-
-        return array_values(array_unique($tables));
+        return TextAnalyzer::extractTablesFromSql($sql);
     }
 
     /**

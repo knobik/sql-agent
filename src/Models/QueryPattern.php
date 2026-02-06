@@ -5,8 +5,20 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Knobik\SqlAgent\Contracts\Searchable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $question
+ * @property string $sql
+ * @property string|null $summary
+ * @property array<int, string>|null $tables_used
+ * @property string|null $data_quality_notes
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class QueryPattern extends Model implements Searchable
 {
     use HasFactory;

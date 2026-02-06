@@ -4,10 +4,21 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|string|null $user_id
+ * @property string|null $title
+ * @property string $connection
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Collection<int, Message> $messages
+ */
 class Conversation extends Model
 {
     use HasFactory;
@@ -50,6 +61,7 @@ class Conversation extends Model
 
     public function getLastMessage(): ?Message
     {
+        /** @var Message|null */
         return $this->messages()->latest()->first();
     }
 
@@ -60,6 +72,7 @@ class Conversation extends Model
 
     public function generateTitle(): string
     {
+        /** @var Message|null $firstUserMessage */
         $firstUserMessage = $this->messages()
             ->where('role', 'user')
             ->first();

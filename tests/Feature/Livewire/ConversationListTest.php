@@ -16,6 +16,8 @@ beforeEach(function () {
     if (! class_exists(\Livewire\Livewire::class)) {
         $this->markTestSkipped('Livewire is not installed');
     }
+
+    config()->set('sql-agent.user.enabled', true);
 });
 
 it('can render conversation list', function () {
