@@ -25,7 +25,8 @@ export default defineConfig({
 						{ label: 'Knowledge Base', slug: 'guides/knowledge-base' },
 						{ label: 'LLM & Search Drivers', slug: 'guides/drivers' },
 						{ label: 'Web Interface', slug: 'guides/web-interface' },
-						{ label: 'Evaluation & Self-Learning', slug: 'guides/evaluation' },
+						{ label: 'Evaluation', slug: 'guides/evaluation' },
+						{ label: 'Self-Learning', slug: 'guides/self-learning' },
 					],
 				},
 				{
