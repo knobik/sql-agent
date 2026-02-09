@@ -49,6 +49,8 @@ This package provides the foundation to build reliable, context-aware data agent
 
 ## Installation
 
+For detailed setup instructions, see the [full documentation](https://knobik.github.io/laravel-sql-agent/installation/).
+
 Install the package via Composer:
 
 ```bash
@@ -120,15 +122,18 @@ echo $response->sql;     // "SELECT COUNT(*) as count FROM users WHERE created_a
 
 ## Documentation
 
-- [Configuration](docs/configuration.md) - All config options (database, LLM, search, safety, etc.)
-- [Knowledge Base](docs/knowledge-base.md) - Table metadata, business rules, and query patterns
-- [LLM & Search Drivers](docs/drivers.md) - OpenAI, Anthropic, Ollama, and search driver setup
-- [Usage](docs/usage.md) - Artisan commands and programmatic API
-- [Web Interface](docs/web-interface.md) - Livewire chat UI and debug mode
-- [Evaluation & Self-Learning](docs/evaluation.md) - Test accuracy and automatic learning
-- [Events](docs/events.md) - Event hooks for custom behavior
-- [Database Support](docs/database-support.md) - MySQL, PostgreSQL, SQLite, SQL Server
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+**[Read the full documentation](https://knobik.github.io/laravel-sql-agent/)**
+
+- [Configuration](https://knobik.github.io/laravel-sql-agent/guides/configuration/) - All config options (database, LLM, search, safety, etc.)
+- [Knowledge Base](https://knobik.github.io/laravel-sql-agent/guides/knowledge-base/) - Table metadata, business rules, and query patterns
+- [LLM & Search Drivers](https://knobik.github.io/laravel-sql-agent/guides/drivers/) - OpenAI, Anthropic, Ollama, and search driver setup
+- [Artisan Commands](https://knobik.github.io/laravel-sql-agent/reference/commands/) - All available commands and options
+- [Programmatic API](https://knobik.github.io/laravel-sql-agent/reference/api/) - Facade, streaming, and dependency injection
+- [Web Interface](https://knobik.github.io/laravel-sql-agent/guides/web-interface/) - Livewire chat UI and debug mode
+- [Evaluation & Self-Learning](https://knobik.github.io/laravel-sql-agent/guides/evaluation/) - Test accuracy and automatic learning
+- [Events](https://knobik.github.io/laravel-sql-agent/reference/events/) - Event hooks for custom behavior
+- [Database Support](https://knobik.github.io/laravel-sql-agent/reference/database-support/) - MySQL, PostgreSQL, SQLite, SQL Server
+- [Troubleshooting](https://knobik.github.io/laravel-sql-agent/troubleshooting/) - Common issues and solutions
 
 ## Testing
 
