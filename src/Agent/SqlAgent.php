@@ -132,7 +132,7 @@ class SqlAgent implements Agent
                             'iteration' => $stepIndex,
                             'response' => $currentStep['text'] ?? '',
                             'tool_calls' => $currentStep['tool_calls'] ?? [],
-                            'finish_reason' => $event->finishReason?->value ?? 'stop',
+                            'finish_reason' => $event->finishReason->value,
                             'tool_results' => $currentStep['tool_results'] ?? [],
                         ];
                     }
