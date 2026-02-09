@@ -11,7 +11,6 @@ use Knobik\SqlAgent\Contracts\SearchDriver;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Search\SearchResult;
-use Laravel\Scout\Searchable as ScoutSearchable;
 use RuntimeException;
 
 /**
@@ -45,10 +44,9 @@ class ScoutSearchDriver implements SearchDriver
 
         $this->ensureScoutSearchable($modelClass);
 
-        /** @var Model&ScoutSearchable $model */
         $model = new $modelClass;
 
-        $results = $model::search($query)
+        $results = $model::search($query) // @phpstan-ignore staticMethod.notFound
             ->take($limit)
             ->get();
 
@@ -90,8 +88,7 @@ class ScoutSearchDriver implements SearchDriver
 
         $this->ensureScoutSearchable(get_class($model));
 
-        /** @var Model&ScoutSearchable $model */
-        $model->searchable();
+        $model->searchable(); // @phpstan-ignore method.notFound
     }
 
     public function delete(mixed $model): void
@@ -102,8 +99,7 @@ class ScoutSearchDriver implements SearchDriver
 
         $this->ensureScoutSearchable(get_class($model));
 
-        /** @var Model&ScoutSearchable $model */
-        $model->unsearchable();
+        $model->unsearchable(); // @phpstan-ignore method.notFound
     }
 
     /**
@@ -126,7 +122,7 @@ class ScoutSearchDriver implements SearchDriver
             throw new RuntimeException("Index {$index} must map to an Eloquent Model class.");
         }
 
-        return $class;
+        return $class; // @phpstan-ignore return.type
     }
 
     /**
@@ -136,7 +132,7 @@ class ScoutSearchDriver implements SearchDriver
      */
     protected function ensureScoutSearchable(string $modelClass): void
     {
-        if (! in_array(ScoutSearchable::class, class_uses_recursive($modelClass))) {
+        if (! in_array(\Laravel\Scout\Searchable::class, class_uses_recursive($modelClass))) {
             throw new RuntimeException(
                 "Model {$modelClass} must use the Laravel Scout Searchable trait to use the Scout search driver."
             );

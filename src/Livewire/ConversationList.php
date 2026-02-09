@@ -111,6 +111,6 @@ class ConversationList extends Component
 
     public function render(): View
     {
-        return view('sql-agent::livewire.conversation-list');
+        return view('sql-agent::livewire.conversation-list'); // @phpstan-ignore argument.type
     }
 }

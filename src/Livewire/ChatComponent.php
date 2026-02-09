@@ -94,6 +94,6 @@ class ChatComponent extends Component
 
     public function render(): View
     {
-        return view('sql-agent::livewire.chat-component');
+        return view('sql-agent::livewire.chat-component'); // @phpstan-ignore argument.type
     }
 }

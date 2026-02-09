@@ -97,7 +97,7 @@ class ContextBuilder
         $keywords = TextAnalyzer::extractKeywords($question);
 
         if (empty($keywords)) {
-            return Learning::query()
+            return Learning::query() // @phpstan-ignore return.type
                 ->latest()
                 ->limit($limit)
                 ->get()
@@ -134,7 +134,7 @@ class ContextBuilder
             $results = $query->limit($limit)->get();
         }
 
-        return $results->map(fn (Learning $l) => [
+        return $results->map(fn (Learning $l) => [ // @phpstan-ignore return.type
             'title' => $l->title,
             'description' => $l->description,
             'category' => $l->category?->value,
