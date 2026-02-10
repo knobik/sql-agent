@@ -6,17 +6,11 @@ namespace Knobik\SqlAgent;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Knobik\SqlAgent\Agent\FallbackResponseGenerator;
-use Knobik\SqlAgent\Agent\MessageBuilder;
-use Knobik\SqlAgent\Agent\PromptRenderer;
 use Knobik\SqlAgent\Agent\SqlAgent;
-use Knobik\SqlAgent\Agent\ToolLabelResolver;
 use Knobik\SqlAgent\Agent\ToolRegistry;
 use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Contracts\SearchDriver;
-use Knobik\SqlAgent\Embeddings\EmbeddingGenerator;
 use Knobik\SqlAgent\Embeddings\EmbeddingObserver;
-use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Events\SqlErrorOccurred;
 use Knobik\SqlAgent\Listeners\AutoLearnFromError;
 use Knobik\SqlAgent\Livewire\ChatComponent;
@@ -24,20 +18,7 @@ use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Search\SearchManager;
-use Knobik\SqlAgent\Services\BusinessRulesLoader;
-use Knobik\SqlAgent\Services\ContextBuilder;
-use Knobik\SqlAgent\Services\ConversationService;
-use Knobik\SqlAgent\Services\ErrorAnalyzer;
-use Knobik\SqlAgent\Services\EvaluationRunner;
-use Knobik\SqlAgent\Services\KnowledgeLoader;
-use Knobik\SqlAgent\Services\LearningImportExport;
-use Knobik\SqlAgent\Services\LearningMachine;
-use Knobik\SqlAgent\Services\LearningMaintenance;
-use Knobik\SqlAgent\Services\LlmGrader;
-use Knobik\SqlAgent\Services\QueryPatternSearch;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
-use Knobik\SqlAgent\Services\SemanticModelLoader;
-use Knobik\SqlAgent\Support\UserResolver;
 use Knobik\SqlAgent\Tools\IntrospectSchemaTool;
 use Knobik\SqlAgent\Tools\RunSqlTool;
 use Knobik\SqlAgent\Tools\SaveLearningTool;
@@ -50,37 +31,13 @@ class SqlAgentServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/sql-agent.php', 'sql-agent');
 
-        // Auto-resolvable singletons (no explicit closures needed)
-        $this->app->singleton(UserResolver::class);
-        $this->app->singleton(ConversationService::class);
-        $this->app->singleton(SemanticModelLoader::class);
-        $this->app->singleton(BusinessRulesLoader::class);
-        $this->app->singleton(QueryPatternSearch::class);
-        $this->app->singleton(SchemaIntrospector::class);
-        $this->app->singleton(KnowledgeLoader::class);
-        $this->app->singleton(ErrorAnalyzer::class);
-        $this->app->singleton(LearningMachine::class);
-        $this->app->singleton(LearningImportExport::class);
-        $this->app->singleton(LearningMaintenance::class);
-        $this->app->singleton(ContextBuilder::class);
-        $this->app->singleton(PromptRenderer::class);
-        $this->app->singleton(MessageBuilder::class);
-        $this->app->singleton(ToolLabelResolver::class);
-        $this->app->singleton(FallbackResponseGenerator::class);
-        $this->app->singleton(EvaluationRunner::class);
-
-        // Embeddings
-        $this->app->singleton(EmbeddingGenerator::class);
-        $this->app->singleton(TextSerializer::class);
-        $this->app->singleton(Search\Drivers\PgvectorSearchDriver::class, fn ($app) => $app->make(SearchManager::class)->driver('pgvector'));
-
-        // Search Manager (needs $app)
+        // Search Manager — singleton because it's a Laravel Manager that caches driver instances
         $this->app->singleton(SearchManager::class, fn ($app) => new SearchManager($app));
 
         // Bind SearchDriver interface to manager's default driver
         $this->app->bind(SearchDriver::class, fn ($app) => $app->make(SearchManager::class)->driver());
 
-        // Tool Registry with default tools
+        // Tool Registry — singleton because tools are registered at boot and shared across requests
         $this->app->singleton(ToolRegistry::class, function ($app) {
             $registry = new ToolRegistry;
 
@@ -95,17 +52,14 @@ class SqlAgentServiceProvider extends ServiceProvider
             return $registry;
         });
 
-        // SQL Agent (auto-resolvable since LlmDriver was removed)
-        $this->app->singleton(SqlAgent::class);
+        // SQL Agent — scoped so per-request state (lastSql, iterations, etc.) is fresh each request
+        $this->app->scoped(SqlAgent::class);
 
         // Bind Agent interface to SqlAgent
         $this->app->bind(Agent::class, SqlAgent::class);
 
         // Alias for facade accessor
         $this->app->alias(Agent::class, 'sql-agent');
-
-        // LLM Grader (no constructor args, uses Prism directly)
-        $this->app->singleton(LlmGrader::class);
     }
 
     public function boot(): void
