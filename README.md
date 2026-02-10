@@ -31,6 +31,16 @@ This package solves it with:
 
 This package provides the foundation to build reliable, context-aware data agents for Laravel applications.
 
+## How It Works
+
+SqlAgent uses multi-layer context assembly to give the LLM everything it needs before writing SQL, then lets it retrieve more during execution.
+
+1. **Context Assembly** — Before the LLM sees the question, the agent retrieves relevant table metadata, business rules, similar query patterns, and past learnings. This assembled context is injected into the system prompt.
+2. **Agentic Tool Loop** — The LLM enters a tool-calling loop where it can introspect live schema, search for additional knowledge, execute SQL, and refine results iteratively.
+3. **Self-Learning** — When queries fail and the agent recovers, it saves what it learned. When queries succeed, it saves them as reusable patterns. Both feed back into step 1 for future queries.
+
+This creates a feedback loop — the more the agent is used, the better its context becomes.
+
 ## Features
 
 - **Multi-LLM Support** - Any provider supported by [Prism PHP](https://prismphp.com) (OpenAI, Anthropic, Ollama, Gemini, Mistral, xAI, and more)

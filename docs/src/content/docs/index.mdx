@@ -37,6 +37,14 @@ Raw LLMs writing SQL hit a wall fast — schemas lack meaning, types are mislead
   </Card>
 </CardGrid>
 
+## How It Works
+
+1. **Assemble context** — The agent retrieves relevant table metadata, business rules, query patterns, and past learnings based on the question
+2. **Enter tool loop** — The LLM iteratively introspects schema, searches for additional knowledge, executes SQL, and refines results
+3. **Learn and improve** — Errors become learnings, successful queries become reusable patterns — both feed back into future context assembly
+
+See the [Introduction](/sql-agent/getting-started/introduction/) for a detailed architecture overview.
+
 ## Quick Start
 
 ```bash
