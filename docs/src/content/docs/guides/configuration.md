@@ -201,6 +201,21 @@ Control how the agentic loop operates:
 | `default_limit` | `LIMIT` applied to queries that don't specify one | `100` |
 | `chat_history_length` | Number of previous messages included for conversational context | `10` |
 
+### Custom Tools
+
+You can extend the agent with your own tools by listing class names in the `tools` array:
+
+```php
+'agent' => [
+    // ... other options ...
+    'tools' => [
+        \App\SqlAgent\CurrentDateTimeTool::class,
+    ],
+],
+```
+
+Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/laravel-sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
+
 ## Learning
 
 SqlAgent can automatically learn from SQL errors and improve over time:

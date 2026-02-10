@@ -483,3 +483,5 @@ Not all tools are available in every configuration:
 | `save_validated_query` | No | Requires `sql-agent.learning.enabled = true` |
 
 When learning is disabled (`SQL_AGENT_LEARNING_ENABLED=false`), the `save_learning` and `save_validated_query` tools are not registered with the LLM, and the related instructions are removed from the system prompt.
+
+In addition to the built-in tools above, you can register your own tools via the `agent.tools` config option. See the [Custom Tools](/laravel-sql-agent/guides/custom-tools/) guide for details.

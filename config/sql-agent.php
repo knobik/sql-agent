@@ -153,6 +153,10 @@ return [
         'max_iterations' => env('SQL_AGENT_MAX_ITERATIONS', 10),
         'default_limit' => env('SQL_AGENT_DEFAULT_LIMIT', 100),
         'chat_history_length' => env('SQL_AGENT_CHAT_HISTORY', 10),
+
+        // Custom tool class names resolved from the container, e.g.:
+        // [App\SqlAgent\MyCustomTool::class]
+        'tools' => [],
     ],
 
     /*

@@ -24,6 +24,7 @@ use Knobik\SqlAgent\Tools\RunSqlTool;
 use Knobik\SqlAgent\Tools\SaveLearningTool;
 use Knobik\SqlAgent\Tools\SaveQueryTool;
 use Knobik\SqlAgent\Tools\SearchKnowledgeTool;
+use Prism\Prism\Tool;
 
 class SqlAgentServiceProvider extends ServiceProvider
 {
@@ -41,6 +42,7 @@ class SqlAgentServiceProvider extends ServiceProvider
         $this->app->singleton(ToolRegistry::class, function ($app) {
             $registry = new ToolRegistry;
 
+            // Register built-in tools
             $registry->registerMany([
                 new RunSqlTool,
                 new IntrospectSchemaTool($app->make(SchemaIntrospector::class)),
@@ -48,6 +50,21 @@ class SqlAgentServiceProvider extends ServiceProvider
                 new SaveQueryTool,
                 new SearchKnowledgeTool($app->make(SearchManager::class)),
             ]);
+
+            // Register custom tools from config
+            foreach (config('sql-agent.agent.tools') as $toolClass) {
+                if (! class_exists($toolClass)) {
+                    throw new \InvalidArgumentException("Custom tool class [{$toolClass}] does not exist.");
+                }
+
+                $tool = $app->make($toolClass);
+
+                if (! $tool instanceof Tool) {
+                    throw new \InvalidArgumentException("Custom tool class [{$toolClass}] must extend ".Tool::class.'.');
+                }
+
+                $registry->register($tool);
+            }
 
             return $registry;
         });
