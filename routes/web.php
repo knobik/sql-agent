@@ -6,7 +6,7 @@ use Knobik\SqlAgent\Http\Controllers\StreamController;
 
 // Only register routes if UI is enabled
 if (config('sql-agent.ui.enabled', true)) {
-    Route::middleware(config('sql-agent.ui.middleware', ['web', 'auth']))
+    Route::middleware(config('sql-agent.ui.middleware'))
         ->prefix(config('sql-agent.ui.route_prefix', 'sql-agent'))
         ->name('sql-agent.')
         ->group(function () {
