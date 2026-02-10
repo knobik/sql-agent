@@ -115,4 +115,42 @@ describe('RunSqlTool', function () {
 
         expect($tool->getQuestion())->toBe('How many users?');
     });
+
+    it('rejects queries on denied tables', function () {
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+
+        $tool = new RunSqlTool;
+
+        expect(fn () => $tool('SELECT * FROM test_users'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('rejects queries on tables not in allowed list', function () {
+        config()->set('sql-agent.sql.allowed_tables', ['other_table']);
+
+        $tool = new RunSqlTool;
+
+        expect(fn () => $tool('SELECT * FROM test_users'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('allows queries on allowed tables', function () {
+        config()->set('sql-agent.sql.allowed_tables', ['test_users']);
+        config()->set('sql-agent.sql.denied_tables', []);
+
+        $tool = new RunSqlTool;
+
+        $result = json_decode($tool('SELECT * FROM test_users'), true);
+
+        expect($result['rows'])->toHaveCount(2);
+    });
+
+    it('rejects queries with denied tables in JOIN', function () {
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+
+        $tool = new RunSqlTool;
+
+        expect(fn () => $tool('SELECT * FROM orders JOIN test_users ON orders.user_id = test_users.id'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
 });

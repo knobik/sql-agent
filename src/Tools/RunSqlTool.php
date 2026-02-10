@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Tools;
 
 use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Events\SqlErrorOccurred;
+use Knobik\SqlAgent\Services\TableAccessControl;
 use Prism\Prism\Tool;
 use RuntimeException;
 use Throwable;
@@ -16,12 +17,16 @@ class RunSqlTool extends Tool
 
     protected ?string $question = null;
 
+    protected TableAccessControl $tableAccessControl;
+
     public ?string $lastSql = null;
 
     public ?array $lastResults = null;
 
     public function __construct()
     {
+        $this->tableAccessControl = app(TableAccessControl::class);
+
         $allowed = implode(', ', config('sql-agent.sql.allowed_statements'));
 
         $this
@@ -131,5 +136,46 @@ class RunSqlTool extends Tool
         if (substr_count($withoutStrings, ';') > 1) {
             throw new RuntimeException('Multiple SQL statements are not allowed.');
         }
+
+        $this->validateTableAccess($withoutStrings);
+    }
+
+    /**
+     * Extract table names from SQL and validate access.
+     */
+    protected function validateTableAccess(string $sql): void
+    {
+        $tables = $this->extractTableNames($sql);
+
+        foreach ($tables as $table) {
+            if (! $this->tableAccessControl->isTableAllowed($table)) {
+                throw new RuntimeException(
+                    "Access denied: table '{$table}' is restricted and cannot be queried."
+                );
+            }
+        }
+    }
+
+    /**
+     * Extract table names from SQL (best-effort regex).
+     *
+     * @return array<string>
+     */
+    protected function extractTableNames(string $sql): array
+    {
+        $tables = [];
+
+        // Match FROM table, JOIN table, INTO table, UPDATE table patterns
+        // Handles optional schema prefix (schema.table) and backtick/bracket quoting
+        $pattern = '/\b(?:FROM|JOIN|INTO|UPDATE)\s+([`\[\"]?)(\w+(?:\.\w+)?)\1/i';
+        if (preg_match_all($pattern, $sql, $matches)) {
+            foreach ($matches[2] as $match) {
+                // Strip schema prefix if present
+                $parts = explode('.', $match);
+                $tables[] = end($parts);
+            }
+        }
+
+        return array_unique($tables);
     }
 }

@@ -317,6 +317,49 @@ SqlAgent includes configurable guardrails to prevent destructive SQL operations:
 | `allowed_statements` | Only these SQL statement types may be executed | `['SELECT', 'WITH']` |
 | `forbidden_keywords` | Queries containing these keywords are rejected | See above |
 | `max_rows` | Maximum number of rows returned by any query | `1000` |
+| `allowed_tables` | Whitelist of tables the agent may access (empty = all allowed) | `[]` |
+| `denied_tables` | Blacklist of tables the agent may never access (takes precedence over `allowed_tables`) | `[]` |
+| `hidden_columns` | Columns to hide per table (associative array) | `[]` |
+
+### Table & Column Restrictions
+
+You can restrict which tables and columns the agent can see and query. This is useful for preventing access to sensitive data such as password hashes, API keys, or audit logs.
+
+```php
+'sql' => [
+    // ... other options ...
+
+    // Only allow the agent to access these tables (empty = all tables allowed)
+    'allowed_tables' => ['users', 'orders', 'products'],
+
+    // Always deny access to these tables (takes precedence over allowed_tables)
+    'denied_tables' => ['password_resets', 'personal_access_tokens'],
+
+    // Hide specific columns from the agent per table
+    'hidden_columns' => [
+        'users' => ['password', 'remember_token', 'two_factor_secret'],
+    ],
+],
+```
+
+**How it works:**
+
+- **`allowed_tables`** acts as a whitelist. When non-empty, only listed tables are visible to the agent. Leave empty to allow all tables.
+- **`denied_tables`** acts as a blacklist. Listed tables are always denied, even if they appear in `allowed_tables`. This takes precedence.
+- **`hidden_columns`** removes specific columns from schema introspection and semantic model output. The agent will not know these columns exist.
+
+Restrictions are enforced at every layer:
+
+- Schema introspection (listing tables, inspecting columns)
+- Semantic model loading (table metadata from files or database)
+- SQL execution (queries referencing denied tables are rejected)
+- Query pattern saving (patterns cannot reference restricted tables)
+
+Restricted tables and hidden columns are never exposed to the LLM. The agent simply cannot see them in any schema or metadata, and any SQL that references a denied table is rejected at execution time.
+
+:::caution
+Table name extraction from SQL is regex-based and best-effort. It catches common patterns (`FROM`, `JOIN`) but may not detect every reference in complex queries. Always combine table restrictions with other safety measures such as database-level permissions.
+:::
 
 ## Evaluation
 

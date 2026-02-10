@@ -188,4 +188,32 @@ describe('SaveQueryTool', function () {
         expect($tool->requiredParameters())->toContain('summary');
         expect($tool->requiredParameters())->toContain('tables_used');
     });
+
+    it('rejects saving patterns with denied tables', function () {
+        config()->set('sql-agent.sql.denied_tables', ['secrets']);
+
+        $tool = new SaveQueryTool;
+
+        expect(fn () => $tool(
+            name: 'Secret Query',
+            question: 'Show secrets?',
+            sql: 'SELECT * FROM secrets',
+            summary: 'Gets secrets',
+            tables_used: ['secrets'],
+        ))->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('rejects saving patterns with tables not in allowed list', function () {
+        config()->set('sql-agent.sql.allowed_tables', ['users']);
+
+        $tool = new SaveQueryTool;
+
+        expect(fn () => $tool(
+            name: 'Order Query',
+            question: 'Show orders?',
+            sql: 'SELECT * FROM orders',
+            summary: 'Gets orders',
+            tables_used: ['orders'],
+        ))->toThrow(RuntimeException::class, 'Access denied');
+    });
 });

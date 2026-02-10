@@ -7,6 +7,7 @@ namespace Knobik\SqlAgent\Tools;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
+use Knobik\SqlAgent\Services\TableAccessControl;
 use Prism\Prism\Tool;
 use RuntimeException;
 use Throwable;
@@ -15,9 +16,13 @@ class IntrospectSchemaTool extends Tool
 {
     protected ?string $connection = null;
 
+    protected TableAccessControl $tableAccessControl;
+
     public function __construct(
         protected SchemaIntrospector $introspector,
     ) {
+        $this->tableAccessControl = app(TableAccessControl::class);
+
         $this
             ->as('introspect_schema')
             ->for('Get detailed schema information about database tables. Can inspect a specific table or list all available tables.')
@@ -62,6 +67,12 @@ class IntrospectSchemaTool extends Tool
 
     protected function inspectTable(string $tableName, bool $includeSampleData, ?string $connection): array
     {
+        if (! $this->tableAccessControl->isTableAllowed($tableName)) {
+            throw new RuntimeException(
+                "Access denied: table '{$tableName}' is restricted."
+            );
+        }
+
         if (! $this->introspector->tableExists($tableName, $connection)) {
             $available = $this->introspector->getTableNames($connection);
 
@@ -79,9 +90,16 @@ class IntrospectSchemaTool extends Tool
         $primaryKeyColumns = $this->getPrimaryKeyColumns($indexes);
         $foreignKeyMap = $this->buildForeignKeyMap($foreignKeys);
 
+        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName);
+
         $columns = [];
         foreach ($dbColumns as $column) {
             $columnName = $column['name'];
+
+            if (in_array($columnName, $hiddenColumns, true)) {
+                continue;
+            }
+
             $fkInfo = $foreignKeyMap[$columnName] ?? null;
 
             $columns[] = [
@@ -200,11 +218,17 @@ class IntrospectSchemaTool extends Tool
 
     protected function getSampleData(string $tableName, ?string $connection): array
     {
+        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName);
+
         $rows = DB::connection($connection)
             ->table($tableName)
             ->limit(3)
             ->get();
 
-        return $rows->map(fn ($row) => (array) $row)->toArray();
+        return $rows->map(function ($row) use ($hiddenColumns) {
+            $data = (array) $row;
+
+            return array_diff_key($data, array_flip($hiddenColumns));
+        })->toArray();
     }
 }

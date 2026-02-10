@@ -76,4 +76,42 @@ describe('IntrospectSchemaTool', function () {
 
         expect($result)->toBe($tool);
     });
+
+    it('excludes denied tables from listing', function () {
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(), true);
+
+        expect($result['tables'])->not->toContain('test_users');
+    });
+
+    it('rejects introspection of denied table', function () {
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        expect(fn () => $tool(table_name: 'test_users'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('hides columns from inspected table', function () {
+        config()->set('sql-agent.sql.hidden_columns', [
+            'test_users' => ['email'],
+        ]);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(table_name: 'test_users'), true);
+
+        $columnNames = array_column($result['columns'], 'name');
+
+        expect($columnNames)->toContain('id');
+        expect($columnNames)->toContain('name');
+        expect($columnNames)->not->toContain('email');
+    });
 });

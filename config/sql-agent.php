@@ -232,6 +232,14 @@ return [
         ],
 
         'max_rows' => env('SQL_AGENT_MAX_ROWS', 1000),
+
+        // Table access control — restrict which tables the agent can see and query.
+        // allowed_tables: whitelist — empty array means all tables are allowed.
+        // denied_tables: blacklist — always denied, takes precedence over allowed_tables.
+        // hidden_columns: columns to hide per table, e.g. ['users' => ['password', 'remember_token']]
+        'allowed_tables' => [],
+        'denied_tables' => [],
+        'hidden_columns' => [],
     ],
 
     /*

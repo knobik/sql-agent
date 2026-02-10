@@ -268,7 +268,9 @@ class SqlAgent implements Agent
     protected function prepareLoop(string $question, ?string $connection, array $history = []): AgentLoopContext
     {
         $context = $this->contextBuilder->build($question, $connection);
-        $systemPrompt = $this->promptRenderer->renderSystem($context->toPromptString());
+        $systemPrompt = $this->promptRenderer->renderSystem(
+            $context->toPromptString(),
+        );
 
         $messages = $this->messageBuilder->buildPrismMessages($question, $history);
 

@@ -11,6 +11,10 @@ use Knobik\SqlAgent\Models\TableMetadata;
 
 class SemanticModelLoader
 {
+    public function __construct(
+        protected TableAccessControl $tableAccessControl,
+    ) {}
+
     /**
      * Load table metadata from the configured source.
      *
@@ -20,11 +24,13 @@ class SemanticModelLoader
     {
         $source = config('sql-agent.knowledge.source');
 
-        return match ($source) {
+        $tables = match ($source) {
             'files' => $this->loadFromFiles($connection),
             'database' => $this->loadFromDatabase($connection),
             default => throw new \InvalidArgumentException("Unknown knowledge source: {$source}"),
         };
+
+        return $this->applyAccessControl($tables);
     }
 
     /**
@@ -141,6 +147,35 @@ class SemanticModelLoader
         // For file-based loading, we don't filter by connection
         // (connection info would need to be in the JSON if filtering is needed)
         return true;
+    }
+
+    /**
+     * Filter tables and columns through access control.
+     *
+     * @param  Collection<int, TableSchema>  $tables
+     * @return Collection<int, TableSchema>
+     */
+    protected function applyAccessControl(Collection $tables): Collection
+    {
+        return $tables
+            ->filter(fn (TableSchema $table) => $this->tableAccessControl->isTableAllowed($table->tableName))
+            ->map(function (TableSchema $table) {
+                $filteredColumns = $this->tableAccessControl->filterColumns($table->tableName, $table->columns);
+
+                if ($filteredColumns === $table->columns) {
+                    return $table;
+                }
+
+                return new TableSchema(
+                    tableName: $table->tableName,
+                    description: $table->description,
+                    columns: $filteredColumns,
+                    relationships: $table->relationships,
+                    dataQualityNotes: $table->dataQualityNotes,
+                    useCases: $table->useCases,
+                );
+            })
+            ->values();
     }
 
     /**

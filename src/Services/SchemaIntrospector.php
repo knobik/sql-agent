@@ -11,6 +11,10 @@ use Throwable;
 
 class SchemaIntrospector
 {
+    public function __construct(
+        protected TableAccessControl $tableAccessControl,
+    ) {}
+
     /**
      * Get the schema for all tables in the connection.
      *
@@ -38,6 +42,10 @@ class SchemaIntrospector
      */
     public function introspectTable(string $tableName, ?string $connection = null): ?TableSchema
     {
+        if (! $this->tableAccessControl->isTableAllowed($tableName)) {
+            return null;
+        }
+
         $connection = $this->resolveConnection($connection);
 
         try {
@@ -138,6 +146,8 @@ class SchemaIntrospector
 
         // Try to get table comment
         $tableComment = $this->getTableComment($tableName, $connection);
+
+        $columns = $this->tableAccessControl->filterColumns($tableName, $columns);
 
         return new TableSchema(
             tableName: $tableName,
@@ -309,7 +319,9 @@ class SchemaIntrospector
             return [];
         }
 
-        return array_map(fn (array $table) => $table['name'], $tables);
+        $tableNames = array_map(fn (array $table) => $table['name'], $tables);
+
+        return $this->tableAccessControl->filterTables($tableNames);
     }
 
     /**
