@@ -296,6 +296,7 @@ class SqlAgent implements Agent
         $context = $this->contextBuilder->build($question, $connection);
         $systemPrompt = $this->promptRenderer->renderSystem(
             $context->toPromptString(),
+            ['customTools' => $this->getCustomTools()],
         );
 
         $messages = $this->messageBuilder->buildPrismMessages($question, $history);
@@ -341,6 +342,19 @@ class SqlAgent implements Agent
         }
 
         return $tools;
+    }
+
+    /**
+     * Get custom (non-built-in) tools from the registry.
+     *
+     * @return Tool[]
+     */
+    protected function getCustomTools(): array
+    {
+        return array_values(array_filter(
+            $this->toolRegistry->all(),
+            fn (Tool $tool): bool => ! str_starts_with($tool::class, 'Knobik\\SqlAgent\\Tools\\'),
+        ));
     }
 
     protected function collectToolCalls(): array

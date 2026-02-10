@@ -46,10 +46,15 @@ class SqlAgentServiceProvider extends ServiceProvider
             $registry->registerMany([
                 new RunSqlTool,
                 new IntrospectSchemaTool($app->make(SchemaIntrospector::class)),
-                new SaveLearningTool,
-                new SaveQueryTool,
                 new SearchKnowledgeTool($app->make(SearchManager::class)),
             ]);
+
+            if (config('sql-agent.learning.enabled')) {
+                $registry->registerMany([
+                    new SaveLearningTool,
+                    new SaveQueryTool,
+                ]);
+            }
 
             // Register custom tools from config
             foreach (config('sql-agent.agent.tools') as $toolClass) {

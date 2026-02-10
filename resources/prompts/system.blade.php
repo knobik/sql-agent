@@ -38,6 +38,14 @@ Save a discovery to the knowledge base (type errors, date formats, column quirks
 ### save_validated_query
 Save a successful query pattern for reuse. Use when a query correctly answers a common question.
 @endif
+@if(!empty($customTools))
+{{-- Custom tools registered via config('sql-agent.agent.tools') --}}
+@foreach($customTools as $tool)
+
+### {{ $tool->name() }}
+{{ $tool->description() }}
+@endforeach
+@endif
 
 ## Workflow
 
