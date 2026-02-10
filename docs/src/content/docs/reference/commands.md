@@ -86,7 +86,7 @@ php artisan sql-agent:prune-learnings
 | `--dry-run` | Preview what would be removed without deleting |
 
 :::tip
-This command is not scheduled automatically. Add it to your scheduler for hands-off maintenance. See [Configuration — Learning](/laravel-sql-agent/guides/configuration/#learning).
+This command is not scheduled automatically. Add it to your scheduler for hands-off maintenance. See [Configuration — Learning](/sql-agent/guides/configuration/#learning).
 :::
 
 ## `sql-agent:generate-embeddings`

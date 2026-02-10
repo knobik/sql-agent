@@ -5,7 +5,7 @@ sidebar:
   order: 8
 ---
 
-SqlAgent ships with a fixed set of [built-in tools](/laravel-sql-agent/reference/tools/) (SQL execution, schema introspection, knowledge search, and learning). You can register additional tools so the LLM can call your own logic during the agentic loop.
+SqlAgent ships with a fixed set of [built-in tools](/sql-agent/reference/tools/) (SQL execution, schema introspection, knowledge search, and learning). You can register additional tools so the LLM can call your own logic during the agentic loop.
 
 Custom tools are plain PHP classes that extend `Prism\Prism\Tool`. They are resolved from the Laravel container, so constructor dependencies are injected automatically.
 

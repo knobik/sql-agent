@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Configuration Tests for Laravel SQL Agent
+ * Configuration Tests for SQL Agent for Laravel
  *
  * Tests all configuration options to verify they are:
  * 1. Properly read from config

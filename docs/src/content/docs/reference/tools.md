@@ -101,7 +101,7 @@ Execute a SQL query against the database. This is the primary tool the agent use
 - Forbidden keywords (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, `TRUNCATE`, etc.) are rejected even inside subqueries.
 - Multiple statements separated by `;` are blocked.
 - Results are capped at `sql.max_rows` (default: 1000).
-- On error, a `SqlErrorOccurred` event is dispatched for [auto-learning](/laravel-sql-agent/guides/self-learning/).
+- On error, a `SqlErrorOccurred` event is dispatched for [auto-learning](/sql-agent/guides/self-learning/).
 
 ### Example Tool Call
 
@@ -389,7 +389,7 @@ Save a validated query pattern after successfully answering a question. This bui
 > Save a validated query pattern to the knowledge base. Use this when you have successfully executed a SQL query that correctly answers a user question. This helps future queries by providing proven patterns.
 
 :::note
-This tool is only available when `sql-agent.learning.enabled` is `true` (the default). Saved queries appear alongside patterns from the [Knowledge Base](/laravel-sql-agent/guides/knowledge-base/#query-patterns) in `search_knowledge` results.
+This tool is only available when `sql-agent.learning.enabled` is `true` (the default). Saved queries appear alongside patterns from the [Knowledge Base](/sql-agent/guides/knowledge-base/#query-patterns) in `search_knowledge` results.
 :::
 
 ### Parameters
@@ -484,4 +484,4 @@ Not all tools are available in every configuration:
 
 When learning is disabled (`SQL_AGENT_LEARNING_ENABLED=false`), the `save_learning` and `save_validated_query` tools are not registered with the LLM, and the related instructions are removed from the system prompt.
 
-In addition to the built-in tools above, you can register your own tools via the `agent.tools` config option. See the [Custom Tools](/laravel-sql-agent/guides/custom-tools/) guide for details.
+In addition to the built-in tools above, you can register your own tools via the `agent.tools` config option. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for details.

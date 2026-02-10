@@ -110,4 +110,4 @@ Local model quality depends heavily on your hardware and model choice. An 8B par
 
 The LLM provider and search driver are completely independent — you can freely combine any LLM with any search driver. For example, you could pair Ollama for local inference with pgvector for high-quality semantic search, or use Anthropic Claude with the simple database full-text driver if you don't need vector embeddings. Pick the LLM that fits your quality and cost requirements, then choose the search driver that matches your infrastructure.
 
-These presets are just starting points. See the full [Configuration](/laravel-sql-agent/guides/configuration/) guide for every available option and the [LLM & Search Drivers](/laravel-sql-agent/guides/drivers/) guide for all supported providers and search backends.
+These presets are just starting points. See the full [Configuration](/sql-agent/guides/configuration/) guide for every available option and the [LLM & Search Drivers](/sql-agent/guides/drivers/) guide for all supported providers and search backends.

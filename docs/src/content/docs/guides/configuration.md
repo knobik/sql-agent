@@ -214,7 +214,7 @@ You can extend the agent with your own tools by listing class names in the `tool
 ],
 ```
 
-Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/laravel-sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
+Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
 
 ## Learning
 
@@ -277,7 +277,7 @@ SqlAgent ships with a Livewire chat UI. Configure its routes and access:
 | `route_prefix` | URL prefix for the UI (e.g., `/sql-agent`) | `sql-agent` |
 | `middleware` | Middleware applied to all UI routes | `['web', 'auth']` |
 
-Set `SQL_AGENT_UI_ENABLED=false` to disable the web interface entirely. See the [Web Interface](/laravel-sql-agent/guides/web-interface/) guide for more details on customization.
+Set `SQL_AGENT_UI_ENABLED=false` to disable the web interface entirely. See the [Web Interface](/sql-agent/guides/web-interface/) guide for more details on customization.
 
 ## User Tracking
 
@@ -396,7 +396,7 @@ Configure the evaluation framework for testing agent accuracy:
 | `pass_threshold` | Minimum score (0.0–1.0) to pass LLM grading | `0.6` |
 | `timeout` | Maximum seconds allowed per test case | `60` |
 
-See the [Evaluation & Self-Learning](/laravel-sql-agent/guides/evaluation/) guide for details on running evaluations.
+See the [Evaluation & Self-Learning](/sql-agent/guides/evaluation/) guide for details on running evaluations.
 
 ## Debug
 
@@ -410,4 +410,4 @@ Enable debug mode to store detailed metadata alongside each assistant message:
 
 When enabled, each message's `metadata` column will include the full system prompt, tool schemas, iteration details, and timing data. This is useful for development but adds significant storage overhead (~50–60 KB per message). Disable in production.
 
-See the [Web Interface — Debug Mode](/laravel-sql-agent/guides/web-interface/#debug-mode) guide for details on what gets stored and how to inspect it.
+See the [Web Interface — Debug Mode](/sql-agent/guides/web-interface/#debug-mode) guide for details on what gets stored and how to inspect it.

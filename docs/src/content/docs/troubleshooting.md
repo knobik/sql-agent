@@ -7,7 +7,7 @@ description: Common issues and solutions when using SqlAgent.
 
 If the agent isn't finding relevant context or producing poor SQL:
 
-1. Verify your knowledge files are valid JSON and follow the [expected format](/laravel-sql-agent/guides/knowledge-base/#table-metadata).
+1. Verify your knowledge files are valid JSON and follow the [expected format](/sql-agent/guides/knowledge-base/#table-metadata).
 2. Reimport your knowledge with `php artisan sql-agent:load-knowledge --recreate`.
 3. Check that the `sql_agent_table_metadata` table has entries: `SELECT COUNT(*) FROM sql_agent_table_metadata`.
 4. Add more descriptive column information — the richer your descriptions, the better the agent performs.

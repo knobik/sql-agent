@@ -21,7 +21,7 @@ The agent's system prompt instructs it to follow a learning-oriented workflow:
 
 The system prompt defines two complementary knowledge systems:
 
-**Knowledge** (static, curated) — Table schemas, business rules, and manually authored query patterns. These come from your [Knowledge Base](/laravel-sql-agent/guides/knowledge-base/) files and are loaded via `sql-agent:load-knowledge`.
+**Knowledge** (static, curated) — Table schemas, business rules, and manually authored query patterns. These come from your [Knowledge Base](/sql-agent/guides/knowledge-base/) files and are loaded via `sql-agent:load-knowledge`.
 
 **Learnings** (dynamic, discovered) — Patterns the agent discovers through its own interactions. These include type gotchas, date formats, column quirks, and validated queries. The agent manages these automatically using two tools:
 
@@ -58,7 +58,7 @@ save_learning(
 
 ### `save_validated_query`
 
-After successfully answering a question, the agent saves the query as a reusable pattern. This populates the same query patterns table used by the [Knowledge Base](/laravel-sql-agent/guides/knowledge-base/#query-patterns), so future searches can find proven SQL for similar questions.
+After successfully answering a question, the agent saves the query as a reusable pattern. This populates the same query patterns table used by the [Knowledge Base](/sql-agent/guides/knowledge-base/#query-patterns), so future searches can find proven SQL for similar questions.
 
 The agent saves:
 - The natural language question

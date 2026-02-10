@@ -1,11 +1,11 @@
 ---
 title: Introduction
-description: Overview of Laravel SQL Agent and how it works.
+description: Overview of SQL Agent for Laravel and how it works.
 sidebar:
   order: 1
 ---
 
-Laravel SQL Agent is a self-learning text-to-SQL agent for Laravel that converts natural language questions into SQL queries using LLMs.
+SQL Agent for Laravel is a self-learning text-to-SQL package that converts natural language questions into SQL queries using LLMs.
 
 This package is based on [Dash](https://github.com/agno-agi/dash) and [OpenAI's in-house data agent](https://openai.com/index/inside-our-in-house-data-agent/).
 

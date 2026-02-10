@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install and configure Laravel SQL Agent in your Laravel application.
+description: Install and configure SQL Agent for Laravel in your Laravel application.
 sidebar:
   order: 2
 ---
@@ -8,7 +8,7 @@ sidebar:
 ## Install via Composer
 
 ```bash
-composer require knobik/laravel-sql-agent
+composer require knobik/sql-agent
 ```
 
 ## Run the Install Command
@@ -97,4 +97,4 @@ The install command publishes the config, migrations, and knowledge directory au
 | `sql-agent-knowledge` | `php artisan vendor:publish --tag=sql-agent-knowledge` | `resources/sql-agent/knowledge/` |
 | `sql-agent-prompts` | `php artisan vendor:publish --tag=sql-agent-prompts` | `resources/views/vendor/sql-agent/prompts/` |
 
-Published views and prompts override the package defaults, so you can customize the [chat UI](/laravel-sql-agent/guides/web-interface/#customizing-views) and the [system prompt](/laravel-sql-agent/guides/self-learning/#customizing-the-system-prompt) without modifying the package.
+Published views and prompts override the package defaults, so you can customize the [chat UI](/sql-agent/guides/web-interface/#customizing-views) and the [system prompt](/sql-agent/guides/self-learning/#customizing-the-system-prompt) without modifying the package.

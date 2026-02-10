@@ -1,5 +1,5 @@
 {
-    "name": "knobik/laravel-sql-agent",
+    "name": "knobik/sql-agent",
     "description": "Self-learning text-to-SQL agent for Laravel",
     "keywords": ["laravel", "sql", "ai", "llm", "text-to-sql", "agent", "eloquent"],
     "license": "Apache-2.0",

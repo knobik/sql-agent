@@ -1,17 +1,17 @@
 ---
-title: Laravel SQL Agent
-description: A self-learning text-to-SQL agent for Laravel that converts natural language questions into SQL queries using LLMs.
+title: SQL Agent for Laravel
+description: A self-learning text-to-SQL package that converts natural language questions into SQL queries using LLMs.
 template: splash
 hero:
-  tagline: A self-learning text-to-SQL agent for Laravel that converts natural language questions into SQL queries using LLMs.
+  tagline: A self-learning text-to-SQL package that converts natural language questions into SQL queries using LLMs.
   image:
     file: ../../assets/logo.svg
   actions:
     - text: Get Started
-      link: /laravel-sql-agent/getting-started/introduction/
+      link: /sql-agent/getting-started/introduction/
       icon: right-arrow
     - text: View on GitHub
-      link: https://github.com/knobik/laravel-sql-agent
+      link: https://github.com/knobik/sql-agent
       icon: external
       variant: minimal
 ---
@@ -30,7 +30,7 @@ Raw LLMs writing SQL hit a wall fast — schemas lack meaning, types are mislead
     When a query fails and the agent recovers, it saves that learning. Next time, it knows.
   </Card>
   <Card title="Multi-LLM Support" icon="puzzle">
-    OpenAI (GPT-4, GPT-4o), Anthropic (Claude), and Ollama for local models — switch drivers via environment variables.
+    Any provider supported by [Prism PHP](https://prismphp.com) — OpenAI, Anthropic, Ollama, Gemini, Mistral, xAI, and more.
   </Card>
   <Card title="SQL Safety" icon="approve-check">
     Configurable guardrails prevent destructive operations with statement restrictions and row limits.
@@ -40,7 +40,7 @@ Raw LLMs writing SQL hit a wall fast — schemas lack meaning, types are mislead
 ## Quick Start
 
 ```bash
-composer require knobik/laravel-sql-agent
+composer require knobik/sql-agent
 php artisan sql-agent:install
 ```
 
@@ -53,7 +53,7 @@ $response = SqlAgent::run('How many users signed up this month?');
 echo $response->answer;
 ```
 
-See the [Installation](/laravel-sql-agent/getting-started/installation/) guide for full setup instructions.
+See the [Installation](/sql-agent/getting-started/installation/) guide for full setup instructions.
 
 ## Features
 

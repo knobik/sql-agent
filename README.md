@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="art/logo.svg" width="200" alt="Laravel SQL Agent">
+  <img src="art/logo.svg" width="200" alt="SQL Agent for Laravel">
 </p>
 
-# Laravel SQL Agent
+# SQL Agent for Laravel
 
 > **Alpha Release** - This package is in early development. APIs may change without notice.
 
-A self-learning text-to-SQL agent for Laravel that converts natural language questions into SQL queries using LLMs.
+A self-learning text-to-SQL package that converts natural language questions into SQL queries using LLMs.
 
 This package is based on [Dash](https://github.com/agno-agi/dash) and [OpenAI's in-house data agent](https://openai.com/index/inside-our-in-house-data-agent/).
 
@@ -54,12 +54,12 @@ This package provides the foundation to build reliable, context-aware data agent
 
 ## Installation
 
-For detailed setup instructions, see the [full documentation](https://knobik.github.io/laravel-sql-agent/getting-started/installation/).
+For detailed setup instructions, see the [full documentation](https://knobik.github.io/sql-agent/getting-started/installation/).
 
 Install the package via Composer:
 
 ```bash
-composer require knobik/laravel-sql-agent
+composer require knobik/sql-agent
 ```
 
 Run the install command:
@@ -128,20 +128,20 @@ echo $response->sql;     // "SELECT COUNT(*) as count FROM users WHERE created_a
 
 ## Documentation
 
-**[Read the full documentation](https://knobik.github.io/laravel-sql-agent/)**
+**[Read the full documentation](https://knobik.github.io/sql-agent/)**
 
-- [Configuration](https://knobik.github.io/laravel-sql-agent/guides/configuration/) - All config options (database, LLM, search, safety, etc.)
-- [Knowledge Base](https://knobik.github.io/laravel-sql-agent/guides/knowledge-base/) - Table metadata, business rules, and query patterns
-- [LLM & Search Drivers](https://knobik.github.io/laravel-sql-agent/guides/drivers/) - OpenAI, Anthropic, Ollama, and search driver setup
-- [Artisan Commands](https://knobik.github.io/laravel-sql-agent/reference/commands/) - All available commands and options
-- [Programmatic API](https://knobik.github.io/laravel-sql-agent/reference/api/) - Facade, streaming, and dependency injection
-- [Web Interface](https://knobik.github.io/laravel-sql-agent/guides/web-interface/) - Livewire chat UI and debug mode
-- [Evaluation](https://knobik.github.io/laravel-sql-agent/guides/evaluation/) - Test accuracy with automated evaluations
-- [Self-Learning](https://knobik.github.io/laravel-sql-agent/guides/self-learning/) - Automatic learning from errors
-- [Events](https://knobik.github.io/laravel-sql-agent/reference/events/) - Event hooks for custom behavior
-- [Agent Tools](https://knobik.github.io/laravel-sql-agent/reference/tools/) - All LLM tools with parameters and JSON schemas
-- [Database Support](https://knobik.github.io/laravel-sql-agent/reference/database-support/) - MySQL, PostgreSQL, SQLite, SQL Server
-- [Troubleshooting](https://knobik.github.io/laravel-sql-agent/troubleshooting/) - Common issues and solutions
+- [Configuration](https://knobik.github.io/sql-agent/guides/configuration/) - All config options (database, LLM, search, safety, etc.)
+- [Knowledge Base](https://knobik.github.io/sql-agent/guides/knowledge-base/) - Table metadata, business rules, and query patterns
+- [LLM & Search Drivers](https://knobik.github.io/sql-agent/guides/drivers/) - Configure LLM providers and search drivers
+- [Artisan Commands](https://knobik.github.io/sql-agent/reference/commands/) - All available commands and options
+- [Programmatic API](https://knobik.github.io/sql-agent/reference/api/) - Facade, streaming, and dependency injection
+- [Web Interface](https://knobik.github.io/sql-agent/guides/web-interface/) - Livewire chat UI and debug mode
+- [Evaluation](https://knobik.github.io/sql-agent/guides/evaluation/) - Test accuracy with automated evaluations
+- [Self-Learning](https://knobik.github.io/sql-agent/guides/self-learning/) - Automatic learning from errors
+- [Events](https://knobik.github.io/sql-agent/reference/events/) - Event hooks for custom behavior
+- [Agent Tools](https://knobik.github.io/sql-agent/reference/tools/) - All LLM tools with parameters and JSON schemas
+- [Database Support](https://knobik.github.io/sql-agent/reference/database-support/) - MySQL, PostgreSQL, SQLite, SQL Server
+- [Troubleshooting](https://knobik.github.io/sql-agent/troubleshooting/) - Common issues and solutions
 
 ## Testing
 
@@ -185,4 +185,4 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-Laravel SQL Agent is open-sourced software licensed under the [Apache-2.0 License](LICENSE).
+SQL Agent for Laravel is open-sourced software licensed under the [Apache-2.0 License](LICENSE).

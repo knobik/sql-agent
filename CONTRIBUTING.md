@@ -1,12 +1,12 @@
 # Contributing
 
-Thank you for considering contributing to Laravel SQL Agent!
+Thank you for considering contributing to SQL Agent for Laravel!
 
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/laravel-sql-agent.git
-cd laravel-sql-agent
+git clone https://github.com/YOUR_USERNAME/sql-agent.git
+cd sql-agent
 composer install
 ```
 
