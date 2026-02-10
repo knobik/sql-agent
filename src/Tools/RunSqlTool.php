@@ -22,10 +22,12 @@ class RunSqlTool extends Tool
 
     public function __construct()
     {
+        $allowed = implode(', ', config('sql-agent.sql.allowed_statements'));
+
         $this
             ->as('run_sql')
-            ->for('Execute a SQL query against the database. Only SELECT and WITH statements are allowed. Returns query results as JSON.')
-            ->withStringParameter('sql', 'The SQL query to execute. Must be a SELECT or WITH statement.')
+            ->for("Execute a SQL query against the database. Only {$allowed} statements are allowed. Returns query results as JSON.")
+            ->withStringParameter('sql', "The SQL query to execute. Must be a {$allowed} statement.")
             ->using($this);
     }
 
@@ -112,10 +114,7 @@ class RunSqlTool extends Tool
             );
         }
 
-        $forbiddenKeywords = config('sql-agent.sql.forbidden_keywords', [
-            'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE',
-            'TRUNCATE', 'GRANT', 'REVOKE', 'EXEC', 'EXECUTE',
-        ]);
+        $forbiddenKeywords = config('sql-agent.sql.forbidden_keywords');
 
         foreach ($forbiddenKeywords as $keyword) {
             $pattern = '/\b'.preg_quote($keyword, '/').'\b/i';

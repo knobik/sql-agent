@@ -64,8 +64,20 @@ class SaveQueryTool extends Tool
         }
 
         $sqlUpper = strtoupper(trim($sql));
-        if (! str_starts_with($sqlUpper, 'SELECT') && ! str_starts_with($sqlUpper, 'WITH')) {
-            throw new RuntimeException('SQL must be a SELECT or WITH statement.');
+        $allowedStatements = config('sql-agent.sql.allowed_statements');
+        $startsWithAllowed = false;
+
+        foreach ($allowedStatements as $statement) {
+            if (str_starts_with($sqlUpper, $statement)) {
+                $startsWithAllowed = true;
+                break;
+            }
+        }
+
+        if (! $startsWithAllowed) {
+            throw new RuntimeException(
+                'SQL must be a '.implode(' or ', $allowedStatements).' statement.'
+            );
         }
 
         $tablesUsed = array_values(array_filter(array_map(function ($table) {
