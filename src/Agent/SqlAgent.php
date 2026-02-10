@@ -21,6 +21,7 @@ use Prism\Prism\Streaming\Events\ToolCallEvent;
 use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Text\Response as PrismResponse;
 use Prism\Prism\Tool;
+use Prism\Prism\ValueObjects\Usage;
 use Throwable;
 
 class SqlAgent implements Agent
@@ -34,6 +35,8 @@ class SqlAgent implements Agent
     protected ?string $currentQuestion = null;
 
     protected ?array $lastPrompt = null;
+
+    protected ?Usage $lastUsage = null;
 
     public function __construct(
         protected ToolRegistry $toolRegistry,
@@ -57,6 +60,7 @@ class SqlAgent implements Agent
 
             $this->syncFromRunSqlTool($loop->tools);
             $this->iterations = $this->extractIterations($response);
+            $this->lastUsage = $response->usage;
 
             return $this->buildResponse($response->text);
         } catch (Throwable $e) {
@@ -136,10 +140,26 @@ class SqlAgent implements Agent
                             'tool_results' => $currentStep['tool_results'] ?? [],
                         ];
                     }
+
+                    $lastFinishReason = $event->finishReason->value;
+
+                    if ($event->usage !== null) {
+                        $this->lastUsage = $event->usage;
+                    }
                 }
             }
 
             $this->syncFromRunSqlTool($loop->tools);
+
+            // Some providers (e.g. Ollama) report 'stop' even when max_tokens is reached.
+            // Detect truncation by comparing completion_tokens against configured max_tokens.
+            $finishReason = $lastFinishReason ?? 'stop';
+            if ($finishReason === 'stop' && $this->lastUsage !== null) {
+                $maxTokens = config('sql-agent.llm.max_tokens');
+                if ($maxTokens > 0 && $this->lastUsage->completionTokens >= $maxTokens) {
+                    $finishReason = 'length';
+                }
+            }
 
             // Fallback if content is empty but we have results
             if (empty(trim($fullContent)) && $this->lastSql !== null && $this->lastResults !== null) {
@@ -147,10 +167,10 @@ class SqlAgent implements Agent
                 yield StreamChunk::content($fallbackContent);
             }
 
-            yield StreamChunk::complete('stop');
+            yield StreamChunk::complete($finishReason, usage: $this->lastUsage?->toArray());
         } catch (Throwable $e) {
             yield StreamChunk::content("\n\nAn error occurred: {$e->getMessage()}");
-            yield StreamChunk::complete('error');
+            yield StreamChunk::complete('error', usage: $this->lastUsage?->toArray());
         }
     }
 
@@ -172,6 +192,11 @@ class SqlAgent implements Agent
     public function getLastPrompt(): ?array
     {
         return $this->lastPrompt;
+    }
+
+    public function getLastUsage(): ?array
+    {
+        return $this->lastUsage?->toArray();
     }
 
     protected function buildPrismRequest(AgentLoopContext $loop): \Prism\Prism\Text\PendingRequest
@@ -254,6 +279,7 @@ class SqlAgent implements Agent
             toolCalls: $this->collectToolCalls(),
             iterations: $this->iterations,
             error: $error,
+            usage: $this->lastUsage?->toArray(),
         );
     }
 
@@ -287,6 +313,7 @@ class SqlAgent implements Agent
         $this->iterations = [];
         $this->currentQuestion = null;
         $this->lastPrompt = null;
+        $this->lastUsage = null;
 
         // Reset tool state
         foreach ($this->toolRegistry->all() as $tool) {

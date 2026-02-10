@@ -28,6 +28,7 @@ class StreamAgentResponse
 
         $fullContent = '';
         $fullThinking = '';
+        $lastUsage = null;
         $cancelled = false;
         $debugEnabled = config('sql-agent.debug.enabled');
         $startTime = hrtime(true);
@@ -54,12 +55,14 @@ class StreamAgentResponse
                 }
 
                 if ($chunk->isComplete()) {
+                    $lastUsage = $chunk->usage;
+                    $truncated = $chunk->finishReason === 'length';
                     break;
                 }
             }
 
             if (! $cancelled) {
-                $this->persistAndFinish($conversationId, $fullContent, $fullThinking, $debugEnabled, $startTime);
+                $this->persistAndFinish($conversationId, $fullContent, $fullThinking, $debugEnabled, $startTime, $lastUsage, $truncated ?? false);
             }
         } catch (\Throwable $e) {
             $this->conversationService->addMessage(
@@ -79,6 +82,8 @@ class StreamAgentResponse
         string $fullThinking,
         bool $debugEnabled,
         int $startTime,
+        ?array $usage = null,
+        bool $truncated = false,
     ): void {
         $lastSql = $this->agent->getLastSql();
         $lastResults = $this->agent->getLastResults();
@@ -95,6 +100,12 @@ class StreamAgentResponse
         if ($fullThinking !== '') {
             $metadata['thinking'] = $fullThinking;
         }
+        if ($usage !== null) {
+            $metadata['usage'] = $usage;
+        }
+        if ($truncated) {
+            $metadata['truncated'] = true;
+        }
 
         $this->conversationService->addMessage(
             $conversationId,
@@ -105,11 +116,19 @@ class StreamAgentResponse
             $metadata ?: null,
         );
 
-        $this->sendEvent('done', [
+        $donePayload = [
             'sql' => $lastSql,
             'hasResults' => ! empty($lastResults),
             'resultCount' => $lastResults ? count($lastResults) : 0,
-        ]);
+        ];
+        if ($usage !== null) {
+            $donePayload['usage'] = $usage;
+        }
+        if ($truncated) {
+            $donePayload['truncated'] = true;
+        }
+
+        $this->sendEvent('done', $donePayload);
     }
 
     protected function sendEvent(string $event, array $data): void

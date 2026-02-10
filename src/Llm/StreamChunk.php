@@ -11,6 +11,7 @@ class StreamChunk
         public readonly array $toolCalls = [],
         public readonly ?string $finishReason = null,
         public readonly ?string $thinking = null,
+        public readonly ?array $usage = null,
     ) {}
 
     /**
@@ -88,12 +89,13 @@ class StreamChunk
     /**
      * Create a completion chunk.
      */
-    public static function complete(string $finishReason, ?string $content = null, array $toolCalls = []): self
+    public static function complete(string $finishReason, ?string $content = null, array $toolCalls = [], ?array $usage = null): self
     {
         return new self(
             content: $content,
             toolCalls: $toolCalls,
             finishReason: $finishReason,
+            usage: $usage,
         );
     }
 }

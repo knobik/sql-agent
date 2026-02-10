@@ -47,7 +47,7 @@ SqlAgent uses [Prism PHP](https://prismphp.com) as its LLM abstraction layer. Pr
     'provider' => env('SQL_AGENT_LLM_PROVIDER', 'openai'),
     'model' => env('SQL_AGENT_LLM_MODEL', 'gpt-4o'),
     'temperature' => (float) env('SQL_AGENT_LLM_TEMPERATURE', 0.3),
-    'max_tokens' => (int) env('SQL_AGENT_LLM_MAX_TOKENS', 4096),
+    'max_tokens' => (int) env('SQL_AGENT_LLM_MAX_TOKENS', 16384),
     'provider_options' => [],
 ],
 ```
@@ -57,7 +57,7 @@ SqlAgent uses [Prism PHP](https://prismphp.com) as its LLM abstraction layer. Pr
 | `provider` | The Prism provider name (`openai`, `anthropic`, `ollama`, `gemini`, etc.) | `openai` |
 | `model` | The model identifier for the chosen provider | `gpt-4o` |
 | `temperature` | Sampling temperature (0.0 = deterministic, 1.0 = creative) | `0.3` |
-| `max_tokens` | Maximum tokens in the LLM response | `4096` |
+| `max_tokens` | Maximum tokens in the LLM response | `16384` |
 | `provider_options` | Additional provider-specific options passed to Prism's `withProviderOptions()` | `[]` |
 
 Provider credentials (API keys, base URLs) are configured in Prism's own config file. Publish it with:

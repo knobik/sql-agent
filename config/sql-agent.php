@@ -58,7 +58,7 @@ return [
         'provider' => env('SQL_AGENT_LLM_PROVIDER', 'openai'),
         'model' => env('SQL_AGENT_LLM_MODEL', 'gpt-4o'),
         'temperature' => (float) env('SQL_AGENT_LLM_TEMPERATURE', 0.3),
-        'max_tokens' => (int) env('SQL_AGENT_LLM_MAX_TOKENS', 4096),
+        'max_tokens' => (int) env('SQL_AGENT_LLM_MAX_TOKENS', 16384),
 
         // Additional provider-specific options passed to Prism's withProviderOptions()
         // e.g. ['thinking' => true] for Ollama thinking mode

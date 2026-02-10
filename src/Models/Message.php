@@ -17,6 +17,7 @@ use Knobik\SqlAgent\Enums\MessageRole;
  * @property string|null $sql
  * @property array<int, mixed>|null $results
  * @property array<string, mixed>|null $metadata
+ * @property array<string, mixed>|null $usage
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -117,5 +118,10 @@ class Message extends Model
     public function getExecutionTime(): ?float
     {
         return $this->metadata['execution_time'] ?? null;
+    }
+
+    public function getUsageAttribute(): ?array
+    {
+        return $this->metadata['usage'] ?? null;
     }
 }

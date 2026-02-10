@@ -448,8 +448,12 @@ function chatStream() {
                 // Error event
                 this.streamedContent = 'Error: ' + data.message;
                 this.renderContent();
+            } else if (data.truncated) {
+                // Done event with truncation — model hit max_tokens
+                this.streamedContent += '\n\n> **Warning:** The response was cut short because the model reached its token limit. You can increase `SQL_AGENT_LLM_MAX_TOKENS` in your configuration.';
+                this.renderContent();
+                this.scrollToBottom();
             }
-            // Done event - handled by finally block
         },
 
         renderContent() {

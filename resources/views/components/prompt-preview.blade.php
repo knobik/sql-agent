@@ -9,6 +9,7 @@
     $errorDetails = $debugData['error_details'] ?? null;
     $toolsFull = $promptData['tools_full'] ?? [];
     $thinking = $debugData['thinking'] ?? null;
+    $debugUsage = $debugData['usage'] ?? null;
     $systemPrompt = $promptData['system'] ?? '';
     $systemPromptSizeKb = $systemPrompt ? round(strlen($systemPrompt) / 1024, 1) : 0;
 @endphp
@@ -25,6 +26,9 @@
         <div class="flex items-center gap-3 text-xs text-amber-600 dark:text-amber-400">
             @if(!empty($timing['total_ms']))
                 <span>{{ $timing['total_ms'] }}ms</span>
+            @endif
+            @if($debugUsage)
+                <span>{{ number_format(($debugUsage['prompt_tokens'] ?? 0) + ($debugUsage['completion_tokens'] ?? 0)) }} tokens</span>
             @endif
             <span>{{ count($promptData['messages'] ?? []) }} messages</span>
             @if(count($iterations) > 0)
@@ -69,6 +73,15 @@
                     class="px-4 py-2 text-xs font-medium border-b-2 transition-colors"
                 >
                     Thinking
+                </button>
+            @endif
+            @if($debugUsage)
+                <button
+                    @click="activeTab = 'usage'"
+                    :class="activeTab === 'usage' ? 'border-amber-500 text-amber-700 dark:text-amber-300' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                    class="px-4 py-2 text-xs font-medium border-b-2 transition-colors"
+                >
+                    Usage
                 </button>
             @endif
             @if($errorDetails)
@@ -238,6 +251,48 @@
                     </div>
                     <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800 max-h-96 overflow-y-auto custom-scrollbar">
                         <div class="prose prose-sm prose-purple dark:prose-invert max-w-none text-purple-800 dark:text-purple-200" x-data x-html="marked.parse(@js($thinking))"></div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Usage Tab --}}
+            @if($debugUsage)
+                <div x-show="activeTab === 'usage'" x-cloak class="space-y-3">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-amber-200 dark:border-gray-700">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Prompt Tokens</div>
+                                <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($debugUsage['prompt_tokens'] ?? 0) }}</div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Completion Tokens</div>
+                                <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($debugUsage['completion_tokens'] ?? 0) }}</div>
+                            </div>
+                            @if(($debugUsage['cache_write_input_tokens'] ?? null) !== null)
+                                <div class="space-y-1">
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Cache Write Tokens</div>
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($debugUsage['cache_write_input_tokens']) }}</div>
+                                </div>
+                            @endif
+                            @if(($debugUsage['cache_read_input_tokens'] ?? null) !== null)
+                                <div class="space-y-1">
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Cache Read Tokens</div>
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($debugUsage['cache_read_input_tokens']) }}</div>
+                                </div>
+                            @endif
+                            @if(($debugUsage['thought_tokens'] ?? null) !== null)
+                                <div class="space-y-1">
+                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Thought Tokens</div>
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($debugUsage['thought_tokens']) }}</div>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ number_format(($debugUsage['prompt_tokens'] ?? 0) + ($debugUsage['completion_tokens'] ?? 0)) }} tokens</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endif

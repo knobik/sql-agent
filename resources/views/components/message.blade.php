@@ -12,6 +12,8 @@
     $isAssistant = $role === 'assistant' || $role === \Knobik\SqlAgent\Enums\MessageRole::Assistant;
     $debugEnabled = config('sql-agent.debug.enabled', false);
     $hasPrompt = $debugEnabled && isset($metadata['prompt']);
+    $usage = $metadata['usage'] ?? null;
+    $truncated = $metadata['truncated'] ?? false;
 @endphp
 
 <div class="flex gap-4 {{ $isUser ? 'justify-end' : 'justify-start' }}">
@@ -28,9 +30,27 @@
             <div class="markdown-content {{ $isStreaming ? 'stream-cursor' : '' }} {{ $isUser ? 'text-white [&_code]:bg-white/20 [&_code]:text-white' : 'text-gray-700 dark:text-gray-200' }}" x-data x-html="marked.parse(@js($content))"></div>
         </div>
 
-        @if($isAssistant && ($sql || $results || $hasPrompt))
+        @if($isAssistant && $truncated)
+            <div class="mt-2 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>Response truncated — the model reached its token limit. Consider increasing <code class="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-[11px] font-mono">SQL_AGENT_LLM_MAX_TOKENS</code>.</span>
+            </div>
+        @endif
+
+        @if($isAssistant && ($sql || $results || $hasPrompt || $usage))
             <div x-data="{ showSql: false, showResults: false, showPrompt: false }" class="mt-3">
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($usage)
+                        <span class="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            {{ number_format($usage['prompt_tokens'] ?? 0) }} in / {{ number_format($usage['completion_tokens'] ?? 0) }} out{{ ($usage['cache_read_input_tokens'] ?? null) ? ' · ' . number_format($usage['cache_read_input_tokens']) . ' cached' : '' }}
+                        </span>
+                    @endif
+
                     @if($sql)
                         <button
                             @click="showSql = !showSql"
