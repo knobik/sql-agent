@@ -1,0 +1,148 @@
+---
+/**
+ * Version picker dropdown that fetches versions.json at runtime.
+ * Hides itself gracefully when versions.json is unavailable (e.g. local dev).
+ * Follows the custom element pattern from Starlight's ThemeSelect.
+ */
+---
+
+<starlight-version-select>
+	<label style="--sl-select-width: 7em" class="version-select">
+		<span class="sr-only">Version</span>
+		<svg aria-hidden="true" class="icon label-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+		</svg>
+		<select autocomplete="off">
+			<option>Loading...</option>
+		</select>
+		<svg aria-hidden="true" class="icon caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M12 16l-6-6h12z" />
+		</svg>
+	</label>
+</starlight-version-select>
+
+<script>
+	class StarlightVersionSelect extends HTMLElement {
+		constructor() {
+			super();
+			this.init();
+		}
+
+		async init() {
+			const select = this.querySelector('select');
+			if (!select) return;
+
+			try {
+				const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+				// Walk up to the site root to find versions.json
+				// e.g. /sql-agent/next -> /sql-agent, /sql-agent/v0 -> /sql-agent
+				const siteRoot = base.split('/').slice(0, 2).join('/') || '/';
+				const res = await fetch(`${siteRoot}/versions.json`);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data: { versions: Array<{ label: string; path: string; latest?: boolean; prerelease?: boolean }> } = await res.json();
+
+				if (!data.versions || data.versions.length === 0) {
+					this.style.display = 'none';
+					return;
+				}
+
+				// Detect current version from pathname
+				const pathname = window.location.pathname;
+				let currentPath = '';
+				for (const v of data.versions) {
+					if (pathname.startsWith(v.path)) {
+						if (v.path.length > currentPath.length) {
+							currentPath = v.path;
+						}
+					}
+				}
+
+				// Build options
+				select.innerHTML = '';
+				for (const v of data.versions) {
+					const opt = document.createElement('option');
+					opt.value = v.path;
+					opt.textContent = v.label;
+					opt.selected = v.path === currentPath;
+					select.appendChild(opt);
+				}
+
+				select.addEventListener('change', () => {
+					window.location.href = select.value;
+				});
+			} catch {
+				// versions.json not available (local dev) — hide the picker
+				this.style.display = 'none';
+			}
+		}
+	}
+
+	customElements.define('starlight-version-select', StarlightVersionSelect);
+</script>
+
+<style>
+	starlight-version-select {
+		display: contents;
+	}
+
+	.version-select {
+		--sl-label-icon-size: 0.875rem;
+		--sl-caret-size: 1.25rem;
+		--sl-inline-padding: 0.5rem;
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--sl-color-gray-1);
+	}
+
+	.version-select:hover {
+		color: var(--sl-color-gray-2);
+	}
+
+	.icon {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		pointer-events: none;
+	}
+
+	.label-icon {
+		font-size: var(--sl-label-icon-size);
+		width: var(--sl-label-icon-size);
+		height: var(--sl-label-icon-size);
+		inset-inline-start: 0;
+	}
+
+	.caret {
+		font-size: var(--sl-caret-size);
+		width: var(--sl-caret-size);
+		height: var(--sl-caret-size);
+		inset-inline-end: 0;
+	}
+
+	select {
+		border: 0;
+		padding-block: 0.625rem;
+		padding-inline: calc(var(--sl-label-icon-size) + var(--sl-inline-padding) + 0.25rem)
+			calc(var(--sl-caret-size) + var(--sl-inline-padding) + 0.25rem);
+		margin-inline: calc(var(--sl-inline-padding) * -1);
+		width: calc(var(--sl-select-width) + var(--sl-inline-padding) * 2);
+		background-color: transparent;
+		text-overflow: ellipsis;
+		color: inherit;
+		cursor: pointer;
+		appearance: none;
+	}
+
+	option {
+		background-color: var(--sl-color-bg-nav);
+		color: var(--sl-color-gray-1);
+	}
+
+	@media (min-width: 50rem) {
+		select {
+			font-size: var(--sl-text-sm);
+		}
+	}
+</style>

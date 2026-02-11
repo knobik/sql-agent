@@ -3,8 +3,8 @@ name: Deploy Docs to GitHub Pages
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
+    tags:
+      - '*.*.*'
   workflow_dispatch:
 
 permissions:
@@ -21,12 +21,140 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
-      - name: Build docs
-        uses: withastro/action@v5
         with:
-          path: docs
-          package-manager: npm
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Discover versions
+        id: versions
+        run: |
+          # Collect all semver tags (v?X.Y.Z)
+          TAGS=$(git tag -l --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' || true)
+
+          if [ -z "$TAGS" ]; then
+            echo "has_tags=false" >> "$GITHUB_OUTPUT"
+            echo "No semver tags found — will build main only."
+            exit 0
+          fi
+
+          echo "has_tags=true" >> "$GITHUB_OUTPUT"
+
+          # Latest tag overall
+          LATEST_TAG=$(echo "$TAGS" | head -n1)
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
+          # Extract major version of latest tag
+          LATEST_MAJOR=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f1)
+          echo "latest_major=$LATEST_MAJOR" >> "$GITHUB_OUTPUT"
+
+          # Find latest tag per older major version
+          OLD_MAJORS=""
+          SEEN_MAJORS="$LATEST_MAJOR"
+          for TAG in $TAGS; do
+            MAJOR=$(echo "$TAG" | sed 's/^v//' | cut -d. -f1)
+            if ! echo "$SEEN_MAJORS" | grep -qw "$MAJOR"; then
+              # First time seeing this major = latest tag for it (already sorted desc)
+              OLD_MAJORS="${OLD_MAJORS}${MAJOR}=${TAG} "
+              SEEN_MAJORS="${SEEN_MAJORS} ${MAJOR}"
+            fi
+          done
+
+          echo "old_majors=$OLD_MAJORS" >> "$GITHUB_OUTPUT"
+          echo "Discovered: latest=$LATEST_TAG (v$LATEST_MAJOR), old_majors=[$OLD_MAJORS]"
+
+      - name: Build all versions
+        env:
+          HAS_TAGS: ${{ steps.versions.outputs.has_tags }}
+          LATEST_TAG: ${{ steps.versions.outputs.latest_tag }}
+          LATEST_MAJOR: ${{ steps.versions.outputs.latest_major }}
+          OLD_MAJORS: ${{ steps.versions.outputs.old_majors }}
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+
+          build_version() {
+            local REF="$1"
+            local DEST="$2"
+            local BASE="$3"
+            local LABEL="$4"
+
+            echo "::group::Building $LABEL (ref=$REF, base=$BASE, dest=$DEST)"
+
+            git worktree add ".worktrees/$REF" "$REF" --detach 2>/dev/null || {
+              echo "::warning::Failed to checkout $REF — skipping"
+              echo "::endgroup::"
+              return 0
+            }
+
+            local DOCS_DIR=".worktrees/$REF/docs"
+            if [ ! -d "$DOCS_DIR" ]; then
+              echo "::warning::No docs/ directory at $REF — skipping"
+              git worktree remove ".worktrees/$REF" --force 2>/dev/null || true
+              echo "::endgroup::"
+              return 0
+            fi
+
+            cd "$DOCS_DIR"
+
+            # Patch astro.config.mjs for old tags that don't have DOCS_BASE env var support
+            if ! grep -q 'DOCS_BASE' astro.config.mjs 2>/dev/null; then
+              echo "Patching astro.config.mjs for DOCS_BASE support..."
+              sed -i "s|base: '/sql-agent'|base: process.env.DOCS_BASE \|\| '/sql-agent'|" astro.config.mjs
+            fi
+
+            npm ci
+            DOCS_BASE="$BASE" npx astro build
+
+            cd -
+            mkdir -p "_site/$DEST"
+            cp -r ".worktrees/$REF/docs/dist/"* "_site/$DEST/"
+            git worktree remove ".worktrees/$REF" --force
+
+            echo "::endgroup::"
+          }
+
+          if [ "$HAS_TAGS" = "false" ]; then
+            # No tags — build main as root only
+            build_version "main" "" "/sql-agent" "main (no tags)"
+          else
+            # Build main → _site/next/
+            build_version "main" "next" "/sql-agent/next" "Next (main)"
+
+            # Build latest tag → _site/ (root)
+            build_version "$LATEST_TAG" "" "/sql-agent" "$LATEST_TAG (latest)"
+
+            # Build old major versions
+            for ENTRY in $OLD_MAJORS; do
+              MAJOR="${ENTRY%%=*}"
+              TAG="${ENTRY#*=}"
+              build_version "$TAG" "v$MAJOR" "/sql-agent/v$MAJOR" "$TAG (v$MAJOR)"
+            done
+
+            # Generate versions.json
+            echo "Generating versions.json..."
+            VERSIONS_JSON='{"versions":['
+            VERSIONS_JSON+='{"label":"Next","path":"/sql-agent/next/","prerelease":true}'
+            VERSIONS_JSON+=',{"label":"v'"$LATEST_MAJOR"' (latest)","path":"/sql-agent/","latest":true}'
+
+            for ENTRY in $OLD_MAJORS; do
+              MAJOR="${ENTRY%%=*}"
+              VERSIONS_JSON+=',{"label":"v'"$MAJOR"'","path":"/sql-agent/v'"$MAJOR"'/"}'
+            done
+
+            VERSIONS_JSON+=']}'
+
+            echo "$VERSIONS_JSON" | python3 -m json.tool > _site/versions.json
+            echo "Generated versions.json:"
+            cat _site/versions.json
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
   deploy:
     needs: build
