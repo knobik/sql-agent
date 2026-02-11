@@ -26,12 +26,11 @@ describe('StreamRequest validation', function () {
         expect($rules['conversation_id'])->toContain('integer');
     });
 
-    it('connection is nullable string', function () {
+    it('does not have connection validation rule', function () {
         $request = new StreamRequest;
         $rules = $request->rules();
 
-        expect($rules['connection'])->toContain('nullable');
-        expect($rules['connection'])->toContain('string');
+        expect($rules)->not->toHaveKey('connection');
     });
 
     it('authorizes all requests', function () {
@@ -61,22 +60,5 @@ describe('StreamRequest accessor methods', function () {
         ]);
 
         expect($request->getConversationId())->toBe(42);
-    });
-
-    it('getResolvedConnection uses connection input when provided', function () {
-        $request = StreamRequest::create('/stream', 'POST', [
-            'message' => 'test',
-            'connection' => 'mysql',
-        ]);
-
-        expect($request->getResolvedConnection())->toBe('mysql');
-    });
-
-    it('getResolvedConnection falls back to config', function () {
-        config(['sql-agent.database.connection' => 'pgsql']);
-
-        $request = StreamRequest::create('/stream', 'POST', ['message' => 'test']);
-
-        expect($request->getResolvedConnection())->toBe('pgsql');
     });
 });

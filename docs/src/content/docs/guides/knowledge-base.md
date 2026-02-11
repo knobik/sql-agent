@@ -36,6 +36,7 @@ Columns are defined as a simple map of column name to description. Relationships
 
 ```json
 {
+    "connection": "sales",
     "table": "orders",
     "description": "Contains customer orders and their status",
     "use_cases": [
@@ -66,6 +67,7 @@ Columns are defined as a simple map of column name to description. Relationships
 | Field | Required | Description |
 |-------|----------|-------------|
 | `table` | Yes | Table name. Also accepts `table_name`. |
+| `connection` | No | Logical connection name matching a key in your `database.connections` config. Files without this field default to `"default"` and are included for all connections. |
 | `description` | No | Human-readable table description. Also accepts `table_description`. |
 | `columns` | No | Map of column name to description string. |
 | `relationships` | No | List of relationship description strings. |
@@ -74,6 +76,10 @@ Columns are defined as a simple map of column name to description. Relationships
 
 :::tip
 Column descriptions are free-form text. Include whatever context helps the LLM — data types, foreign key references, enum values, defaults, and business meaning. The more context you provide, the better the agent's SQL will be.
+:::
+
+:::tip
+When using multiple databases, tag each table file with the `connection` field matching the key in your `database.connections` config. For example, if your config has `'sales' => [...]`, set `"connection": "sales"` in the corresponding table files. See the [Database Connections](/sql-agent/guides/multi-database/) guide for details.
 :::
 
 ## Business Rules

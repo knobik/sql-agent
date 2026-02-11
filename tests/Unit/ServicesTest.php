@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Knobik\SqlAgent\Services\BusinessRulesLoader;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ContextBuilder;
 use Knobik\SqlAgent\Services\KnowledgeLoader;
 use Knobik\SqlAgent\Services\QueryPatternSearch;
@@ -220,6 +221,69 @@ describe('ContextBuilder', function () {
         );
 
         expect($context->businessRules)->toBe('');
+        expect($context->queryPatterns)->toBeEmpty();
+    });
+
+    it('builds multi-connection context with per-connection sections', function () {
+        config(['sql-agent.knowledge.source' => 'database']);
+        config(['sql-agent.learning.enabled' => false]);
+        config(['sql-agent.database.connections' => [
+            'sales' => [
+                'connection' => 'testing',
+                'label' => 'Sales Database',
+                'description' => 'Orders and customers.',
+            ],
+            'analytics' => [
+                'connection' => 'testing',
+                'label' => 'Analytics Database',
+                'description' => 'Page views and events.',
+            ],
+        ]]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $builder = app(ContextBuilder::class);
+
+        try {
+            $context = $builder->build('How many users?');
+        } catch (\BadMethodCallException $e) {
+            // Doctrine DBAL not available - skip runtime schema check
+            $this->markTestSkipped('Schema introspection not available for this driver.');
+        }
+
+        expect($context)->toBeInstanceOf(\Knobik\SqlAgent\Data\Context::class);
+
+        // Runtime schema should contain per-connection headers
+        if ($context->runtimeSchema !== null) {
+            expect($context->runtimeSchema)->toContain('Connection: sales (Sales Database)');
+            expect($context->runtimeSchema)->toContain('Connection: analytics (Analytics Database)');
+        }
+    });
+
+    it('includes business rules and learnings globally in multi-connection mode', function () {
+        config(['sql-agent.knowledge.source' => 'database']);
+        config(['sql-agent.learning.enabled' => false]);
+        config(['sql-agent.database.connections' => [
+            'db1' => [
+                'connection' => 'testing',
+                'label' => 'DB1',
+                'description' => 'First database.',
+            ],
+        ]]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $builder = app(ContextBuilder::class);
+
+        try {
+            $context = $builder->build('test question');
+        } catch (\BadMethodCallException $e) {
+            $this->markTestSkipped('Schema introspection not available for this driver.');
+        }
+
+        // Business rules are global (not per-connection)
+        expect($context->businessRules)->toBeString();
+        // Query patterns are global
         expect($context->queryPatterns)->toBeEmpty();
     });
 });

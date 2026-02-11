@@ -23,12 +23,15 @@
             </div>
 
             <div class="flex items-center gap-2">
-                {{-- Connection Selector --}}
-                <x-sql-agent::connection-selector
-                    x-bind:disabled="isStreaming"
-                    :connections="$this->connections"
-                    :selected="$connection"
-                />
+                {{-- Database Connection Badge --}}
+                <div class="flex items-center gap-2 px-3 py-2.5 text-sm bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg shadow-sm">
+                    <div class="w-5 h-5 rounded bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                        <svg class="w-3 h-3 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                    </div>
+                    <span class="font-medium text-primary-700 dark:text-primary-300">{{ $this->connectionCount }} {{ Str::plural('database', $this->connectionCount) }} connected</span>
+                </div>
 
                 {{-- Dark Mode Toggle --}}
                 <button
@@ -283,7 +286,6 @@ function chatStream() {
         streamedContent: '',
         pendingUserMessage: '',
         conversationId: @json($conversationId),
-        connection: @json($connection),
         abortController: null,
 
         // Show streaming UI while streaming or finishing
@@ -358,7 +360,6 @@ function chatStream() {
                     body: JSON.stringify({
                         message: message,
                         conversation_id: this.conversationId,
-                        connection: this.connection,
                     }),
                     signal: this.abortController.signal,
                 });

@@ -6,30 +6,32 @@ namespace Knobik\SqlAgent\Services;
 
 class TableAccessControl
 {
+    public function __construct(
+        protected ConnectionRegistry $connectionRegistry,
+    ) {}
+
     /**
      * Filter a list of table names through allowed/denied rules.
      *
      * @param  array<string>  $tables
      * @return array<string>
      */
-    public function filterTables(array $tables): array
+    public function filterTables(array $tables, ?string $connectionName = null): array
     {
-        return array_values(array_filter($tables, fn (string $table) => $this->isTableAllowed($table)));
+        return array_values(array_filter($tables, fn (string $table) => $this->isTableAllowed($table, $connectionName)));
     }
 
     /**
      * Check if a table is allowed based on allowed/denied config.
      * Denied takes precedence over allowed.
      */
-    public function isTableAllowed(string $table): bool
+    public function isTableAllowed(string $table, ?string $connectionName = null): bool
     {
-        $deniedTables = config('sql-agent.sql.denied_tables');
+        [$allowedTables, $deniedTables] = $this->resolveTableRules($connectionName);
 
         if (in_array($table, $deniedTables, true)) {
             return false;
         }
-
-        $allowedTables = config('sql-agent.sql.allowed_tables');
 
         if (empty($allowedTables)) {
             return true;
@@ -44,9 +46,9 @@ class TableAccessControl
      * @param  array<string, mixed>  $columns  column name => description/info
      * @return array<string, mixed>
      */
-    public function filterColumns(string $table, array $columns): array
+    public function filterColumns(string $table, array $columns, ?string $connectionName = null): array
     {
-        $hidden = $this->getHiddenColumns($table);
+        $hidden = $this->getHiddenColumns($table, $connectionName);
 
         if (empty($hidden)) {
             return $columns;
@@ -60,10 +62,40 @@ class TableAccessControl
      *
      * @return array<string>
      */
-    public function getHiddenColumns(string $table): array
+    public function getHiddenColumns(string $table, ?string $connectionName = null): array
     {
-        $hiddenColumns = config('sql-agent.sql.hidden_columns');
+        $hiddenColumns = $this->resolveHiddenColumns($connectionName);
 
         return $hiddenColumns[$table] ?? [];
+    }
+
+    /**
+     * Resolve allowed/denied table rules for a connection.
+     *
+     * @return array{0: array<string>, 1: array<string>}
+     */
+    protected function resolveTableRules(?string $connectionName): array
+    {
+        if ($connectionName !== null) {
+            $config = $this->connectionRegistry->getConnection($connectionName);
+
+            return [$config->allowedTables, $config->deniedTables];
+        }
+
+        return [[], []];
+    }
+
+    /**
+     * Resolve hidden columns config for a connection.
+     *
+     * @return array<string, array<string>>
+     */
+    protected function resolveHiddenColumns(?string $connectionName): array
+    {
+        if ($connectionName !== null) {
+            return $this->connectionRegistry->getConnection($connectionName)->hiddenColumns;
+        }
+
+        return [];
     }
 }

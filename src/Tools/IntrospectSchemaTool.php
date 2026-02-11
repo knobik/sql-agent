@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Tools;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
 use Knobik\SqlAgent\Services\TableAccessControl;
 use Prism\Prism\Tool;
@@ -14,50 +15,54 @@ use Throwable;
 
 class IntrospectSchemaTool extends Tool
 {
-    protected ?string $connection = null;
-
     protected TableAccessControl $tableAccessControl;
+
+    protected ConnectionRegistry $connectionRegistry;
 
     public function __construct(
         protected SchemaIntrospector $introspector,
     ) {
         $this->tableAccessControl = app(TableAccessControl::class);
+        $this->connectionRegistry = app(ConnectionRegistry::class);
 
         $this
             ->as('introspect_schema')
             ->for('Get detailed schema information about database tables. Can inspect a specific table or list all available tables.')
             ->withStringParameter('table_name', 'Optional: The name of a specific table to inspect. If not provided, lists all tables.', required: false)
             ->withBooleanParameter('include_sample_data', 'Whether to include sample data from the table (up to 3 rows). This data is for understanding the schema only - never use it directly in responses to the user.', required: false)
+            ->withEnumParameter(
+                'connection',
+                'The database connection to inspect.',
+                $this->connectionRegistry->getConnectionNames(),
+            )
             ->using($this);
     }
 
-    public function __invoke(?string $table_name = null, bool $include_sample_data = false): string
+    public function __invoke(?string $table_name = null, bool $include_sample_data = false, ?string $connection = null): string
     {
-        $connection = $this->connection ?? config('sql-agent.database.connection');
+        $resolvedConnection = $this->resolveConnection($connection);
 
         if ($table_name) {
             return json_encode(
-                $this->inspectTable($table_name, $include_sample_data, $connection),
+                $this->inspectTable($table_name, $include_sample_data, $resolvedConnection, $connection),
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
             );
         }
 
         return json_encode(
-            $this->listTables($connection),
+            $this->listTables($resolvedConnection, $connection),
             JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
         );
     }
 
-    public function setConnection(?string $connection): self
+    protected function resolveConnection(?string $logicalName): ?string
     {
-        $this->connection = $connection;
-
-        return $this;
+        return $this->connectionRegistry->resolveConnection($logicalName);
     }
 
-    protected function listTables(?string $connection): array
+    protected function listTables(?string $connection, ?string $connectionName = null): array
     {
-        $tableNames = $this->introspector->getTableNames($connection);
+        $tableNames = $this->introspector->getTableNames($connection, $connectionName);
 
         return [
             'tables' => $tableNames,
@@ -65,16 +70,16 @@ class IntrospectSchemaTool extends Tool
         ];
     }
 
-    protected function inspectTable(string $tableName, bool $includeSampleData, ?string $connection): array
+    protected function inspectTable(string $tableName, bool $includeSampleData, ?string $connection, ?string $connectionName = null): array
     {
-        if (! $this->tableAccessControl->isTableAllowed($tableName)) {
+        if (! $this->tableAccessControl->isTableAllowed($tableName, $connectionName)) {
             throw new RuntimeException(
                 "Access denied: table '{$tableName}' is restricted."
             );
         }
 
         if (! $this->introspector->tableExists($tableName, $connection)) {
-            $available = $this->introspector->getTableNames($connection);
+            $available = $this->introspector->getTableNames($connection, $connectionName);
 
             throw new RuntimeException(
                 "Table '{$tableName}' does not exist. Available tables: ".implode(', ', $available)
@@ -90,7 +95,7 @@ class IntrospectSchemaTool extends Tool
         $primaryKeyColumns = $this->getPrimaryKeyColumns($indexes);
         $foreignKeyMap = $this->buildForeignKeyMap($foreignKeys);
 
-        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName);
+        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName, $connectionName);
 
         $columns = [];
         foreach ($dbColumns as $column) {
@@ -134,7 +139,7 @@ class IntrospectSchemaTool extends Tool
         ];
 
         if ($includeSampleData) {
-            $result['sample_data'] = $this->getSampleData($tableName, $connection);
+            $result['sample_data'] = $this->getSampleData($tableName, $connection, $connectionName);
         }
 
         return $result;
@@ -216,9 +221,9 @@ class IntrospectSchemaTool extends Tool
         return (string) $default;
     }
 
-    protected function getSampleData(string $tableName, ?string $connection): array
+    protected function getSampleData(string $tableName, ?string $connection, ?string $connectionName = null): array
     {
-        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName);
+        $hiddenColumns = $this->tableAccessControl->getHiddenColumns($tableName, $connectionName);
 
         $rows = DB::connection($connection)
             ->table($tableName)

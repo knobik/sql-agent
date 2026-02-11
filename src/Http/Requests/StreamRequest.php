@@ -21,7 +21,6 @@ class StreamRequest extends FormRequest
         return [
             'message' => 'required|string|max:10000',
             'conversation_id' => 'nullable|integer|exists:sql_agent_conversations,id',
-            'connection' => 'nullable|string',
         ];
     }
 
@@ -35,12 +34,5 @@ class StreamRequest extends FormRequest
         $id = $this->input('conversation_id');
 
         return $id !== null ? (int) $id : null;
-    }
-
-    public function getResolvedConnection(): string
-    {
-        return $this->input('connection')
-            ?: config('sql-agent.database.connection')
-            ?: config('database.default');
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SemanticModelLoader;
 
 uses(RefreshDatabase::class);
@@ -58,11 +59,18 @@ afterEach(function () {
 
 describe('SemanticModelLoader with TableAccessControl', function () {
     it('excludes denied tables from loaded metadata', function () {
-        config()->set('sql-agent.sql.denied_tables', ['secrets']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'denied_tables' => ['secrets'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $loader = app(SemanticModelLoader::class);
 
-        $tables = $loader->load();
+        $tables = $loader->load(connectionName: 'main');
         $tableNames = $tables->pluck('tableName')->all();
 
         expect($tableNames)->toContain('users');
@@ -71,24 +79,38 @@ describe('SemanticModelLoader with TableAccessControl', function () {
     });
 
     it('only includes allowed tables', function () {
-        config()->set('sql-agent.sql.allowed_tables', ['users']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'allowed_tables' => ['users'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $loader = app(SemanticModelLoader::class);
 
-        $tables = $loader->load();
+        $tables = $loader->load(connectionName: 'main');
         $tableNames = $tables->pluck('tableName')->all();
 
         expect($tableNames)->toBe(['users']);
     });
 
     it('hides columns from loaded metadata', function () {
-        config()->set('sql-agent.sql.hidden_columns', [
-            'users' => ['password'],
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'hidden_columns' => [
+                    'users' => ['password'],
+                ],
+            ],
         ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $loader = app(SemanticModelLoader::class);
 
-        $tables = $loader->load();
+        $tables = $loader->load(connectionName: 'main');
         $usersTable = $tables->first(fn ($t) => $t->tableName === 'users');
 
         expect($usersTable)->not->toBeNull();
@@ -99,13 +121,20 @@ describe('SemanticModelLoader with TableAccessControl', function () {
     });
 
     it('does not modify tables without hidden columns', function () {
-        config()->set('sql-agent.sql.hidden_columns', [
-            'users' => ['password'],
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'hidden_columns' => [
+                    'users' => ['password'],
+                ],
+            ],
         ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $loader = app(SemanticModelLoader::class);
 
-        $tables = $loader->load();
+        $tables = $loader->load(connectionName: 'main');
         $ordersTable = $tables->first(fn ($t) => $t->tableName === 'orders');
 
         expect($ordersTable)->not->toBeNull();

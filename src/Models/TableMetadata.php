@@ -42,10 +42,8 @@ class TableMetadata extends Model
         ];
     }
 
-    public function scopeForConnection($query, ?string $connection = null)
+    public function scopeForConnection($query, string $connection)
     {
-        $connection = $connection ?? config('sql-agent.database.connection');
-
         return $query->where('connection', $connection);
     }
 

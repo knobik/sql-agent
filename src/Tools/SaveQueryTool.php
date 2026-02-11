@@ -5,19 +5,14 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Tools;
 
 use Knobik\SqlAgent\Models\QueryPattern;
-use Knobik\SqlAgent\Services\TableAccessControl;
 use Prism\Prism\Schema\StringSchema;
 use Prism\Prism\Tool;
 use RuntimeException;
 
 class SaveQueryTool extends Tool
 {
-    protected TableAccessControl $tableAccessControl;
-
     public function __construct()
     {
-        $this->tableAccessControl = app(TableAccessControl::class);
-
         $this
             ->as('save_validated_query')
             ->for('Save a validated query pattern to the knowledge base. Use this when you have successfully executed a SQL query that correctly answers a user question. This helps future queries by providing proven patterns.')
@@ -91,14 +86,6 @@ class SaveQueryTool extends Tool
 
         if (empty($tablesUsed)) {
             throw new RuntimeException('Tables used must contain at least one valid table name.');
-        }
-
-        foreach ($tablesUsed as $table) {
-            if (! $this->tableAccessControl->isTableAllowed($table)) {
-                throw new RuntimeException(
-                    "Access denied: table '{$table}' is restricted and cannot be saved in query patterns."
-                );
-            }
         }
 
         $existing = QueryPattern::search($question)->first();

@@ -83,4 +83,29 @@ describe('buildStreamChunkFromPrism', function () {
 
         expect($chunk->content)->toContain('data-sql="SELECT 1"');
     });
+
+    it('appends connection name for run_sql when present', function () {
+        $chunk = $this->resolver->buildStreamChunkFromPrism('run_sql', ['sql' => 'SELECT 1', 'connection' => 'sales']);
+
+        expect($chunk->content)->toContain('Running SQL query on sales');
+        expect($chunk->content)->toContain('data-sql="SELECT 1"');
+    });
+
+    it('appends connection name for introspect_schema when present', function () {
+        $chunk = $this->resolver->buildStreamChunkFromPrism('introspect_schema', ['connection' => 'analytics']);
+
+        expect($chunk->content)->toContain('Inspecting schema on analytics');
+    });
+
+    it('does not append connection for other tools', function () {
+        $chunk = $this->resolver->buildStreamChunkFromPrism('search_knowledge', ['query' => 'test', 'connection' => 'sales']);
+
+        expect($chunk->content)->not->toContain('on sales');
+    });
+
+    it('does not append connection when not present', function () {
+        $chunk = $this->resolver->buildStreamChunkFromPrism('run_sql', ['sql' => 'SELECT 1']);
+
+        expect($chunk->content)->not->toContain(' on ');
+    });
 });

@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
 
 uses(RefreshDatabase::class);
@@ -20,45 +21,73 @@ afterEach(function () {
 
 describe('SchemaIntrospector with TableAccessControl', function () {
     it('excludes denied tables from getTableNames', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
 
-        $tables = $introspector->getTableNames();
+        $tables = $introspector->getTableNames(connectionName: 'main');
 
         expect($tables)->not->toContain('test_users');
         expect($tables)->toContain('test_orders');
     });
 
     it('excludes tables not in allowed list from getTableNames', function () {
-        config()->set('sql-agent.sql.allowed_tables', ['test_orders']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'allowed_tables' => ['test_orders'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
 
-        $tables = $introspector->getTableNames();
+        $tables = $introspector->getTableNames(connectionName: 'main');
 
         expect($tables)->not->toContain('test_users');
         expect($tables)->toContain('test_orders');
     });
 
     it('returns null when introspecting denied table', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
 
-        $result = $introspector->introspectTable('test_users');
+        $result = $introspector->introspectTable('test_users', connectionName: 'main');
 
         expect($result)->toBeNull();
     });
 
     it('hides columns from introspected table', function () {
-        config()->set('sql-agent.sql.hidden_columns', [
-            'test_users' => ['password'],
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'hidden_columns' => [
+                    'test_users' => ['password'],
+                ],
+            ],
         ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
 
-        $schema = $introspector->introspectTable('test_users');
+        $schema = $introspector->introspectTable('test_users', connectionName: 'main');
 
         expect($schema)->not->toBeNull();
         expect($schema->getColumnNames())->toContain('id');
@@ -68,11 +97,18 @@ describe('SchemaIntrospector with TableAccessControl', function () {
     });
 
     it('excludes denied tables from getAllTables', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
 
-        $tables = $introspector->getAllTables();
+        $tables = $introspector->getAllTables(connectionName: 'main');
         $tableNames = $tables->pluck('tableName')->all();
 
         expect($tableNames)->not->toContain('test_users');

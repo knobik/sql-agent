@@ -19,6 +19,8 @@ class TableSchema extends Data
         public array $dataQualityNotes = [],
         /** @var array<string> */
         public array $useCases = [],
+        /** Connection name this table belongs to (used for file-based multi-connection filtering) */
+        public ?string $connection = null,
     ) {}
 
     public function toPromptString(): string

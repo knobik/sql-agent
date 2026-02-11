@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
 use Knobik\SqlAgent\Tools\IntrospectSchemaTool;
 use Prism\Prism\Tool;
@@ -68,50 +69,222 @@ describe('IntrospectSchemaTool', function () {
         expect($tool->name())->toBe('introspect_schema');
     });
 
-    it('can set connection', function () {
+    it('excludes denied tables from listing via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
         $introspector = app(SchemaIntrospector::class);
         $tool = new IntrospectSchemaTool($introspector);
 
-        $result = $tool->setConnection('testing');
-
-        expect($result)->toBe($tool);
-    });
-
-    it('excludes denied tables from listing', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
-
-        $introspector = app(SchemaIntrospector::class);
-        $tool = new IntrospectSchemaTool($introspector);
-
-        $result = json_decode($tool(), true);
+        $result = json_decode($tool(connection: 'main'), true);
 
         expect($result['tables'])->not->toContain('test_users');
     });
 
-    it('rejects introspection of denied table', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+    it('rejects introspection of denied table via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
         $tool = new IntrospectSchemaTool($introspector);
 
-        expect(fn () => $tool(table_name: 'test_users'))
+        expect(fn () => $tool(table_name: 'test_users', connection: 'main'))
             ->toThrow(RuntimeException::class, 'Access denied');
     });
 
-    it('hides columns from inspected table', function () {
-        config()->set('sql-agent.sql.hidden_columns', [
-            'test_users' => ['email'],
+    it('hides columns from inspected table via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'hidden_columns' => [
+                    'test_users' => ['email'],
+                ],
+            ],
         ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $introspector = app(SchemaIntrospector::class);
         $tool = new IntrospectSchemaTool($introspector);
 
-        $result = json_decode($tool(table_name: 'test_users'), true);
+        $result = json_decode($tool(table_name: 'test_users', connection: 'main'), true);
 
         $columnNames = array_column($result['columns'], 'name');
 
         expect($columnNames)->toContain('id');
         expect($columnNames)->toContain('name');
         expect($columnNames)->not->toContain('email');
+    });
+});
+
+describe('IntrospectSchemaTool multi-connection mode', function () {
+    it('registers connection enum parameter when multi-mode is active', function () {
+        config()->set('sql-agent.database.connections', [
+            'crm' => [
+                'connection' => 'testing',
+                'label' => 'CRM DB',
+                'description' => 'CRM data.',
+            ],
+            'analytics' => [
+                'connection' => 'testing',
+                'label' => 'Analytics DB',
+                'description' => 'Analytics data.',
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        expect($tool->parameters())->toHaveKey('connection');
+        expect($tool->parametersAsArray()['connection']['enum'])->toContain('crm');
+        expect($tool->parametersAsArray()['connection']['enum'])->toContain('analytics');
+    });
+
+    it('lists tables on specified connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main DB',
+                'description' => 'Main database.',
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(connection: 'main'), true);
+
+        expect($result)->toHaveKey('tables');
+        expect($result['tables'])->toContain('test_users');
+    });
+
+    it('inspects table on specified connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main DB',
+                'description' => 'Main database.',
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(table_name: 'test_users', connection: 'main'), true);
+
+        expect($result['table'])->toBe('test_users');
+        expect($result['columns'])->not->toBeEmpty();
+    });
+
+    it('enforces per-connection denied tables in listing', function () {
+        config()->set('sql-agent.database.connections', [
+            'restricted' => [
+                'connection' => 'testing',
+                'label' => 'Restricted DB',
+                'description' => 'Restricted.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(connection: 'restricted'), true);
+
+        expect($result['tables'])->not->toContain('test_users');
+    });
+
+    it('rejects introspection of per-connection denied table', function () {
+        config()->set('sql-agent.database.connections', [
+            'restricted' => [
+                'connection' => 'testing',
+                'label' => 'Restricted DB',
+                'description' => 'Restricted.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        expect(fn () => $tool(table_name: 'test_users', connection: 'restricted'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('hides per-connection columns from inspected table', function () {
+        config()->set('sql-agent.database.connections', [
+            'secured' => [
+                'connection' => 'testing',
+                'label' => 'Secured DB',
+                'description' => 'Secured.',
+                'hidden_columns' => [
+                    'test_users' => ['email'],
+                ],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(table_name: 'test_users', connection: 'secured'), true);
+
+        $columnNames = array_column($result['columns'], 'name');
+
+        expect($columnNames)->toContain('id');
+        expect($columnNames)->toContain('name');
+        expect($columnNames)->not->toContain('email');
+    });
+
+    it('uses per-connection rules instead of global rules', function () {
+        // Global rules deny test_users, but per-connection rules allow everything
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+        config()->set('sql-agent.database.connections', [
+            'open' => [
+                'connection' => 'testing',
+                'label' => 'Open DB',
+                'description' => 'No restrictions.',
+                'allowed_tables' => [],
+                'denied_tables' => [],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $introspector = app(SchemaIntrospector::class);
+        $tool = new IntrospectSchemaTool($introspector);
+
+        $result = json_decode($tool(connection: 'open'), true);
+
+        expect($result['tables'])->toContain('test_users');
     });
 });

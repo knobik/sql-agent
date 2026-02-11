@@ -16,19 +16,37 @@ class ContextBuilder
         protected BusinessRulesLoader $rulesLoader,
         protected QueryPatternSearch $patternSearch,
         protected SchemaIntrospector $introspector,
+        protected ConnectionRegistry $connectionRegistry,
     ) {}
 
     /**
      * Build the complete context for a question.
      */
-    public function build(string $question, ?string $connection = null): Context
+    public function build(string $question): Context
     {
+        $semanticSections = [];
+        $schemaSections = [];
+
+        foreach ($this->connectionRegistry->all() as $name => $config) {
+            $laravelConnection = $config->connection;
+
+            $semantic = $this->semanticLoader->format($laravelConnection, $name);
+            if ($semantic && $semantic !== 'No table metadata available.') {
+                $semanticSections[] = "## Connection: {$name} ({$config->label})\n{$config->description}\n\n{$semantic}";
+            }
+
+            $schema = $this->introspector->getRelevantSchema($question, $laravelConnection, $name);
+            if ($schema) {
+                $schemaSections[] = "## Connection: {$name} ({$config->label})\n\n{$schema}";
+            }
+        }
+
         return new Context(
-            semanticModel: $this->semanticLoader->format($connection),
+            semanticModel: implode("\n\n---\n\n", $semanticSections) ?: 'No table metadata available.',
             businessRules: $this->rulesLoader->format(),
             queryPatterns: $this->patternSearch->search($question),
             learnings: $this->searchLearnings($question),
-            runtimeSchema: $this->introspector->getRelevantSchema($question, $connection),
+            runtimeSchema: implode("\n\n---\n\n", $schemaSections) ?: null,
         );
     }
 
@@ -37,7 +55,6 @@ class ContextBuilder
      */
     public function buildWithOptions(
         string $question,
-        ?string $connection = null,
         bool $includeSemanticModel = true,
         bool $includeBusinessRules = true,
         bool $includeQueryPatterns = true,
@@ -47,21 +64,21 @@ class ContextBuilder
         int $learningLimit = 5,
     ): Context {
         return new Context(
-            semanticModel: $includeSemanticModel ? $this->semanticLoader->format($connection) : '',
+            semanticModel: $includeSemanticModel ? $this->buildSemanticModel() : '',
             businessRules: $includeBusinessRules ? $this->rulesLoader->format() : '',
             queryPatterns: $includeQueryPatterns ? $this->patternSearch->search($question, $queryPatternLimit) : collect(),
             learnings: $includeLearnings ? $this->searchLearnings($question, $learningLimit) : collect(),
-            runtimeSchema: $includeRuntimeSchema ? $this->introspector->getRelevantSchema($question, $connection) : null,
+            runtimeSchema: $includeRuntimeSchema ? $this->buildRuntimeSchema($question) : null,
         );
     }
 
     /**
      * Build minimal context (just schema, no search).
      */
-    public function buildMinimal(?string $connection = null): Context
+    public function buildMinimal(): Context
     {
         return new Context(
-            semanticModel: $this->semanticLoader->format($connection),
+            semanticModel: $this->buildSemanticModel(),
             businessRules: $this->rulesLoader->format(),
             queryPatterns: collect(),
             learnings: collect(),
@@ -72,15 +89,49 @@ class ContextBuilder
     /**
      * Build context with runtime introspection only.
      */
-    public function buildRuntimeOnly(string $question, ?string $connection = null): Context
+    public function buildRuntimeOnly(string $question): Context
     {
         return new Context(
             semanticModel: '',
             businessRules: '',
             queryPatterns: collect(),
             learnings: collect(),
-            runtimeSchema: $this->introspector->getRelevantSchema($question, $connection),
+            runtimeSchema: $this->buildRuntimeSchema($question),
         );
+    }
+
+    /**
+     * Build semantic model across all configured connections.
+     */
+    protected function buildSemanticModel(): string
+    {
+        $sections = [];
+
+        foreach ($this->connectionRegistry->all() as $name => $config) {
+            $semantic = $this->semanticLoader->format($config->connection, $name);
+            if ($semantic && $semantic !== 'No table metadata available.') {
+                $sections[] = "## Connection: {$name} ({$config->label})\n{$config->description}\n\n{$semantic}";
+            }
+        }
+
+        return implode("\n\n---\n\n", $sections) ?: 'No table metadata available.';
+    }
+
+    /**
+     * Build runtime schema across all configured connections.
+     */
+    protected function buildRuntimeSchema(string $question): ?string
+    {
+        $sections = [];
+
+        foreach ($this->connectionRegistry->all() as $name => $config) {
+            $schema = $this->introspector->getRelevantSchema($question, $config->connection, $name);
+            if ($schema) {
+                $sections[] = "## Connection: {$name} ({$config->label})\n\n{$schema}";
+            }
+        }
+
+        return implode("\n\n---\n\n", $sections) ?: null;
     }
 
     /**

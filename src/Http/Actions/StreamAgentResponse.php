@@ -16,7 +16,7 @@ class StreamAgentResponse
         protected ConversationService $conversationService,
     ) {}
 
-    public function __invoke(string $question, int $conversationId, string $connection): void
+    public function __invoke(string $question, int $conversationId): void
     {
         if (ob_get_level()) {
             ob_end_clean();
@@ -34,7 +34,7 @@ class StreamAgentResponse
         $startTime = hrtime(true);
 
         try {
-            foreach ($this->agent->stream($question, $connection, $history) as $chunk) {
+            foreach ($this->agent->stream($question, $history) as $chunk) {
                 if ($chunk->hasThinking()) {
                     $fullThinking .= $chunk->thinking;
                     $this->sendEvent('thinking', ['thinking' => $chunk->thinking]);

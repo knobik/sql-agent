@@ -22,8 +22,21 @@ return [
     |
     */
     'database' => [
-        'connection' => env('SQL_AGENT_CONNECTION', config('database.default')),
         'storage_connection' => env('SQL_AGENT_STORAGE_CONNECTION', config('database.default')),
+
+        // Database connections the agent can query. Each entry maps a logical name
+        // to a Laravel database connection. The agent autonomously decides which
+        // database to query based on the user's question.
+        'connections' => [
+            'default' => [
+                'connection' => env('SQL_AGENT_CONNECTION', config('database.default')),
+                'label' => 'Database',
+                'description' => 'Main application database.',
+                // 'allowed_tables' => [],
+                // 'denied_tables' => [],
+                // 'hidden_columns' => [],
+            ],
+        ],
     ],
 
     /*
@@ -236,14 +249,6 @@ return [
         ],
 
         'max_rows' => env('SQL_AGENT_MAX_ROWS', 1000),
-
-        // Table access control — restrict which tables the agent can see and query.
-        // allowed_tables: whitelist — empty array means all tables are allowed.
-        // denied_tables: blacklist — always denied, takes precedence over allowed_tables.
-        // hidden_columns: columns to hide per table, e.g. ['users' => ['password', 'remember_token']]
-        'allowed_tables' => [],
-        'denied_tables' => [],
-        'hidden_columns' => [],
     ],
 
     /*

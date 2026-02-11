@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Tools\RunSqlTool;
 use Prism\Prism\Tool;
 
@@ -100,14 +101,6 @@ describe('RunSqlTool', function () {
         expect($tool->requiredParameters())->toContain('sql');
     });
 
-    it('can set connection', function () {
-        $tool = new RunSqlTool;
-
-        $result = $tool->setConnection('testing');
-
-        expect($result)->toBe($tool);
-    });
-
     it('can set and get question', function () {
         $tool = new RunSqlTool;
 
@@ -116,41 +109,180 @@ describe('RunSqlTool', function () {
         expect($tool->getQuestion())->toBe('How many users?');
     });
 
-    it('rejects queries on denied tables', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+    it('rejects queries on denied tables via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $tool = new RunSqlTool;
 
-        expect(fn () => $tool('SELECT * FROM test_users'))
+        expect(fn () => $tool('SELECT * FROM test_users', 'main'))
             ->toThrow(RuntimeException::class, 'Access denied');
     });
 
-    it('rejects queries on tables not in allowed list', function () {
-        config()->set('sql-agent.sql.allowed_tables', ['other_table']);
+    it('rejects queries on tables not in allowed list via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'allowed_tables' => ['other_table'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $tool = new RunSqlTool;
 
-        expect(fn () => $tool('SELECT * FROM test_users'))
+        expect(fn () => $tool('SELECT * FROM test_users', 'main'))
             ->toThrow(RuntimeException::class, 'Access denied');
     });
 
-    it('allows queries on allowed tables', function () {
-        config()->set('sql-agent.sql.allowed_tables', ['test_users']);
-        config()->set('sql-agent.sql.denied_tables', []);
+    it('allows queries on allowed tables via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'allowed_tables' => ['test_users'],
+                'denied_tables' => [],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $tool = new RunSqlTool;
 
-        $result = json_decode($tool('SELECT * FROM test_users'), true);
+        $result = json_decode($tool('SELECT * FROM test_users', 'main'), true);
 
         expect($result['rows'])->toHaveCount(2);
     });
 
-    it('rejects queries with denied tables in JOIN', function () {
-        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+    it('rejects queries with denied tables in JOIN via connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main',
+                'description' => 'Main database.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
 
         $tool = new RunSqlTool;
 
-        expect(fn () => $tool('SELECT * FROM orders JOIN test_users ON orders.user_id = test_users.id'))
+        expect(fn () => $tool('SELECT * FROM orders JOIN test_users ON orders.user_id = test_users.id', 'main'))
             ->toThrow(RuntimeException::class, 'Access denied');
+    });
+});
+
+describe('RunSqlTool multi-connection mode', function () {
+    it('registers connection enum parameter when multi-mode is active', function () {
+        config()->set('sql-agent.database.connections', [
+            'sales' => [
+                'connection' => 'testing',
+                'label' => 'Sales DB',
+                'description' => 'Sales data.',
+            ],
+            'analytics' => [
+                'connection' => 'testing',
+                'label' => 'Analytics DB',
+                'description' => 'Analytics data.',
+            ],
+        ]);
+
+        // ConnectionRegistry is a singleton, so we need to flush the cached state
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $tool = new RunSqlTool;
+
+        expect($tool->parameters())->toHaveKey('connection');
+        expect($tool->parametersAsArray()['connection']['enum'])->toContain('sales');
+        expect($tool->parametersAsArray()['connection']['enum'])->toContain('analytics');
+    });
+
+    it('executes query on specified connection', function () {
+        config()->set('sql-agent.database.connections', [
+            'main' => [
+                'connection' => 'testing',
+                'label' => 'Main DB',
+                'description' => 'Main database.',
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $tool = new RunSqlTool;
+
+        $result = json_decode($tool('SELECT * FROM test_users', 'main'), true);
+
+        expect($result['rows'])->toHaveCount(2);
+        expect($result['row_count'])->toBe(2);
+    });
+
+    it('enforces per-connection denied tables', function () {
+        config()->set('sql-agent.database.connections', [
+            'restricted' => [
+                'connection' => 'testing',
+                'label' => 'Restricted DB',
+                'description' => 'Restricted.',
+                'denied_tables' => ['test_users'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $tool = new RunSqlTool;
+
+        expect(fn () => $tool('SELECT * FROM test_users', 'restricted'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('enforces per-connection allowed tables', function () {
+        config()->set('sql-agent.database.connections', [
+            'limited' => [
+                'connection' => 'testing',
+                'label' => 'Limited DB',
+                'description' => 'Limited.',
+                'allowed_tables' => ['other_table'],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $tool = new RunSqlTool;
+
+        expect(fn () => $tool('SELECT * FROM test_users', 'limited'))
+            ->toThrow(RuntimeException::class, 'Access denied');
+    });
+
+    it('uses per-connection rules instead of global rules', function () {
+        // Global rules deny test_users, but per-connection rules allow everything
+        config()->set('sql-agent.sql.denied_tables', ['test_users']);
+        config()->set('sql-agent.database.connections', [
+            'open' => [
+                'connection' => 'testing',
+                'label' => 'Open DB',
+                'description' => 'No restrictions.',
+                'allowed_tables' => [],
+                'denied_tables' => [],
+            ],
+        ]);
+
+        app()->forgetInstance(ConnectionRegistry::class);
+
+        $tool = new RunSqlTool;
+
+        $result = json_decode($tool('SELECT * FROM test_users', 'open'), true);
+
+        expect($result['rows'])->toHaveCount(2);
     });
 });

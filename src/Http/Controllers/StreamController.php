@@ -16,15 +16,14 @@ class StreamController extends Controller
     public function __invoke(StreamRequest $request, StreamAgentResponse $streamAction, ConversationService $conversationService): StreamedResponse
     {
         $question = $request->getMessage();
-        $connection = $request->getResolvedConnection();
-        $conversation = $conversationService->findOrCreate($request->getConversationId(), $connection);
+        $conversation = $conversationService->findOrCreate($request->getConversationId(), 'multi');
         $conversationId = $conversation->id;
 
         $conversationService->addMessage($conversationId, MessageRole::User, $question);
         $conversation->updateTitleIfEmpty();
 
         return new StreamedResponse(
-            fn () => $streamAction($question, $conversationId, $connection),
+            fn () => $streamAction($question, $conversationId),
             200,
             [
                 'Content-Type' => 'text/event-stream',

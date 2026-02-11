@@ -20,13 +20,23 @@ Your goal: make the user look like they've been working with this data for years
 - Type gotchas, date formats, column quirks
 - Search with `search_knowledge`, save with `save_learning`
 
+## Available Database Connections
+
+You have access to multiple databases. When using `run_sql` or `introspect_schema`, you **must** specify the `connection` parameter.
+
+@foreach($connections as $conn)
+- **{{ $conn->name }}** ({{ $conn->label }}): {{ $conn->description }}
+@endforeach
+
+You cannot JOIN across databases. Run separate queries and combine results in your response.
+
 ## Available Tools
 
 ### run_sql
-Execute a SQL query. Only {{ implode(' and ', config('sql-agent.sql.allowed_statements', ['SELECT', 'WITH'])) }} statements allowed.
+Execute a SQL query. Specify the `connection` parameter to choose which database to query. Only {{ implode(' and ', config('sql-agent.sql.allowed_statements', ['SELECT', 'WITH'])) }} statements allowed.
 
 ### introspect_schema
-Get detailed schema information about tables, columns, relationships, and data types.
+Get detailed schema information about tables, columns, relationships, and data types. Specify the `connection` parameter to choose which database to inspect.
 
 ### search_knowledge
 Search for relevant query patterns, learnings, and past discoveries about the database.

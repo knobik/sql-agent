@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Knobik\SqlAgent\Data\TableSchema;
 use Throwable;
@@ -20,12 +21,12 @@ class SchemaIntrospector
      *
      * @return Collection<int, TableSchema>
      */
-    public function getAllTables(?string $connection = null): Collection
+    public function getAllTables(?string $connection = null, ?string $connectionName = null): Collection
     {
         $connection = $this->resolveConnection($connection);
 
         try {
-            $tableNames = $this->getTableNames($connection);
+            $tableNames = $this->getTableNames($connection, $connectionName);
         } catch (Throwable $e) {
             report($e);
 
@@ -33,16 +34,16 @@ class SchemaIntrospector
         }
 
         return collect($tableNames)
-            ->map(fn (string $tableName) => $this->introspectTable($tableName, $connection))
+            ->map(fn (string $tableName) => $this->introspectTable($tableName, $connection, $connectionName))
             ->filter();
     }
 
     /**
      * Introspect a single table.
      */
-    public function introspectTable(string $tableName, ?string $connection = null): ?TableSchema
+    public function introspectTable(string $tableName, ?string $connection = null, ?string $connectionName = null): ?TableSchema
     {
-        if (! $this->tableAccessControl->isTableAllowed($tableName)) {
+        if (! $this->tableAccessControl->isTableAllowed($tableName, $connectionName)) {
             return null;
         }
 
@@ -53,7 +54,7 @@ class SchemaIntrospector
                 return null;
             }
 
-            return $this->buildTableSchema($tableName, $connection);
+            return $this->buildTableSchema($tableName, $connection, $connectionName);
         } catch (Throwable $e) {
             report($e);
 
@@ -64,19 +65,19 @@ class SchemaIntrospector
     /**
      * Get relevant schema for a question by extracting potential table names.
      */
-    public function getRelevantSchema(string $question, ?string $connection = null): ?string
+    public function getRelevantSchema(string $question, ?string $connection = null, ?string $connectionName = null): ?string
     {
         $connection = $this->resolveConnection($connection);
 
         // Extract potential table names from the question
-        $potentialTables = $this->extractPotentialTableNames($question, $connection);
+        $potentialTables = $this->extractPotentialTableNames($question, $connection, $connectionName);
 
         if (empty($potentialTables)) {
             return null;
         }
 
         $schemas = collect($potentialTables)
-            ->map(fn (string $tableName) => $this->introspectTable($tableName, $connection))
+            ->map(fn (string $tableName) => $this->introspectTable($tableName, $connection, $connectionName))
             ->filter()
             ->map(fn (TableSchema $schema) => $schema->toPromptString());
 
@@ -90,7 +91,7 @@ class SchemaIntrospector
     /**
      * Build a TableSchema from Laravel's schema information.
      */
-    protected function buildTableSchema(string $tableName, ?string $connection): TableSchema
+    protected function buildTableSchema(string $tableName, ?string $connection, ?string $connectionName = null): TableSchema
     {
         $schemaBuilder = Schema::connection($connection);
 
@@ -147,7 +148,7 @@ class SchemaIntrospector
         // Try to get table comment
         $tableComment = $this->getTableComment($tableName, $connection);
 
-        $columns = $this->tableAccessControl->filterColumns($tableName, $columns);
+        $columns = $this->tableAccessControl->filterColumns($tableName, $columns, $connectionName);
 
         return new TableSchema(
             tableName: $tableName,
@@ -218,7 +219,7 @@ class SchemaIntrospector
     protected function getTableComment(string $tableName, ?string $connection): ?string
     {
         try {
-            $tables = Schema::connection($connection)->getTables();
+            $tables = $this->getTablesForConnection($connection);
         } catch (Throwable) {
             return null;
         }
@@ -253,12 +254,12 @@ class SchemaIntrospector
      *
      * @return array<string>
      */
-    protected function extractPotentialTableNames(string $question, ?string $connection = null): array
+    protected function extractPotentialTableNames(string $question, ?string $connection = null, ?string $connectionName = null): array
     {
         $connection = $this->resolveConnection($connection);
 
         try {
-            $allTables = $this->getTableNames($connection);
+            $allTables = $this->getTableNames($connection, $connectionName);
         } catch (Throwable) {
             return [];
         }
@@ -307,12 +308,12 @@ class SchemaIntrospector
      *
      * @return array<string>
      */
-    public function getTableNames(?string $connection = null): array
+    public function getTableNames(?string $connection = null, ?string $connectionName = null): array
     {
         $connection = $this->resolveConnection($connection);
 
         try {
-            $tables = Schema::connection($connection)->getTables();
+            $tables = $this->getTablesForConnection($connection);
         } catch (Throwable $e) {
             report($e);
 
@@ -321,7 +322,7 @@ class SchemaIntrospector
 
         $tableNames = array_map(fn (array $table) => $table['name'], $tables);
 
-        return $this->tableAccessControl->filterTables($tableNames);
+        return $this->tableAccessControl->filterTables($tableNames, $connectionName);
     }
 
     /**
@@ -353,9 +354,9 @@ class SchemaIntrospector
     /**
      * Format all tables as a prompt string.
      */
-    public function format(?string $connection = null): string
+    public function format(?string $connection = null, ?string $connectionName = null): string
     {
-        $tables = $this->getAllTables($connection);
+        $tables = $this->getAllTables($connection, $connectionName);
 
         if ($tables->isEmpty()) {
             return 'No tables found in the database.';
@@ -367,10 +368,35 @@ class SchemaIntrospector
     }
 
     /**
+     * Get tables filtered to the connection's configured database.
+     *
+     * Laravel's Schema::getTables() may return tables from all databases on the same
+     * server (observed on MySQL). This method filters results to only include tables
+     * belonging to the connection's configured database.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function getTablesForConnection(?string $connection): array
+    {
+        $tables = Schema::connection($connection)->getTables();
+
+        $schemas = array_unique(array_filter(array_column($tables, 'schema')));
+        if (count($schemas) <= 1) {
+            return $tables;
+        }
+
+        $databaseName = DB::connection($connection)->getDatabaseName();
+
+        return array_values(
+            array_filter($tables, fn (array $table) => ($table['schema'] ?? null) === $databaseName)
+        );
+    }
+
+    /**
      * Resolve the connection name.
      */
     protected function resolveConnection(?string $connection): ?string
     {
-        return $connection ?? config('sql-agent.database.connection');
+        return $connection;
     }
 }

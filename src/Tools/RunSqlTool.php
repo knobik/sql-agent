@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Tools;
 
 use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Events\SqlErrorOccurred;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\TableAccessControl;
 use Prism\Prism\Tool;
 use RuntimeException;
@@ -13,11 +14,11 @@ use Throwable;
 
 class RunSqlTool extends Tool
 {
-    protected ?string $connection = null;
-
     protected ?string $question = null;
 
     protected TableAccessControl $tableAccessControl;
+
+    protected ConnectionRegistry $connectionRegistry;
 
     public ?string $lastSql = null;
 
@@ -26,6 +27,7 @@ class RunSqlTool extends Tool
     public function __construct()
     {
         $this->tableAccessControl = app(TableAccessControl::class);
+        $this->connectionRegistry = app(ConnectionRegistry::class);
 
         $allowed = implode(', ', config('sql-agent.sql.allowed_statements'));
 
@@ -33,10 +35,15 @@ class RunSqlTool extends Tool
             ->as('run_sql')
             ->for("Execute a SQL query against the database. Only {$allowed} statements are allowed. Returns query results as JSON.")
             ->withStringParameter('sql', "The SQL query to execute. Must be a {$allowed} statement.")
+            ->withEnumParameter(
+                'connection',
+                'The database connection to query.',
+                $this->connectionRegistry->getConnectionNames(),
+            )
             ->using($this);
     }
 
-    public function __invoke(string $sql): string
+    public function __invoke(string $sql, ?string $connection = null): string
     {
         $sql = trim($sql);
 
@@ -44,20 +51,20 @@ class RunSqlTool extends Tool
             throw new RuntimeException('SQL query cannot be empty.');
         }
 
-        $this->validateSql($sql);
+        $this->validateSql($sql, $connection);
 
-        $connection = $this->connection ?? config('sql-agent.database.connection');
+        $resolvedConnection = $this->resolveConnection($connection);
         $maxRows = config('sql-agent.sql.max_rows');
 
         try {
-            $results = DB::connection($connection)->select($sql);
+            $results = DB::connection($resolvedConnection)->select($sql);
         } catch (Throwable $e) {
             if ($this->question !== null) {
                 SqlErrorOccurred::dispatch(
                     $sql,
                     $e->getMessage(),
                     $this->question,
-                    $connection,
+                    $resolvedConnection,
                 );
             }
 
@@ -80,13 +87,6 @@ class RunSqlTool extends Tool
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function setConnection(?string $connection): self
-    {
-        $this->connection = $connection;
-
-        return $this;
-    }
-
     public function setQuestion(?string $question): self
     {
         $this->question = $question;
@@ -99,7 +99,12 @@ class RunSqlTool extends Tool
         return $this->question;
     }
 
-    protected function validateSql(string $sql): void
+    protected function resolveConnection(?string $logicalName): ?string
+    {
+        return $this->connectionRegistry->resolveConnection($logicalName);
+    }
+
+    protected function validateSql(string $sql, ?string $connectionName = null): void
     {
         $sqlUpper = strtoupper(trim($sql));
 
@@ -137,18 +142,18 @@ class RunSqlTool extends Tool
             throw new RuntimeException('Multiple SQL statements are not allowed.');
         }
 
-        $this->validateTableAccess($withoutStrings);
+        $this->validateTableAccess($withoutStrings, $connectionName);
     }
 
     /**
      * Extract table names from SQL and validate access.
      */
-    protected function validateTableAccess(string $sql): void
+    protected function validateTableAccess(string $sql, ?string $connectionName = null): void
     {
         $tables = $this->extractTableNames($sql);
 
         foreach ($tables as $table) {
-            if (! $this->tableAccessControl->isTableAllowed($table)) {
+            if (! $this->tableAccessControl->isTableAllowed($table, $connectionName)) {
                 throw new RuntimeException(
                     "Access denied: table '{$table}' is restricted and cannot be queried."
                 );

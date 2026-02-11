@@ -65,7 +65,7 @@ class EvaluationRunner
 
         try {
             // Run the agent
-            $agentResponse = $this->agent->run($testCase->question, $connection);
+            $agentResponse = $this->agent->run($testCase->question);
             $duration = microtime(true) - $startTime;
 
             // Check if we've exceeded the timeout
@@ -193,8 +193,7 @@ class EvaluationRunner
     protected function executeGoldenSql(string $sql, ?string $connection): ?array
     {
         try {
-            $conn = $connection ?? config('sql-agent.database.connection');
-            $results = DB::connection($conn)->select($sql);
+            $results = DB::connection($connection)->select($sql);
 
             // Convert to array of arrays
             return array_map(fn ($row) => (array) $row, $results);

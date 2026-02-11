@@ -7,6 +7,7 @@ namespace Knobik\SqlAgent\Livewire;
 use Illuminate\Contracts\View\View;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Models\Conversation;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ConversationService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -14,17 +15,15 @@ use Livewire\Component;
 
 /**
  * @property-read Conversation|null $conversation
+ * @property-read int $connectionCount
  */
 class ChatComponent extends Component
 {
     public ?int $conversationId = null;
 
-    public ?string $connection = null;
-
     public function mount(?int $conversationId = null): void
     {
         $this->conversationId = $conversationId;
-        $this->connection = config('sql-agent.database.connection') ?: config('database.default');
 
         // Verify conversation belongs to current user (if user tracking enabled)
         if ($this->conversationId) {
@@ -61,11 +60,9 @@ class ChatComponent extends Component
     }
 
     #[Computed]
-    public function connections(): array
+    public function connectionCount(): int
     {
-        $connections = array_keys(config('database.connections', []));
-
-        return array_combine($connections, $connections);
+        return count(app(ConnectionRegistry::class)->all());
     }
 
     #[On('load-conversation')]
@@ -78,7 +75,6 @@ class ChatComponent extends Component
         }
 
         $this->conversationId = $conversationId;
-        $this->connection = $conversation->connection ?: config('database.default');
     }
 
     #[On('new-conversation')]

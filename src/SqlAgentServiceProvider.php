@@ -18,6 +18,7 @@ use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Search\SearchManager;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SchemaIntrospector;
 use Knobik\SqlAgent\Tools\IntrospectSchemaTool;
 use Knobik\SqlAgent\Tools\RunSqlTool;
@@ -31,6 +32,9 @@ class SqlAgentServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/sql-agent.php', 'sql-agent');
+
+        // Connection Registry — singleton because it caches parsed connection configs
+        $this->app->singleton(ConnectionRegistry::class);
 
         // Search Manager — singleton because it's a Laravel Manager that caches driver instances
         $this->app->singleton(SearchManager::class, fn ($app) => new SearchManager($app));

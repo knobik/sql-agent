@@ -8,8 +8,8 @@ use Generator;
 use Knobik\SqlAgent\Contracts\Agent;
 use Knobik\SqlAgent\Contracts\AgentResponse;
 use Knobik\SqlAgent\Llm\StreamChunk;
+use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ContextBuilder;
-use Knobik\SqlAgent\Tools\IntrospectSchemaTool;
 use Knobik\SqlAgent\Tools\RunSqlTool;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Streaming\Events\StepFinishEvent;
@@ -45,15 +45,16 @@ class SqlAgent implements Agent
         protected MessageBuilder $messageBuilder,
         protected ToolLabelResolver $toolLabelResolver,
         protected FallbackResponseGenerator $fallbackResponseGenerator,
+        protected ConnectionRegistry $connectionRegistry,
     ) {}
 
-    public function run(string $question, ?string $connection = null): AgentResponse
+    public function run(string $question): AgentResponse
     {
         $this->reset();
         $this->currentQuestion = $question;
 
         try {
-            $loop = $this->prepareLoop($question, $connection);
+            $loop = $this->prepareLoop($question);
 
             $response = $this->buildPrismRequest($loop)
                 ->asText();
@@ -68,12 +69,12 @@ class SqlAgent implements Agent
         }
     }
 
-    public function stream(string $question, ?string $connection = null, array $history = []): Generator
+    public function stream(string $question, array $history = []): Generator
     {
         $this->reset();
         $this->currentQuestion = $question;
 
-        $loop = $this->prepareLoop($question, $connection, $history);
+        $loop = $this->prepareLoop($question, $history);
 
         $this->lastPrompt = [
             'system' => $loop->systemPrompt,
@@ -291,17 +292,24 @@ class SqlAgent implements Agent
         );
     }
 
-    protected function prepareLoop(string $question, ?string $connection, array $history = []): AgentLoopContext
+    protected function prepareLoop(string $question, array $history = []): AgentLoopContext
     {
-        $context = $this->contextBuilder->build($question, $connection);
+        $context = $this->contextBuilder->build($question);
+
+        $extra = [
+            'customTools' => $this->getCustomTools(),
+            'multiConnection' => true,
+            'connections' => $this->connectionRegistry->all(),
+        ];
+
         $systemPrompt = $this->promptRenderer->renderSystem(
             $context->toPromptString(),
-            ['customTools' => $this->getCustomTools()],
+            $extra,
         );
 
         $messages = $this->messageBuilder->buildPrismMessages($question, $history);
 
-        $tools = $this->prepareTools($connection, $question);
+        $tools = $this->prepareTools($question);
         $maxIterations = config('sql-agent.agent.max_iterations');
 
         return new AgentLoopContext($systemPrompt, $messages, $tools, $maxIterations);
@@ -328,16 +336,13 @@ class SqlAgent implements Agent
     /**
      * @return Tool[]
      */
-    protected function prepareTools(?string $connection, ?string $question = null): array
+    protected function prepareTools(?string $question = null): array
     {
         $tools = $this->toolRegistry->all();
 
         foreach ($tools as $tool) {
             if ($tool instanceof RunSqlTool) {
-                $tool->setConnection($connection);
                 $tool->setQuestion($question);
-            } elseif ($tool instanceof IntrospectSchemaTool) {
-                $tool->setConnection($connection);
             }
         }
 

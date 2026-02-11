@@ -23,20 +23,42 @@ The `name` option defines the display name used in the web UI and log messages:
 
 ## Database
 
-SqlAgent uses two database connections: one for querying your application data, and one for storing its own internal tables (knowledge, learnings, conversations, etc.):
+SqlAgent uses two types of database connections: connections for querying your application data, and a storage connection for its own internal tables (knowledge, learnings, conversations, etc.):
 
 ```php
 'database' => [
-    'connection' => env('SQL_AGENT_CONNECTION', config('database.default')),
     'storage_connection' => env('SQL_AGENT_STORAGE_CONNECTION', config('database.default')),
+
+    'connections' => [
+        'default' => [
+            'connection' => env('SQL_AGENT_CONNECTION', config('database.default')),
+            'label' => 'Database',
+            'description' => 'Main application database.',
+        ],
+    ],
 ],
 ```
 
-The `connection` option determines which database the agent will run queries against. The `storage_connection` option determines where SqlAgent's own tables are stored. By default, both use your application's default connection.
+The `storage_connection` option determines where SqlAgent's own tables are stored. By default it uses your application's default connection.
+
+### Database Connections
+
+The `connections` map defines which databases the agent can query. By default a single `default` entry is configured that uses your application's default database connection. The agent autonomously decides which database to query for each question and can combine results across databases.
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `connection` | Laravel database connection name (from `config/database.php`) | Yes |
+| `label` | Human-readable label shown to the LLM and in the UI | No (defaults to the key) |
+| `description` | What data this database holds — helps the LLM choose the right database | No |
+| `allowed_tables` | Whitelist of tables the agent may access (empty = all) | No |
+| `denied_tables` | Blacklist of tables the agent may never access | No |
+| `hidden_columns` | Columns to hide per table | No |
 
 :::tip
-If your application data lives on a separate database from your main application, set `SQL_AGENT_CONNECTION` accordingly. You may also want to store SqlAgent's tables on a different connection using `SQL_AGENT_STORAGE_CONNECTION`.
+Write clear, descriptive `description` values. The LLM reads these to decide which database to query. "Orders, products, and customers" is much better than "Sales data".
 :::
+
+To add more databases, add entries to the `connections` map. See the [Database Connections](/sql-agent/guides/multi-database/) guide for a complete walkthrough.
 
 ## LLM
 
@@ -332,45 +354,10 @@ SqlAgent includes configurable guardrails to prevent destructive SQL operations:
 | `allowed_statements` | Only these SQL statement types may be executed | `['SELECT', 'WITH']` |
 | `forbidden_keywords` | Queries containing these keywords are rejected | See above |
 | `max_rows` | Maximum number of rows returned by any query | `1000` |
-| `allowed_tables` | Whitelist of tables the agent may access (empty = all allowed) | `[]` |
-| `denied_tables` | Blacklist of tables the agent may never access (takes precedence over `allowed_tables`) | `[]` |
-| `hidden_columns` | Columns to hide per table (associative array) | `[]` |
 
 ### Table & Column Restrictions
 
-You can restrict which tables and columns the agent can see and query. This is useful for preventing access to sensitive data such as password hashes, API keys, or audit logs.
-
-```php
-'sql' => [
-    // ... other options ...
-
-    // Only allow the agent to access these tables (empty = all tables allowed)
-    'allowed_tables' => ['users', 'orders', 'products'],
-
-    // Always deny access to these tables (takes precedence over allowed_tables)
-    'denied_tables' => ['password_resets', 'personal_access_tokens'],
-
-    // Hide specific columns from the agent per table
-    'hidden_columns' => [
-        'users' => ['password', 'remember_token', 'two_factor_secret'],
-    ],
-],
-```
-
-**How it works:**
-
-- **`allowed_tables`** acts as a whitelist. When non-empty, only listed tables are visible to the agent. Leave empty to allow all tables.
-- **`denied_tables`** acts as a blacklist. Listed tables are always denied, even if they appear in `allowed_tables`. This takes precedence.
-- **`hidden_columns`** removes specific columns from schema introspection and semantic model output. The agent will not know these columns exist.
-
-Restrictions are enforced at every layer:
-
-- Schema introspection (listing tables, inspecting columns)
-- Semantic model loading (table metadata from files or database)
-- SQL execution (queries referencing denied tables are rejected)
-- Query pattern saving (patterns cannot reference restricted tables)
-
-Restricted tables and hidden columns are never exposed to the LLM. The agent simply cannot see them in any schema or metadata, and any SQL that references a denied table is rejected at execution time.
+Table and column restrictions are configured per connection in the `database.connections` map. Each connection can define its own `allowed_tables`, `denied_tables`, and `hidden_columns`. See the [Database Connections](/sql-agent/guides/multi-database/) guide for details.
 
 :::caution
 Table name extraction from SQL is regex-based and best-effort. It catches common patterns (`FROM`, `JOIN`) but may not detect every reference in complex queries. Always combine table restrictions with other safety measures such as database-level permissions.

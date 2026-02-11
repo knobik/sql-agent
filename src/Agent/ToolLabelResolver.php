@@ -39,6 +39,12 @@ class ToolLabelResolver
         $label = $this->getLabel($toolName);
         $type = $this->getType($toolName);
 
+        // Append connection name when present (multi-database mode)
+        $connection = $arguments['connection'] ?? null;
+        if ($connection !== null && in_array($toolName, ['run_sql', 'introspect_schema'])) {
+            $label .= ' on '.htmlspecialchars($connection, ENT_QUOTES, 'UTF-8');
+        }
+
         $sqlData = '';
         if ($toolName === 'run_sql') {
             $sql = $arguments['sql'] ?? $arguments['query'] ?? '';

@@ -15,7 +15,6 @@ use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Search\Strategies\MysqlFullTextStrategy;
 use Knobik\SqlAgent\Search\Strategies\PostgresFullTextStrategy;
 use Knobik\SqlAgent\Services\LearningMachine;
-use Knobik\SqlAgent\Tools\RunSqlTool;
 
 uses(RefreshDatabase::class);
 
@@ -24,20 +23,6 @@ beforeEach(function () {
 });
 
 describe('Database Configuration', function () {
-    it('uses configured database connection', function () {
-        config(['sql-agent.database.connection' => 'custom_connection']);
-
-        $tool = new RunSqlTool;
-        $reflection = new ReflectionProperty($tool, 'connection');
-        $reflection->setAccessible(true);
-
-        // Connection should be null initially (will use config when needed)
-        expect($reflection->getValue($tool))->toBeNull();
-
-        // Verify config value is accessible
-        expect(config('sql-agent.database.connection'))->toBe('custom_connection');
-    });
-
     it('models use storage_connection config', function () {
         config(['sql-agent.database.storage_connection' => 'storage_db']);
 
@@ -241,9 +226,6 @@ describe('SQL Safety Configuration', function () {
     it('RunSqlTool uses max_rows config', function () {
         config(['sql-agent.sql.max_rows' => 100]);
 
-        $tool = new RunSqlTool;
-
-        // Verify the config is accessible where the tool would use it
         expect(config('sql-agent.sql.max_rows'))->toBe(100);
     });
 });

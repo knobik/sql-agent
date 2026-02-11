@@ -20,7 +20,7 @@ class SemanticModelLoader
      *
      * @return Collection<int, TableSchema>
      */
-    public function load(?string $connection = null): Collection
+    public function load(?string $connection = null, ?string $connectionName = null): Collection
     {
         $source = config('sql-agent.knowledge.source');
 
@@ -30,15 +30,15 @@ class SemanticModelLoader
             default => throw new \InvalidArgumentException("Unknown knowledge source: {$source}"),
         };
 
-        return $this->applyAccessControl($tables);
+        return $this->applyAccessControl($tables, $connectionName);
     }
 
     /**
      * Format loaded table metadata as a prompt string.
      */
-    public function format(?string $connection = null): string
+    public function format(?string $connection = null, ?string $connectionName = null): string
     {
-        $tables = $this->load($connection);
+        $tables = $this->load($connection, $connectionName);
 
         if ($tables->isEmpty()) {
             return 'No table metadata available.';
@@ -118,6 +118,7 @@ class SemanticModelLoader
             relationships: $relationships,
             dataQualityNotes: $data['data_quality_notes'] ?? [],
             useCases: $data['use_cases'] ?? [],
+            connection: $data['connection'] ?? null,
         );
     }
 
@@ -137,6 +138,10 @@ class SemanticModelLoader
 
     /**
      * Check if a table belongs to the specified connection.
+     *
+     * When a connection is specified, only tables with a matching `connection`
+     * field in their JSON file are included. Tables without a `connection`
+     * field default to "default" and are included for all connections.
      */
     protected function matchesConnection(TableSchema $table, ?string $connection): bool
     {
@@ -144,9 +149,9 @@ class SemanticModelLoader
             return true;
         }
 
-        // For file-based loading, we don't filter by connection
-        // (connection info would need to be in the JSON if filtering is needed)
-        return true;
+        $tableConnection = $table->connection ?? 'default';
+
+        return $tableConnection === $connection || $tableConnection === 'default';
     }
 
     /**
@@ -155,12 +160,12 @@ class SemanticModelLoader
      * @param  Collection<int, TableSchema>  $tables
      * @return Collection<int, TableSchema>
      */
-    protected function applyAccessControl(Collection $tables): Collection
+    protected function applyAccessControl(Collection $tables, ?string $connectionName = null): Collection
     {
         return $tables
-            ->filter(fn (TableSchema $table) => $this->tableAccessControl->isTableAllowed($table->tableName))
-            ->map(function (TableSchema $table) {
-                $filteredColumns = $this->tableAccessControl->filterColumns($table->tableName, $table->columns);
+            ->filter(fn (TableSchema $table) => $this->tableAccessControl->isTableAllowed($table->tableName, $connectionName))
+            ->map(function (TableSchema $table) use ($connectionName) {
+                $filteredColumns = $this->tableAccessControl->filterColumns($table->tableName, $table->columns, $connectionName);
 
                 if ($filteredColumns === $table->columns) {
                     return $table;
