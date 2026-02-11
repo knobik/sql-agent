@@ -6,11 +6,11 @@
 
 A self-learning text-to-SQL agent that turns natural language into accurate SQL — with context, memory, and a built-in chat UI.
 
-> **Alpha Release** — APIs may change without notice.
-
 <p align="center">
   <img src="art/screenshot.png" width="800" alt="SQL Agent chat UI showing a natural language query being converted to SQL with results">
 </p>
+
+> **Beta Release** — The core API is stabilizing but may still change before v1.0.
 
 ## Quick Install
 
