@@ -3,8 +3,8 @@ name: Deploy Docs to GitHub Pages
 on:
   push:
     branches: [main]
-    tags:
-      - '*.*.*'
+    paths:
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -80,19 +80,22 @@ jobs:
             local DEST="$2"
             local BASE="$3"
             local LABEL="$4"
+            # Use a sanitized name for the worktree directory (slashes break paths)
+            local WT_NAME
+            WT_NAME=$(echo "$REF" | tr '/' '-')
 
             echo "::group::Building $LABEL (ref=$REF, base=$BASE, dest=$DEST)"
 
-            git worktree add ".worktrees/$REF" "$REF" --detach 2>/dev/null || {
+            git worktree add ".worktrees/$WT_NAME" "$REF" --detach 2>/dev/null || {
               echo "::warning::Failed to checkout $REF — skipping"
               echo "::endgroup::"
               return 0
             }
 
-            local DOCS_DIR=".worktrees/$REF/docs"
+            local DOCS_DIR=".worktrees/$WT_NAME/docs"
             if [ ! -d "$DOCS_DIR" ]; then
               echo "::warning::No docs/ directory at $REF — skipping"
-              git worktree remove ".worktrees/$REF" --force 2>/dev/null || true
+              git worktree remove ".worktrees/$WT_NAME" --force 2>/dev/null || true
               echo "::endgroup::"
               return 0
             fi
@@ -105,23 +108,28 @@ jobs:
               sed -i "s|base: '/sql-agent'|base: process.env.DOCS_BASE \|\| '/sql-agent'|" astro.config.mjs
             fi
 
-            npm ci
+            # Use npm ci when lock file exists, fall back to npm install for old tags
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install
+            fi
             DOCS_BASE="$BASE" npx astro build
 
             cd -
             mkdir -p "_site/$DEST"
-            cp -r ".worktrees/$REF/docs/dist/"* "_site/$DEST/"
-            git worktree remove ".worktrees/$REF" --force
+            cp -r ".worktrees/$WT_NAME/docs/dist/"* "_site/$DEST/"
+            git worktree remove ".worktrees/$WT_NAME" --force
 
             echo "::endgroup::"
           }
 
           if [ "$HAS_TAGS" = "false" ]; then
             # No tags — build main as root only
-            build_version "main" "" "/sql-agent" "main (no tags)"
+            build_version "origin/main" "" "/sql-agent" "main (no tags)"
           else
             # Build main → _site/next/
-            build_version "main" "next" "/sql-agent/next" "Next (main)"
+            build_version "origin/main" "next" "/sql-agent/next" "Next (main)"
 
             # Build latest tag → _site/ (root)
             build_version "$LATEST_TAG" "" "/sql-agent" "$LATEST_TAG (latest)"
