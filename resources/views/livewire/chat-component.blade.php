@@ -268,7 +268,7 @@ function chatStream() {
             });
 
             // Listen for load-conversation event to sync Alpine state
-            Livewire.on('load-conversation', ([{conversationId}]) => {
+            Livewire.on('load-conversation', ({conversationId}) => {
                 this.conversationId = conversationId;
             });
         },
