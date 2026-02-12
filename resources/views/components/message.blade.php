@@ -48,6 +48,7 @@
                 showPrompt: false,
                 showQueries: false,
                 expandedQueries: {},
+                expandedResults: {},
                 queryResults: {},
                 loadingQuery: null,
                 queryErrors: {},
@@ -195,6 +196,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                             </svg>
                             <span x-text="expandedQueries[0] ? 'Hide SQL' : 'Show SQL'"></span>
+                        </button>
+                        <button
+                            x-show="queryResults[0]"
+                            x-cloak
+                            @click="expandedResults[0] = expandedResults[0] === false ? true : false"
+                            class="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium transition-colors"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span x-text="expandedResults[0] === false ? 'Show Results' : 'Hide Results'"></span>
                         </button>
                         <button
                             @click="executeQuery(0)"
@@ -414,7 +426,7 @@
                 {{-- Single query results (rendered via Alpine for dynamic data) --}}
                 @if($hasQueries && $isSingleQuery)
                     <template x-if="queryResults[0] && queryResults[0].rows && queryResults[0].rows.length > 0">
-                        <div class="mt-3">
+                        <div x-show="expandedResults[0] !== false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="mt-3">
                             <div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
                                 <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                                     <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
