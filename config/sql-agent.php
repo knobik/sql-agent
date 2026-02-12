@@ -170,6 +170,10 @@ return [
         // Custom tool class names resolved from the container, e.g.:
         // [App\SqlAgent\MyCustomTool::class]
         'tools' => [],
+
+        // MCP server names (from config/relay.php) whose tools should be
+        // available to the agent. Requires prism-php/relay to be installed.
+        'relay' => [],
     ],
 
     /*

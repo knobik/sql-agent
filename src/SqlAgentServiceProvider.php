@@ -75,6 +75,14 @@ class SqlAgentServiceProvider extends ServiceProvider
                 $registry->register($tool);
             }
 
+            // Register tools from Relay MCP servers (if prism-php/relay is installed)
+            if (class_exists(\Prism\Relay\Facades\Relay::class)) {
+                foreach (config('sql-agent.agent.relay') as $server) {
+                    $relayTools = \Prism\Relay\Facades\Relay::tools($server);
+                    $registry->registerMany($relayTools);
+                }
+            }
+
             return $registry;
         });
 

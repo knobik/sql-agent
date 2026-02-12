@@ -244,6 +244,22 @@ You can extend the agent with your own tools by listing class names in the `tool
 
 Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
 
+### MCP Server Tools (Relay)
+
+If you have [Prism Relay](https://github.com/prism-php/relay) installed, you can bring tools from MCP servers into the agent by listing server names from `config/relay.php`:
+
+```php
+'agent' => [
+    // ... other options ...
+    'relay' => [
+        'weather-server',
+        'filesystem-server',
+    ],
+],
+```
+
+The `relay` key is silently ignored when `prism-php/relay` is not installed. See the [Custom Tools](/sql-agent/guides/custom-tools/#mcp-server-tools-relay) guide for full setup instructions.
+
 ## Learning
 
 SqlAgent can automatically learn from SQL errors and improve over time:

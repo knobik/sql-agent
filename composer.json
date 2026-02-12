@@ -29,7 +29,8 @@
     },
     "suggest": {
         "livewire/livewire": "Required for the chat UI",
-        "pgvector/pgvector": "Required for the pgvector search driver (vector similarity search)"
+        "pgvector/pgvector": "Required for the pgvector search driver (vector similarity search)",
+        "prism-php/relay": "Required for MCP server tool integration (relay config)"
     },
     "autoload": {
         "psr-4": {
