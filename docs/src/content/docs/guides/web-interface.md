@@ -1,6 +1,6 @@
 ---
 title: Web Interface
-description: Livewire chat UI, streaming, debug mode, and conversation exports.
+description: Livewire chat UI, streaming, debug mode, and result exports.
 sidebar:
   order: 5
 ---
@@ -66,16 +66,9 @@ You may use the Livewire components directly in your own Blade templates:
 
 Displays a searchable list of previous conversations for the current user.
 
-## Exporting Conversations
+## Exporting Results
 
-Conversations can be exported as JSON or CSV via dedicated routes:
-
-| Route | Named Route | Description |
-|-------|-------------|-------------|
-| `GET /sql-agent/export/{conversation}/json` | `sql-agent.export.json` | Download as JSON |
-| `GET /sql-agent/export/{conversation}/csv` | `sql-agent.export.csv` | Download as CSV |
-
-These routes share the same middleware as the rest of the UI.
+Each result table in the chat interface includes **CSV** and **JSON** export buttons in the header bar. Clicking a button downloads the full result set (all rows, not just the current page) directly from the browser — no server round-trip required.
 
 ## Streaming (SSE)
 
@@ -86,7 +79,7 @@ The chat interface uses Server-Sent Events for real-time streaming. The streamin
 | `conversation` | `{"id": 123}` | Sent first with the conversation ID |
 | `thinking` | `{"thinking": "..."}` | LLM reasoning chunks (when thinking mode is enabled) |
 | `content` | `{"text": "..."}` | Response text chunks |
-| `done` | `{"sql": "...", "hasResults": true, "resultCount": 5}` | Sent when streaming completes |
+| `done` | `{"queryCount": 2}` | Sent when streaming completes |
 | `error` | `{"message": "..."}` | Sent if an error occurs |
 
 ## Debug Mode

@@ -53,21 +53,23 @@ describe('addMessage', function () {
         expect($message->conversation_id)->toBe($conversation->id);
     });
 
-    test('creates an assistant message with sql and results', function () {
+    test('creates an assistant message with queries', function () {
         $conversation = Conversation::create(['connection' => 'mysql']);
         $service = app(ConversationService::class);
+
+        $queries = [
+            ['sql' => 'SELECT * FROM users', 'connection' => null],
+        ];
 
         $message = $service->addMessage(
             $conversation->id,
             MessageRole::Assistant,
             'Here are the results',
-            'SELECT * FROM users',
-            [['id' => 1, 'name' => 'John']],
+            $queries,
             ['thinking' => 'some thoughts'],
         );
 
-        expect($message->sql)->toBe('SELECT * FROM users');
-        expect($message->results)->toBe([['id' => 1, 'name' => 'John']]);
+        expect($message->queries)->toBe($queries);
         expect($message->metadata)->toBe(['thinking' => 'some thoughts']);
     });
 });
