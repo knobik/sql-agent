@@ -15,7 +15,6 @@
         "illuminate/console": "^11.0|^12.0",
         "spatie/laravel-data": "^4.0",
         "doctrine/dbal": "^3.0|^4.0",
-        "pgvector/pgvector": "^0.2",
         "prism-php/prism": "^0.99"
     },
     "require-dev": {
@@ -25,10 +24,12 @@
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^2.0|^3.0",
         "pestphp/pest-plugin-laravel": "^2.0|^3.0",
+        "pgvector/pgvector": "^0.2",
         "phpstan/phpstan": "^2.1"
     },
     "suggest": {
-        "livewire/livewire": "Required for the chat UI"
+        "livewire/livewire": "Required for the chat UI",
+        "pgvector/pgvector": "Required for the pgvector search driver (vector similarity search)"
     },
     "autoload": {
         "psr-4": {

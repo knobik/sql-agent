@@ -81,17 +81,19 @@ The behavior varies by database engine:
 
 Uses PostgreSQL's [pgvector](https://github.com/pgvector/pgvector) extension for semantic similarity search via vector embeddings. This provides the most accurate search results by understanding the meaning of queries rather than just matching keywords.
 
-The pgvector driver uses a **dedicated PostgreSQL connection** for storing embeddings, separate from your main application database. This means you can use MySQL, SQLite, or any other database for your app and SqlAgent storage while running pgvector on a specialized PostgreSQL instance:
+The pgvector driver uses a **dedicated PostgreSQL connection** for storing embeddings, separate from your main application database. This means you can use MySQL, SQLite, or any other database for your app and SqlAgent storage while running pgvector on a specialized PostgreSQL instance.
 
-```ini
-SQL_AGENT_SEARCH_DRIVER=pgvector
-SQL_AGENT_EMBEDDINGS_CONNECTION=pgvector
-SQL_AGENT_EMBEDDINGS_PROVIDER=openai
-SQL_AGENT_EMBEDDINGS_MODEL=text-embedding-3-small
-SQL_AGENT_EMBEDDINGS_DIMENSIONS=1536
+#### Installation
+
+The pgvector search driver requires the `pgvector/pgvector` Composer package, which is not installed by default:
+
+```bash
+composer require pgvector/pgvector
 ```
 
-Add the PostgreSQL connection to `config/database.php`:
+#### Configuration
+
+Add a PostgreSQL connection to `config/database.php`:
 
 ```php
 'connections' => [
@@ -106,11 +108,38 @@ Add the PostgreSQL connection to `config/database.php`:
 ],
 ```
 
-After configuring, run migrations and generate embeddings for existing records:
+Set the environment variables in your `.env`:
+
+```ini
+SQL_AGENT_SEARCH_DRIVER=pgvector
+SQL_AGENT_EMBEDDINGS_CONNECTION=pgvector
+SQL_AGENT_EMBEDDINGS_PROVIDER=openai
+SQL_AGENT_EMBEDDINGS_MODEL=text-embedding-3-small
+SQL_AGENT_EMBEDDINGS_DIMENSIONS=1536
+```
+
+#### Setting Up the Database
+
+Run the setup command to publish the pgvector migration and create the embeddings table:
 
 ```bash
-php artisan migrate
+php artisan sql-agent:setup-pgvector
+```
+
+This command will:
+
+1. Verify that `SQL_AGENT_EMBEDDINGS_CONNECTION` points to a PostgreSQL database
+2. Publish the embeddings migration
+3. Run migrations (creates the extension, table, and HNSW index)
+
+Then generate embeddings for any existing knowledge base records:
+
+```bash
 php artisan sql-agent:generate-embeddings
 ```
 
 Embeddings are automatically kept in sync when records are created or updated.
+
+:::tip
+The `sql-agent:setup-pgvector` command is idempotent — it skips table creation if the table already exists, so it's safe to run more than once.
+:::

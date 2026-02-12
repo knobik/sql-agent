@@ -40,6 +40,12 @@ class SearchManager extends Manager implements SearchDriver
      */
     public function createPgvectorDriver(): PgvectorSearchDriver
     {
+        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+            throw new \RuntimeException(
+                'The pgvector search driver requires the pgvector/pgvector package. Install it with: composer require pgvector/pgvector'
+            );
+        }
+
         $config = $this->config->get('sql-agent.search.drivers.pgvector', []);
 
         return new PgvectorSearchDriver(

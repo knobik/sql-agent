@@ -14,6 +14,29 @@ php artisan sql-agent:install
 php artisan sql-agent:install --force  # Overwrite existing files
 ```
 
+## `sql-agent:setup-pgvector`
+
+Set up pgvector support. This command publishes the embeddings migration and runs it to create the extension, table, and index on your pgvector connection.
+
+Requires the `pgvector/pgvector` package:
+
+```bash
+composer require pgvector/pgvector
+php artisan sql-agent:setup-pgvector
+```
+
+The command will:
+
+1. Verify that the `pgvector/pgvector` package is installed
+2. Verify that `SQL_AGENT_EMBEDDINGS_CONNECTION` is set and points to a PostgreSQL database
+3. Skip if the `sql_agent_embeddings` table already exists
+4. Publish the pgvector embeddings migration
+5. Ask to run migrations (which creates the extension, table, and HNSW index)
+
+:::tip
+After running this command, generate embeddings for your existing knowledge base with `php artisan sql-agent:generate-embeddings`.
+:::
+
 ## `sql-agent:load-knowledge`
 
 Import knowledge files from disk into the database. Required when using the default `database` knowledge source.
@@ -106,7 +129,7 @@ php artisan sql-agent:generate-embeddings --force --batch-size=100
 | `--batch-size=50` | Number of records to process per batch (default: 50) |
 
 :::note
-This command requires the pgvector driver's `connection` to be configured (via `SQL_AGENT_EMBEDDINGS_CONNECTION`) and pointing to a PostgreSQL database with pgvector installed.
+This command requires the `pgvector/pgvector` Composer package and the pgvector driver's `connection` to be configured (via `SQL_AGENT_EMBEDDINGS_CONNECTION`) pointing to a PostgreSQL database with pgvector installed.
 :::
 
 ## `sql-agent:purge`

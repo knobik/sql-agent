@@ -58,4 +58,4 @@ This architecture follows a retrieval-augmented generation (RAG) pattern — but
 - [Prism PHP](https://prismphp.com) (installed automatically as a dependency)
 - An LLM provider — any provider supported by Prism (OpenAI, Anthropic, Ollama, Gemini, Mistral, xAI, etc.)
 - Optional: Livewire 3.x for the chat UI
-- Optional: PostgreSQL with pgvector for semantic similarity search via vector embeddings
+- Optional: [`pgvector/pgvector`](https://github.com/pgvector/pgvector-php) package + PostgreSQL with pgvector for semantic similarity search

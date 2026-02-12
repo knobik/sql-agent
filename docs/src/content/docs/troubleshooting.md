@@ -52,3 +52,11 @@ If the search driver isn't returning expected results:
 2. For MySQL, verify the tables use InnoDB or MyISAM engine (both support full-text indexes).
 3. For SQL Server, ensure a full-text catalog is configured.
 4. Consider switching to the `pgvector` search driver for semantic similarity search.
+
+## pgvector Driver Errors
+
+If you see errors about missing classes like `Pgvector\Laravel\Vector` or `Pgvector\Laravel\HasNeighbors`:
+
+1. Install the required package: `composer require pgvector/pgvector`.
+2. Run `php artisan sql-agent:setup-pgvector` to publish migrations and create the embeddings table.
+3. Verify your `SQL_AGENT_EMBEDDINGS_CONNECTION` points to a PostgreSQL database with the pgvector extension installed.

@@ -18,19 +18,14 @@ php artisan sql-agent:install
 ```
 
 This will:
-1. Publish the configuration file
-2. Publish and run migrations
-3. Create the knowledge directory structure at `resources/sql-agent/knowledge/`
+1. Publish the configuration file (`config/sql-agent.php`)
+2. Publish the Prism config (`config/prism.php`) for LLM provider credentials
+3. Publish and run migrations
+4. Create the knowledge directory structure at `resources/sql-agent/knowledge/`
 
 ## Configure Your LLM Provider
 
-SqlAgent uses [Prism PHP](https://prismphp.com) to communicate with LLM providers. First, publish the Prism config and set your provider credentials:
-
-```bash
-php artisan vendor:publish --tag=prism-config
-```
-
-Then set the provider and model in your `.env`:
+SqlAgent uses [Prism PHP](https://prismphp.com) to communicate with LLM providers. Configure your provider credentials in `config/prism.php` (published by the install command), then set the provider and model in your `.env`:
 
 ```ini
 # For OpenAI (default)
@@ -85,6 +80,20 @@ echo $response->answer;  // "There are 42 users who signed up this month."
 echo $response->sql;     // "SELECT COUNT(*) as count FROM users WHERE created_at >= '2026-01-01'"
 ```
 
+## Optional: pgvector Semantic Search
+
+For the most accurate knowledge retrieval, you can use PostgreSQL's pgvector extension for semantic similarity search. This requires a separate package:
+
+```bash
+composer require pgvector/pgvector
+```
+
+Then follow the [pgvector setup guide](/sql-agent/guides/drivers/#pgvector) to configure the connection and generate embeddings.
+
+:::tip
+The default `database` search driver works without any additional packages, but pgvector's semantic search delivers significantly better knowledge retrieval — especially for complex or ambiguous questions. If you want the best possible results, pgvector is the recommended choice.
+:::
+
 ## Publishing Assets
 
 The install command publishes the config, migrations, and knowledge directory automatically. You can also publish individual assets at any time:
@@ -93,6 +102,7 @@ The install command publishes the config, migrations, and knowledge directory au
 |-----|---------|-------------|
 | `sql-agent-config` | `php artisan vendor:publish --tag=sql-agent-config` | `config/sql-agent.php` |
 | `sql-agent-migrations` | `php artisan vendor:publish --tag=sql-agent-migrations` | `database/migrations/` |
+| `sql-agent-pgvector-migrations` | `php artisan vendor:publish --tag=sql-agent-pgvector-migrations` | `database/migrations/` |
 | `sql-agent-views` | `php artisan vendor:publish --tag=sql-agent-views` | `resources/views/vendor/sql-agent/` |
 | `sql-agent-knowledge` | `php artisan vendor:publish --tag=sql-agent-knowledge` | `resources/sql-agent/knowledge/` |
 | `sql-agent-prompts` | `php artisan vendor:publish --tag=sql-agent-prompts` | `resources/views/vendor/sql-agent/prompts/` |

@@ -93,8 +93,13 @@ class SqlAgentServiceProvider extends ServiceProvider
         // Register event listeners
         Event::listen(SqlErrorOccurred::class, AutoLearnFromError::class);
 
-        // Migrations
+        // Migrations (core)
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        // pgvector migrations — only loaded when the package is installed and a connection is configured
+        if (class_exists(\Pgvector\Laravel\Vector::class) && config('sql-agent.search.drivers.pgvector.connection')) {
+            $this->loadMigrationsFrom(__DIR__.'/../database/migrations/pgvector');
+        }
 
         // Views (includes prompts)
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sql-agent');
@@ -113,6 +118,7 @@ class SqlAgentServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 Console\Commands\InstallCommand::class,
+                Console\Commands\SetupPgvectorCommand::class,
                 Console\Commands\LoadKnowledgeCommand::class,
                 Console\Commands\RunEvalsCommand::class,
                 Console\Commands\ExportLearningsCommand::class,
@@ -131,6 +137,12 @@ class SqlAgentServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'sql-agent-migrations');
 
+            if (class_exists(\Pgvector\Laravel\Vector::class)) {
+                $this->publishes([
+                    __DIR__.'/../database/migrations/pgvector' => database_path('migrations'),
+                ], 'sql-agent-pgvector-migrations');
+            }
+
             $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/sql-agent'),
             ], 'sql-agent-views');
@@ -147,6 +159,10 @@ class SqlAgentServiceProvider extends ServiceProvider
 
     protected function registerEmbeddingObservers(): void
     {
+        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+            return;
+        }
+
         $driver = config('sql-agent.search.default');
 
         if ($driver !== 'pgvector') {

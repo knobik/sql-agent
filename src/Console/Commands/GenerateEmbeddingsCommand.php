@@ -33,6 +33,12 @@ class GenerateEmbeddingsCommand extends Command
 
     public function handle(EmbeddingGenerator $generator, TextSerializer $serializer): int
     {
+        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+            $this->error('The pgvector/pgvector package is not installed. Install it with: composer require pgvector/pgvector');
+
+            return self::FAILURE;
+        }
+
         $connection = config('sql-agent.search.drivers.pgvector.connection');
 
         if (! $connection) {

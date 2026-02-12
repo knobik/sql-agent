@@ -154,7 +154,7 @@ Search drivers determine how SqlAgent finds relevant knowledge (table metadata, 
 Three drivers are available:
 
 - **`database`** — Uses native full-text search (`MATCH ... AGAINST` on MySQL, `tsvector` on PostgreSQL, `LIKE` on SQLite, `CONTAINS` on SQL Server). No external services required.
-- **`pgvector`** — Uses PostgreSQL pgvector for semantic similarity search via vector embeddings. Requires a dedicated PostgreSQL connection with pgvector installed. See the pgvector options below.
+- **`pgvector`** — Uses PostgreSQL pgvector for semantic similarity search via vector embeddings. Requires the `pgvector/pgvector` Composer package and a dedicated PostgreSQL connection with pgvector installed. See the [pgvector setup guide](/sql-agent/guides/drivers/#pgvector).
 - **`null`** — Disables search entirely. Useful for testing or when knowledge search is not needed.
 
 ### Database Driver Options

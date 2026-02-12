@@ -59,6 +59,14 @@ The pgvector search driver needs a dedicated PostgreSQL connection with the pgve
 ],
 ```
 
+This preset requires the `pgvector/pgvector` package:
+
+```bash
+composer require pgvector/pgvector
+php artisan sql-agent:setup-pgvector
+php artisan sql-agent:generate-embeddings
+```
+
 :::tip
 This preset requires an **Anthropic API key** (configured in `config/prism.php`) and a **PostgreSQL instance with the pgvector extension** installed. If you already use PostgreSQL as your main database, you can point the embeddings connection at the same instance.
 :::
