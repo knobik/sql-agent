@@ -162,9 +162,9 @@
             <x-sql-agent::message
                 :role="$msg['role']"
                 :content="$msg['content']"
-                :sql="$msg['sql'] ?? null"
-                :results="$msg['results'] ?? null"
+                :queries="$msg['queries'] ?? null"
                 :metadata="$msg['metadata'] ?? null"
+                :message-id="$msg['id']"
             />
         @endforeach
 

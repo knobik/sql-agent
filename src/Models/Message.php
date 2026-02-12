@@ -14,8 +14,7 @@ use Knobik\SqlAgent\Enums\MessageRole;
  * @property int $conversation_id
  * @property MessageRole $role
  * @property string $content
- * @property string|null $sql
- * @property array<int, mixed>|null $results
+ * @property array<int, array{sql: string, connection: string|null}>|null $queries
  * @property array<string, mixed>|null $metadata
  * @property array<string, mixed>|null $usage
  * @property Carbon $created_at
@@ -31,8 +30,7 @@ class Message extends Model
         'conversation_id',
         'role',
         'content',
-        'sql',
-        'results',
+        'queries',
         'metadata',
     ];
 
@@ -40,7 +38,7 @@ class Message extends Model
     {
         return [
             'role' => MessageRole::class,
-            'results' => 'array',
+            'queries' => 'array',
             'metadata' => 'array',
         ];
     }
@@ -65,9 +63,9 @@ class Message extends Model
         return $query->ofRole(MessageRole::Assistant);
     }
 
-    public function scopeWithSql($query)
+    public function scopeWithQueries($query)
     {
-        return $query->whereNotNull('sql');
+        return $query->whereNotNull('queries');
     }
 
     public function isFromUser(): bool
@@ -90,19 +88,14 @@ class Message extends Model
         return $this->role === MessageRole::Tool;
     }
 
-    public function hasSql(): bool
+    public function hasQueries(): bool
     {
-        return ! empty($this->sql);
+        return ! empty($this->queries);
     }
 
-    public function hasResults(): bool
+    public function getQueries(): array
     {
-        return ! empty($this->results);
-    }
-
-    public function getResultCount(): int
-    {
-        return count($this->results ?? []);
+        return $this->queries ?? [];
     }
 
     public function getToolName(): ?string

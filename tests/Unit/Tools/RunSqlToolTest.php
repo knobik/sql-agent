@@ -101,6 +101,18 @@ describe('RunSqlTool', function () {
         expect($tool->requiredParameters())->toContain('sql');
     });
 
+    it('accumulates executedQueries across calls', function () {
+        $tool = new RunSqlTool;
+
+        $tool('SELECT * FROM test_users');
+        $tool('SELECT name FROM test_users WHERE id = 1');
+
+        expect($tool->executedQueries)->toHaveCount(2);
+        expect($tool->executedQueries[0]['sql'])->toBe('SELECT * FROM test_users');
+        expect($tool->executedQueries[0]['connection'])->toBeNull();
+        expect($tool->executedQueries[1]['sql'])->toBe('SELECT name FROM test_users WHERE id = 1');
+    });
+
     it('can set and get question', function () {
         $tool = new RunSqlTool;
 

@@ -30,6 +30,8 @@ class SqlAgent implements Agent
 
     protected ?array $lastResults = null;
 
+    protected array $allQueries = [];
+
     protected array $iterations = [];
 
     protected ?string $currentQuestion = null;
@@ -185,6 +187,11 @@ class SqlAgent implements Agent
         return $this->lastResults;
     }
 
+    public function getAllQueries(): array
+    {
+        return $this->allQueries;
+    }
+
     public function getIterations(): array
     {
         return $this->iterations;
@@ -231,6 +238,7 @@ class SqlAgent implements Agent
             if ($tool instanceof RunSqlTool) {
                 $this->lastSql = $tool->lastSql;
                 $this->lastResults = $tool->lastResults;
+                $this->allQueries = $tool->executedQueries;
 
                 return;
             }
@@ -319,6 +327,7 @@ class SqlAgent implements Agent
     {
         $this->lastSql = null;
         $this->lastResults = null;
+        $this->allQueries = [];
         $this->iterations = [];
         $this->currentQuestion = null;
         $this->lastPrompt = null;
@@ -329,6 +338,7 @@ class SqlAgent implements Agent
             if ($tool instanceof RunSqlTool) {
                 $tool->lastSql = null;
                 $tool->lastResults = null;
+                $tool->executedQueries = [];
             }
         }
     }

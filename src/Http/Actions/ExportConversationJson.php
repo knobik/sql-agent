@@ -22,8 +22,7 @@ class ExportConversationJson
                     'id' => $message->id,
                     'role' => $message->role->value,
                     'content' => $message->content,
-                    'sql' => $message->sql,
-                    'results' => $message->results,
+                    'queries' => $message->queries,
                     'created_at' => $message->created_at->toIso8601String(),
                 ];
             })->toArray(),

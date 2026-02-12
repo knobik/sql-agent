@@ -85,16 +85,14 @@ class ConversationService
         int $conversationId,
         MessageRole $role,
         string $content,
-        ?string $sql = null,
-        ?array $results = null,
+        ?array $queries = null,
         ?array $metadata = null,
     ): Message {
         return Message::create([
             'conversation_id' => $conversationId,
             'role' => $role,
             'content' => $content,
-            'sql' => $sql,
-            'results' => $results,
+            'queries' => $queries,
             'metadata' => $metadata,
         ]);
     }

@@ -25,19 +25,23 @@ class ExportConversationCsv
                 'Message ID',
                 'Role',
                 'Content',
-                'SQL',
-                'Result Count',
+                'Query Count',
+                'Last SQL',
                 'Created At',
             ]);
 
             // Write messages
             foreach ($conversation->messages as $message) {
+                $queries = $message->queries ?? [];
+                $lastQuery = ! empty($queries) ? end($queries) : null;
+                $lastSql = $lastQuery !== null ? $lastQuery['sql'] : '';
+
                 fputcsv($handle, [
                     $message->id,
                     $message->role->value,
                     $message->content,
-                    $message->sql ?? '',
-                    $message->results ? count($message->results) : 0,
+                    count($queries),
+                    $lastSql,
                     $message->created_at->toIso8601String(),
                 ]);
             }

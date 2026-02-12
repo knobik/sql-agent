@@ -85,8 +85,7 @@ class StreamAgentResponse
         ?array $usage = null,
         bool $truncated = false,
     ): void {
-        $lastSql = $this->agent->getLastSql();
-        $lastResults = $this->agent->getLastResults();
+        $allQueries = $this->agent->getAllQueries();
 
         $metadata = [];
         if ($debugEnabled) {
@@ -111,15 +110,12 @@ class StreamAgentResponse
             $conversationId,
             MessageRole::Assistant,
             $fullContent,
-            $lastSql,
-            $lastResults,
+            ! empty($allQueries) ? $allQueries : null,
             $metadata ?: null,
         );
 
         $donePayload = [
-            'sql' => $lastSql,
-            'hasResults' => ! empty($lastResults),
-            'resultCount' => $lastResults ? count($lastResults) : 0,
+            'queryCount' => count($allQueries),
         ];
         if ($usage !== null) {
             $donePayload['usage'] = $usage;

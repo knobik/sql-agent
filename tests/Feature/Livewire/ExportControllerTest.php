@@ -33,8 +33,9 @@ it('exports conversation as JSON', function () {
         'conversation_id' => $conversation->id,
         'role' => MessageRole::Assistant,
         'content' => 'Hi there!',
-        'sql' => 'SELECT * FROM users',
-        'results' => [['id' => 1, 'name' => 'John']],
+        'queries' => [
+            ['sql' => 'SELECT * FROM users', 'connection' => null],
+        ],
     ]);
 
     $response = $this->actingAs($user)
@@ -51,7 +52,8 @@ it('exports conversation as JSON', function () {
     expect($data['messages'][0]['role'])->toBe('user');
     expect($data['messages'][0]['content'])->toBe('Hello world');
     expect($data['messages'][1]['role'])->toBe('assistant');
-    expect($data['messages'][1]['sql'])->toBe('SELECT * FROM users');
+    expect($data['messages'][1]['queries'])->toHaveCount(1);
+    expect($data['messages'][1]['queries'][0]['sql'])->toBe('SELECT * FROM users');
 });
 
 it('exports conversation as CSV', function () {
@@ -73,8 +75,9 @@ it('exports conversation as CSV', function () {
         'conversation_id' => $conversation->id,
         'role' => MessageRole::Assistant,
         'content' => 'Response',
-        'sql' => 'SELECT 1',
-        'results' => [['value' => 1]],
+        'queries' => [
+            ['sql' => 'SELECT 1', 'connection' => null],
+        ],
     ]);
 
     $response = $this->actingAs($user)

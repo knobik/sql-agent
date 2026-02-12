@@ -7,7 +7,7 @@ namespace Knobik\SqlAgent\Tools;
 use Illuminate\Support\Facades\DB;
 use Knobik\SqlAgent\Events\SqlErrorOccurred;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
-use Knobik\SqlAgent\Services\TableAccessControl;
+use Knobik\SqlAgent\Services\SqlValidator;
 use Prism\Prism\Tool;
 use RuntimeException;
 use Throwable;
@@ -16,7 +16,7 @@ class RunSqlTool extends Tool
 {
     protected ?string $question = null;
 
-    protected TableAccessControl $tableAccessControl;
+    protected SqlValidator $sqlValidator;
 
     protected ConnectionRegistry $connectionRegistry;
 
@@ -24,9 +24,11 @@ class RunSqlTool extends Tool
 
     public ?array $lastResults = null;
 
+    public array $executedQueries = [];
+
     public function __construct()
     {
-        $this->tableAccessControl = app(TableAccessControl::class);
+        $this->sqlValidator = app(SqlValidator::class);
         $this->connectionRegistry = app(ConnectionRegistry::class);
 
         $allowed = implode(', ', config('sql-agent.sql.allowed_statements'));
@@ -78,6 +80,10 @@ class RunSqlTool extends Tool
 
         $this->lastSql = $sql;
         $this->lastResults = $rows;
+        $this->executedQueries[] = [
+            'sql' => $sql,
+            'connection' => $connection,
+        ];
 
         return json_encode([
             'rows' => $rows,
@@ -106,81 +112,6 @@ class RunSqlTool extends Tool
 
     protected function validateSql(string $sql, ?string $connectionName = null): void
     {
-        $sqlUpper = strtoupper(trim($sql));
-
-        $allowedStatements = config('sql-agent.sql.allowed_statements');
-        $startsWithAllowed = false;
-
-        foreach ($allowedStatements as $statement) {
-            if (str_starts_with($sqlUpper, $statement)) {
-                $startsWithAllowed = true;
-                break;
-            }
-        }
-
-        if (! $startsWithAllowed) {
-            throw new RuntimeException(
-                'Only '.implode(' and ', $allowedStatements).' statements are allowed.'
-            );
-        }
-
-        $forbiddenKeywords = config('sql-agent.sql.forbidden_keywords');
-
-        foreach ($forbiddenKeywords as $keyword) {
-            $pattern = '/\b'.preg_quote($keyword, '/').'\b/i';
-            if (preg_match($pattern, $sql)) {
-                throw new RuntimeException(
-                    "Forbidden SQL keyword detected: {$keyword}. This query cannot be executed."
-                );
-            }
-        }
-
-        $withoutStrings = preg_replace("/'[^']*'/", '', $sql);
-        $withoutStrings = preg_replace('/"[^"]*"/', '', $withoutStrings);
-
-        if (substr_count($withoutStrings, ';') > 1) {
-            throw new RuntimeException('Multiple SQL statements are not allowed.');
-        }
-
-        $this->validateTableAccess($withoutStrings, $connectionName);
-    }
-
-    /**
-     * Extract table names from SQL and validate access.
-     */
-    protected function validateTableAccess(string $sql, ?string $connectionName = null): void
-    {
-        $tables = $this->extractTableNames($sql);
-
-        foreach ($tables as $table) {
-            if (! $this->tableAccessControl->isTableAllowed($table, $connectionName)) {
-                throw new RuntimeException(
-                    "Access denied: table '{$table}' is restricted and cannot be queried."
-                );
-            }
-        }
-    }
-
-    /**
-     * Extract table names from SQL (best-effort regex).
-     *
-     * @return array<string>
-     */
-    protected function extractTableNames(string $sql): array
-    {
-        $tables = [];
-
-        // Match FROM table, JOIN table, INTO table, UPDATE table patterns
-        // Handles optional schema prefix (schema.table) and backtick/bracket quoting
-        $pattern = '/\b(?:FROM|JOIN|INTO|UPDATE)\s+([`\[\"]?)(\w+(?:\.\w+)?)\1/i';
-        if (preg_match_all($pattern, $sql, $matches)) {
-            foreach ($matches[2] as $match) {
-                // Strip schema prefix if present
-                $parts = explode('.', $match);
-                $tables[] = end($parts);
-            }
-        }
-
-        return array_unique($tables);
+        $this->sqlValidator->validate($sql, $connectionName);
     }
 }

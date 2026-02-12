@@ -24,19 +24,34 @@ describe('Message', function () {
         expect($message->isFromUser())->toBeTrue();
     });
 
-    it('can have sql and results', function () {
+    it('can have queries', function () {
         $conversation = Conversation::create([]);
+        $queries = [
+            ['sql' => 'SELECT * FROM users', 'connection' => null],
+            ['sql' => 'SELECT count(*) FROM orders', 'connection' => 'analytics'],
+        ];
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'role' => MessageRole::Assistant,
             'content' => 'Here are the results',
-            'sql' => 'SELECT * FROM users',
-            'results' => [['id' => 1, 'name' => 'John']],
+            'queries' => $queries,
         ]);
 
-        expect($message->hasSql())->toBeTrue();
-        expect($message->hasResults())->toBeTrue();
-        expect($message->getResultCount())->toBe(1);
+        expect($message->hasQueries())->toBeTrue();
+        expect($message->getQueries())->toHaveCount(2);
+        expect($message->getQueries()[0]['sql'])->toBe('SELECT * FROM users');
+    });
+
+    it('returns empty queries when null', function () {
+        $conversation = Conversation::create([]);
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'role' => MessageRole::Assistant,
+            'content' => 'No queries here',
+        ]);
+
+        expect($message->hasQueries())->toBeFalse();
+        expect($message->getQueries())->toBeEmpty();
     });
 
     it('scopes by role', function () {

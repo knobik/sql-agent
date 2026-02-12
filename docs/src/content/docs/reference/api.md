@@ -137,7 +137,7 @@ Cache and thought token fields are `null` when the provider does not support the
 When using the web interface or the SSE streaming endpoint, usage data is included in the `done` event:
 
 ```json
-{"event": "done", "data": {"sql": "...", "hasResults": true, "resultCount": 5, "usage": {"prompt_tokens": 1234, "completion_tokens": 567, ...}}}
+{"event": "done", "data": {"queryCount": 2, "usage": {"prompt_tokens": 1234, "completion_tokens": 567, ...}}}
 ```
 
 ### Stored Messages

@@ -86,7 +86,7 @@ The chat interface uses Server-Sent Events for real-time streaming. The streamin
 | `conversation` | `{"id": 123}` | Sent first with the conversation ID |
 | `thinking` | `{"thinking": "..."}` | LLM reasoning chunks (when thinking mode is enabled) |
 | `content` | `{"text": "..."}` | Response text chunks |
-| `done` | `{"sql": "...", "hasResults": true, "resultCount": 5}` | Sent when streaming completes |
+| `done` | `{"queryCount": 2}` | Sent when streaming completes |
 | `error` | `{"message": "..."}` | Sent if an error occurs |
 
 ## Debug Mode
