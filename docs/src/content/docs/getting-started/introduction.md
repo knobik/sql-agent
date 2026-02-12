@@ -15,15 +15,18 @@ SqlAgent converts questions to SQL through multi-layer context assembly, an agen
 
 ### Context Assembly
 
-Before the LLM sees the question, the `ContextBuilder` retrieves and assembles five context layers:
+Before the LLM sees the question, the `ContextBuilder` retrieves and assembles six context layers:
 
-- **Semantic model** — Table metadata, column descriptions, and relationships from your [Knowledge Base](/sql-agent/guides/knowledge-base/)
-- **Business rules** — Metrics definitions, domain rules, and common gotchas
-- **Similar query patterns** — Previously validated queries that match the current question, retrieved via the active [search driver](/sql-agent/guides/drivers/)
-- **Relevant learnings** — Patterns the agent discovered from past errors and corrections
-- **Runtime schema** — Live database introspection available on-demand via the `introspect_schema` tool during the agent loop
+| # | Layer | What it contains | Source |
+|---|-------|-----------------|--------|
+| 1 | Table Usage | Schema, columns, relationships | `knowledge/tables/*.json` |
+| 2 | Human Annotations | Metrics, definitions, business rules | `knowledge/business/*.json` |
+| 3 | Query Patterns | SQL known to work | `knowledge/queries/*.json` and `*.sql` |
+| 4 | Learnings | Error patterns and discovered fixes | `save_learning` tool (on-demand) |
+| 5 | Runtime Context | Live schema inspection | `introspect_schema` tool (on-demand) |
+| 6 | Institutional Knowledge | Docs, wikis, external references | [Custom tools](/sql-agent/guides/custom-tools/) (`agent.tools` config) |
 
-The first four layers are assembled into the system prompt automatically. The runtime schema layer is fetched on-demand by the LLM when it needs exact column types, constraints, or foreign keys for specific tables.
+Layers 1–3 are loaded from the [Knowledge Base](/sql-agent/guides/knowledge-base/) and assembled into the system prompt automatically. Layer 4 is built up over time as the agent learns from errors. Layers 5 and 6 are available on-demand — the LLM calls them during the [tool loop](#agentic-tool-loop) when it needs live schema details or external context.
 
 ### Agentic Tool Loop
 
