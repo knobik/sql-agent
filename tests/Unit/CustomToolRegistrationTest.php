@@ -27,7 +27,7 @@ describe('Custom Tool Registration', function () {
 
         // Custom tool should also be present
         expect($registry->has('fake_custom'))->toBeTrue();
-        expect($registry->count())->toBe(6);
+        expect($registry->all())->toHaveCount(6);
     });
 
     it('resolves custom tools with constructor dependencies from the container', function () {

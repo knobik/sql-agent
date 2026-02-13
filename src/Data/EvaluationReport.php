@@ -7,9 +7,8 @@ namespace Knobik\SqlAgent\Data;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
-use Spatie\LaravelData\Data;
 
-class EvaluationReport extends Data
+class EvaluationReport
 {
     public function __construct(
         /** @var Collection<int, TestResult> */

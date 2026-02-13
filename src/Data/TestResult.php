@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Data;
 
-use Knobik\SqlAgent\Contracts\AgentResponse;
-use Spatie\LaravelData\Data;
-
-class TestResult extends Data
+class TestResult
 {
     public const STATUS_PASS = 'pass';
 

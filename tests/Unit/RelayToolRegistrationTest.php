@@ -52,7 +52,7 @@ describe('Relay MCP Tool Registration', function () {
         $registry = app(ToolRegistry::class);
 
         // Built-in (5) + custom (1) + relay (1) = 7
-        expect($registry->count())->toBe(7);
+        expect($registry->all())->toHaveCount(7);
         expect($registry->has('run_sql'))->toBeTrue();
         expect($registry->has('fake_custom'))->toBeTrue();
         expect($registry->has('mcp_calculator'))->toBeTrue();
@@ -98,7 +98,7 @@ describe('Relay MCP Tool Registration', function () {
         $registry = app(ToolRegistry::class);
 
         // Only built-in tools
-        expect($registry->count())->toBe(5);
+        expect($registry->all())->toHaveCount(5);
     });
 });
 

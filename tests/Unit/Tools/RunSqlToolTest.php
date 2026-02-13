@@ -44,8 +44,8 @@ describe('RunSqlTool', function () {
 
         $tool('SELECT * FROM test_users');
 
-        expect($tool->lastSql)->toBe('SELECT * FROM test_users');
-        expect($tool->lastResults)->toHaveCount(2);
+        expect($tool->getLastSql())->toBe('SELECT * FROM test_users');
+        expect($tool->getLastResults())->toHaveCount(2);
     });
 
     it('executes WITH statements', function () {
@@ -107,10 +107,10 @@ describe('RunSqlTool', function () {
         $tool('SELECT * FROM test_users');
         $tool('SELECT name FROM test_users WHERE id = 1');
 
-        expect($tool->executedQueries)->toHaveCount(2);
-        expect($tool->executedQueries[0]['sql'])->toBe('SELECT * FROM test_users');
-        expect($tool->executedQueries[0]['connection'])->toBeNull();
-        expect($tool->executedQueries[1]['sql'])->toBe('SELECT name FROM test_users WHERE id = 1');
+        expect($tool->getExecutedQueries())->toHaveCount(2);
+        expect($tool->getExecutedQueries()[0]['sql'])->toBe('SELECT * FROM test_users');
+        expect($tool->getExecutedQueries()[0]['connection'])->toBeNull();
+        expect($tool->getExecutedQueries()[1]['sql'])->toBe('SELECT name FROM test_users WHERE id = 1');
     });
 
     it('can set and get question', function () {

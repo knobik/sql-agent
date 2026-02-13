@@ -23,8 +23,6 @@ class SchemaIntrospector
      */
     public function getAllTables(?string $connection = null, ?string $connectionName = null): Collection
     {
-        $connection = $this->resolveConnection($connection);
-
         try {
             $tableNames = $this->getTableNames($connection, $connectionName);
         } catch (Throwable $e) {
@@ -47,8 +45,6 @@ class SchemaIntrospector
             return null;
         }
 
-        $connection = $this->resolveConnection($connection);
-
         try {
             if (! $this->tableExists($tableName, $connection)) {
                 return null;
@@ -67,8 +63,6 @@ class SchemaIntrospector
      */
     public function getRelevantSchema(string $question, ?string $connection = null, ?string $connectionName = null): ?string
     {
-        $connection = $this->resolveConnection($connection);
-
         // Extract potential table names from the question
         $potentialTables = $this->extractPotentialTableNames($question, $connection, $connectionName);
 
@@ -163,7 +157,7 @@ class SchemaIntrospector
      *
      * @return array<string>
      */
-    protected function getPrimaryKeyColumns(array $indexes): array
+    public function getPrimaryKeyColumns(array $indexes): array
     {
         foreach ($indexes as $index) {
             if ($index['primary'] ?? false) {
@@ -179,7 +173,7 @@ class SchemaIntrospector
      *
      * @return array<string, array{table: string, column: string}>
      */
-    protected function buildForeignKeyMap(array $foreignKeys): array
+    public function buildForeignKeyMap(array $foreignKeys): array
     {
         $map = [];
 
@@ -204,7 +198,7 @@ class SchemaIntrospector
      *
      * @return array<array{name: string, columns: array, foreign_table: string, foreign_columns: array}>
      */
-    protected function getForeignKeys(string $tableName, ?string $connection): array
+    public function getForeignKeys(string $tableName, ?string $connection): array
     {
         try {
             return Schema::connection($connection)->getForeignKeys($tableName);
@@ -216,7 +210,7 @@ class SchemaIntrospector
     /**
      * Get table comment if supported by the database.
      */
-    protected function getTableComment(string $tableName, ?string $connection): ?string
+    public function getTableComment(string $tableName, ?string $connection): ?string
     {
         try {
             $tables = $this->getTablesForConnection($connection);
@@ -236,7 +230,7 @@ class SchemaIntrospector
     /**
      * Format default value for display.
      */
-    protected function formatDefaultValue(mixed $default): ?string
+    public function formatDefaultValue(mixed $default): ?string
     {
         if ($default === null) {
             return null;
@@ -256,8 +250,6 @@ class SchemaIntrospector
      */
     protected function extractPotentialTableNames(string $question, ?string $connection = null, ?string $connectionName = null): array
     {
-        $connection = $this->resolveConnection($connection);
-
         try {
             $allTables = $this->getTableNames($connection, $connectionName);
         } catch (Throwable) {
@@ -310,8 +302,6 @@ class SchemaIntrospector
      */
     public function getTableNames(?string $connection = null, ?string $connectionName = null): array
     {
-        $connection = $this->resolveConnection($connection);
-
         try {
             $tables = $this->getTablesForConnection($connection);
         } catch (Throwable $e) {
@@ -330,8 +320,6 @@ class SchemaIntrospector
      */
     public function tableExists(string $tableName, ?string $connection = null): bool
     {
-        $connection = $this->resolveConnection($connection);
-
         try {
             return Schema::connection($connection)->hasTable($tableName);
         } catch (Throwable) {
@@ -390,13 +378,5 @@ class SchemaIntrospector
         return array_values(
             array_filter($tables, fn (array $table) => ($table['schema'] ?? null) === $databaseName)
         );
-    }
-
-    /**
-     * Resolve the connection name.
-     */
-    protected function resolveConnection(?string $connection): ?string
-    {
-        return $connection;
     }
 }

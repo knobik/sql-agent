@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Data;
 
-use Spatie\LaravelData\Data;
-
-class GradeResult extends Data
+class GradeResult
 {
     public function __construct(
         public bool $passed,

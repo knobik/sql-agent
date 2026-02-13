@@ -27,6 +27,8 @@ class ToolRegistry
     /**
      * Register a single tool, throwing if a tool with the same name already exists.
      *
+     * @internal
+     *
      * @throws InvalidArgumentException
      */
     public function registerStrict(Tool $tool): self
@@ -94,41 +96,5 @@ class ToolRegistry
     public function names(): array
     {
         return array_keys($this->tools);
-    }
-
-    /**
-     * Remove a tool by name.
-     */
-    public function remove(string $name): self
-    {
-        unset($this->tools[$name]);
-
-        return $this;
-    }
-
-    /**
-     * Clear all registered tools.
-     */
-    public function clear(): self
-    {
-        $this->tools = [];
-
-        return $this;
-    }
-
-    /**
-     * Get the number of registered tools.
-     */
-    public function count(): int
-    {
-        return count($this->tools);
-    }
-
-    /**
-     * Check if the registry is empty.
-     */
-    public function isEmpty(): bool
-    {
-        return empty($this->tools);
     }
 }

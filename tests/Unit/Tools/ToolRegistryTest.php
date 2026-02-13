@@ -43,7 +43,6 @@ describe('ToolRegistry', function () {
             new SaveLearningTool,
         ]);
 
-        expect($registry->count())->toBe(2);
         expect($registry->has('run_sql'))->toBeTrue();
         expect($registry->has('save_learning'))->toBeTrue();
     });
@@ -80,17 +79,6 @@ describe('ToolRegistry', function () {
         $registry->get('non_existent');
     })->throws(InvalidArgumentException::class, "Tool 'non_existent' is not registered.");
 
-    it('can remove a tool', function () {
-        $registry = new ToolRegistry;
-        $registry->register(new RunSqlTool);
-
-        expect($registry->has('run_sql'))->toBeTrue();
-
-        $registry->remove('run_sql');
-
-        expect($registry->has('run_sql'))->toBeFalse();
-    });
-
     it('silently overwrites on register by default', function () {
         $registry = new ToolRegistry;
         $tool1 = new RunSqlTool;
@@ -99,7 +87,6 @@ describe('ToolRegistry', function () {
         $registry->register($tool1);
         $registry->register($tool2);
 
-        expect($registry->count())->toBe(1);
         expect($registry->get('run_sql'))->toBe($tool2);
     });
 
@@ -115,21 +102,5 @@ describe('ToolRegistry', function () {
         $registry->registerStrict(new RunSqlTool);
 
         expect($registry->has('run_sql'))->toBeTrue();
-        expect($registry->count())->toBe(1);
-    });
-
-    it('can clear all tools', function () {
-        $registry = new ToolRegistry;
-        $registry->registerMany([
-            new RunSqlTool,
-            new SaveLearningTool,
-        ]);
-
-        expect($registry->count())->toBe(2);
-
-        $registry->clear();
-
-        expect($registry->isEmpty())->toBeTrue();
-        expect($registry->count())->toBe(0);
     });
 });

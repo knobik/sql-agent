@@ -3,6 +3,7 @@
 namespace Knobik\SqlAgent\Contracts;
 
 use Generator;
+use Knobik\SqlAgent\Data\AgentResponse;
 
 interface Agent
 {

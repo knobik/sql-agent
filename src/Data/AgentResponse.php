@@ -1,6 +1,8 @@
 <?php
 
-namespace Knobik\SqlAgent\Contracts;
+declare(strict_types=1);
+
+namespace Knobik\SqlAgent\Data;
 
 class AgentResponse
 {

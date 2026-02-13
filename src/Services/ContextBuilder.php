@@ -35,6 +35,8 @@ class ContextBuilder
 
     /**
      * Build context with custom options.
+     *
+     * @internal
      */
     public function buildWithOptions(
         string $question,
@@ -50,12 +52,14 @@ class ContextBuilder
             businessRules: $includeBusinessRules ? $this->rulesLoader->format() : '',
             queryPatterns: $includeQueryPatterns ? $this->searchQueryPatterns($question, $queryPatternLimit) : collect(),
             learnings: $includeLearnings ? $this->searchLearnings($question, $learningLimit) : collect(),
-            customKnowledge: $includeQueryPatterns ? $this->searchCustomIndexes($question) : collect(),
+            customKnowledge: $this->searchCustomIndexes($question),
         );
     }
 
     /**
      * Build minimal context (just schema, no search).
+     *
+     * @internal
      */
     public function buildMinimal(): Context
     {
@@ -146,6 +150,8 @@ class ContextBuilder
 
     /**
      * Get the semantic model loader.
+     *
+     * @internal
      */
     public function getSemanticLoader(): SemanticModelLoader
     {
@@ -154,6 +160,8 @@ class ContextBuilder
 
     /**
      * Get the business rules loader.
+     *
+     * @internal
      */
     public function getRulesLoader(): BusinessRulesLoader
     {

@@ -20,11 +20,11 @@ class RunSqlTool extends Tool
 
     protected ConnectionRegistry $connectionRegistry;
 
-    public ?string $lastSql = null;
+    private ?string $lastSql = null;
 
-    public ?array $lastResults = null;
+    private ?array $lastResults = null;
 
-    public array $executedQueries = [];
+    private array $executedQueries = [];
 
     public function __construct()
     {
@@ -103,6 +103,31 @@ class RunSqlTool extends Tool
     public function getQuestion(): ?string
     {
         return $this->question;
+    }
+
+    public function getLastSql(): ?string
+    {
+        return $this->lastSql;
+    }
+
+    public function getLastResults(): ?array
+    {
+        return $this->lastResults;
+    }
+
+    /**
+     * @return array<int, array{sql: string, connection: ?string}>
+     */
+    public function getExecutedQueries(): array
+    {
+        return $this->executedQueries;
+    }
+
+    public function reset(): void
+    {
+        $this->lastSql = null;
+        $this->lastResults = null;
+        $this->executedQueries = [];
     }
 
     protected function resolveConnection(?string $logicalName): ?string

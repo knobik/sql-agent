@@ -126,7 +126,7 @@ When testing code that uses SqlAgent, you can mock the facade:
 
 ```php
 use Knobik\SqlAgent\Facades\SqlAgent;
-use Knobik\SqlAgent\Contracts\AgentResponse;
+use Knobik\SqlAgent\Data\AgentResponse;
 
 public function test_it_handles_sql_agent_response(): void
 {

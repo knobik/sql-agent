@@ -6,7 +6,7 @@ namespace Knobik\SqlAgent\Agent;
 
 use Generator;
 use Knobik\SqlAgent\Contracts\Agent;
-use Knobik\SqlAgent\Contracts\AgentResponse;
+use Knobik\SqlAgent\Data\AgentResponse;
 use Knobik\SqlAgent\Llm\StreamChunk;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ContextBuilder;
@@ -236,9 +236,9 @@ class SqlAgent implements Agent
     {
         foreach ($tools as $tool) {
             if ($tool instanceof RunSqlTool) {
-                $this->lastSql = $tool->lastSql;
-                $this->lastResults = $tool->lastResults;
-                $this->allQueries = $tool->executedQueries;
+                $this->lastSql = $tool->getLastSql();
+                $this->lastResults = $tool->getLastResults();
+                $this->allQueries = $tool->getExecutedQueries();
 
                 return;
             }
@@ -336,9 +336,7 @@ class SqlAgent implements Agent
         // Reset tool state
         foreach ($this->toolRegistry->all() as $tool) {
             if ($tool instanceof RunSqlTool) {
-                $tool->lastSql = null;
-                $tool->lastResults = null;
-                $tool->executedQueries = [];
+                $tool->reset();
             }
         }
     }

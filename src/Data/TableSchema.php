@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Data;
 
-use Spatie\LaravelData\Data;
-
-class TableSchema extends Data
+class TableSchema
 {
     public function __construct(
         public string $tableName,

@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Search\Strategies;
 
 use Illuminate\Database\Eloquent\Builder;
 use Knobik\SqlAgent\Contracts\FullTextSearchStrategy;
+use Knobik\SqlAgent\Support\TextAnalyzer;
 
 /**
  * SQL Server CONTAINSTABLE full-text search strategy.
@@ -53,10 +54,14 @@ class SqlServerFullTextStrategy implements FullTextSearchStrategy
     /**
      * Prepare the search term for SQL Server full-text search.
      * Uses FORMSOF and OR for broader matching.
+     *
+     * Safety: keywords are interpolated into FORMSOF() expressions. This is safe because
+     * TextAnalyzer::extractKeywords() only passes through [a-zA-Z0-9] characters.
+     * If that filter changes, this method must sanitize keywords.
      */
     protected function prepareSearchTerm(string $term): string
     {
-        $keywords = $this->extractKeywords($term);
+        $keywords = TextAnalyzer::extractKeywords($term);
 
         if (empty($keywords)) {
             return '';
@@ -69,38 +74,5 @@ class SqlServerFullTextStrategy implements FullTextSearchStrategy
         );
 
         return implode(' OR ', $expressions);
-    }
-
-    /**
-     * Extract keywords from a search term.
-     *
-     * @return array<string>
-     */
-    protected function extractKeywords(string $text): array
-    {
-        $stopWords = [
-            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'must', 'can', 'to', 'of', 'in', 'for',
-            'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during',
-            'before', 'after', 'above', 'below', 'between', 'under', 'again',
-            'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
-            'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such',
-            'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
-            'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while',
-            'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
-            'show', 'get', 'find', 'list', 'give', 'tell', 'many', 'much',
-        ];
-
-        $words = preg_split('/[^a-zA-Z0-9]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY);
-
-        if ($words === false) {
-            return [];
-        }
-
-        return array_values(array_filter(
-            $words,
-            fn (string $word) => strlen($word) > 2 && ! in_array($word, $stopWords)
-        ));
     }
 }

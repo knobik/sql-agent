@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Data;
 
-use Spatie\LaravelData\Data;
-
-class QueryPatternData extends Data
+class QueryPatternData
 {
     public function __construct(
         public string $name,

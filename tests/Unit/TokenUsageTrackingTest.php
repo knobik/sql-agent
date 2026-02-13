@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Knobik\SqlAgent\Contracts\AgentResponse;
+use Knobik\SqlAgent\Data\AgentResponse;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Llm\StreamChunk;
 use Knobik\SqlAgent\Models\Conversation;

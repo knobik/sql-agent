@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Data;
 
-use Spatie\LaravelData\Data;
-
-class ConnectionConfig extends Data
+class ConnectionConfig
 {
     public function __construct(
         /** The logical name (key in the config map). */

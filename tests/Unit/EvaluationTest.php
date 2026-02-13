@@ -1,7 +1,7 @@
 <?php
 
 use Knobik\SqlAgent\Contracts\Agent;
-use Knobik\SqlAgent\Contracts\AgentResponse;
+use Knobik\SqlAgent\Data\AgentResponse;
 use Knobik\SqlAgent\Data\EvaluationReport;
 use Knobik\SqlAgent\Data\GradeResult;
 use Knobik\SqlAgent\Data\TestResult;

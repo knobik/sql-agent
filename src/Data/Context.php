@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Data;
 
 use Illuminate\Support\Collection;
-use Spatie\LaravelData\Data;
 
-class Context extends Data
+class Context
 {
     public function __construct(
         public string $semanticModel,

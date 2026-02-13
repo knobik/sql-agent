@@ -13,8 +13,6 @@
         "illuminate/support": "^11.0|^12.0",
         "illuminate/database": "^11.0|^12.0",
         "illuminate/console": "^11.0|^12.0",
-        "spatie/laravel-data": "^4.0",
-        "doctrine/dbal": "^3.0|^4.0",
         "prism-php/prism": "^0.99"
     },
     "require-dev": {

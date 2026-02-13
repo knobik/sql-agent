@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Data;
 
 use Knobik\SqlAgent\Enums\BusinessRuleType;
-use Spatie\LaravelData\Data;
 
-class BusinessRuleData extends Data
+class BusinessRuleData
 {
     public function __construct(
         public string $name,
