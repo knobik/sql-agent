@@ -170,6 +170,10 @@ return [
         // Custom tool class names resolved from the container, e.g.:
         // [App\SqlAgent\MyCustomTool::class]
         'tools' => [],
+
+        // MCP server names (from config/relay.php) whose tools should be
+        // available to the agent. Requires prism-php/relay to be installed.
+        'relay' => [],
     ],
 
     /*
@@ -193,20 +197,15 @@ return [
     |
     | Configure knowledge base settings.
     |
-    | Source options:
-    |   - 'database': Reads knowledge from the sql_agent_table_metadata,
-    |     sql_agent_business_rules, and sql_agent_query_patterns database tables.
-    |     Requires running `php artisan sql-agent:load-knowledge` first to import
-    |     JSON files into the database. Supports full-text search and is the
-    |     recommended option for production.
-    |   - 'files': Reads knowledge directly from JSON files on disk at the
-    |     configured path. No database import needed, but does not support
-    |     full-text search over knowledge.
+    | The path option sets the directory containing your JSON knowledge files.
+    | This path is used by the `sql-agent:load-knowledge` command to import
+    | files into the database. Knowledge is always read from the database at
+    | runtime — run `php artisan sql-agent:load-knowledge` after creating or
+    | changing knowledge files.
     |
     */
     'knowledge' => [
         'path' => env('SQL_AGENT_KNOWLEDGE_PATH', resource_path('sql-agent/knowledge')),
-        'source' => env('SQL_AGENT_KNOWLEDGE_SOURCE', 'database'),
     ],
 
     /*

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\File;
+use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\SemanticModelLoader;
 
@@ -10,15 +10,10 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->artisan('migrate');
 
-    config()->set('sql-agent.knowledge.source', 'files');
-
-    // Create a temporary knowledge directory with table files
-    $this->knowledgePath = sys_get_temp_dir().'/sql-agent-test-knowledge-'.uniqid();
-    $tablesPath = $this->knowledgePath.'/tables';
-    File::makeDirectory($tablesPath, 0755, true);
-
-    File::put("{$tablesPath}/users.json", json_encode([
-        'table' => 'users',
+    // Create test table metadata in the database
+    TableMetadata::create([
+        'connection' => 'default',
+        'table_name' => 'users',
         'description' => 'User accounts',
         'columns' => [
             'id' => 'integer, Primary key',
@@ -27,10 +22,11 @@ beforeEach(function () {
             'password' => 'string, hashed',
         ],
         'relationships' => [],
-    ]));
+    ]);
 
-    File::put("{$tablesPath}/orders.json", json_encode([
-        'table' => 'orders',
+    TableMetadata::create([
+        'connection' => 'default',
+        'table_name' => 'orders',
         'description' => 'Customer orders',
         'columns' => [
             'id' => 'integer, Primary key',
@@ -38,23 +34,18 @@ beforeEach(function () {
             'total' => 'decimal',
         ],
         'relationships' => ['belongsTo users via user_id → users.id'],
-    ]));
+    ]);
 
-    File::put("{$tablesPath}/secrets.json", json_encode([
-        'table' => 'secrets',
+    TableMetadata::create([
+        'connection' => 'default',
+        'table_name' => 'secrets',
         'description' => 'Secret data',
         'columns' => [
             'id' => 'integer',
             'api_key' => 'string',
         ],
         'relationships' => [],
-    ]));
-
-    config()->set('sql-agent.knowledge.path', $this->knowledgePath);
-});
-
-afterEach(function () {
-    File::deleteDirectory($this->knowledgePath);
+    ]);
 });
 
 describe('SemanticModelLoader with TableAccessControl', function () {

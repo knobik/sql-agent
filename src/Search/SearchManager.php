@@ -114,4 +114,32 @@ class SearchManager extends Manager implements SearchDriver
     {
         $this->driver()->delete($model);
     }
+
+    /**
+     * Get all registered index names from the current driver.
+     *
+     * @return array<string>
+     */
+    public function getRegisteredIndexes(): array
+    {
+        $driver = $this->driver();
+
+        if (method_exists($driver, 'getIndexMapping')) {
+            return array_keys($driver->getIndexMapping());
+        }
+
+        return [];
+    }
+
+    /**
+     * Get custom indexes (excluding built-in query_patterns and learnings).
+     *
+     * @return array<string>
+     */
+    public function getCustomIndexes(): array
+    {
+        $builtIn = ['query_patterns', 'learnings'];
+
+        return array_values(array_diff($this->getRegisteredIndexes(), $builtIn));
+    }
 }

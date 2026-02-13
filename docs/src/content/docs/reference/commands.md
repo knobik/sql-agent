@@ -39,7 +39,7 @@ After running this command, generate embeddings for your existing knowledge base
 
 ## `sql-agent:load-knowledge`
 
-Import knowledge files from disk into the database. Required when using the default `database` knowledge source.
+Import knowledge files from disk into the database. Required after creating or changing knowledge files.
 
 ```bash
 php artisan sql-agent:load-knowledge

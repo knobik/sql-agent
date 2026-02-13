@@ -16,14 +16,17 @@ class Context extends Data
         public Collection $queryPatterns,
         /** @var Collection<int, mixed> */
         public Collection $learnings,
-        public ?string $runtimeSchema = null,
-    ) {}
+        /** @var Collection<int, array<string, mixed>> */
+        public ?Collection $customKnowledge = null,
+    ) {
+        $this->customKnowledge ??= collect();
+    }
 
     public function toPromptString(): string
     {
         $sections = [];
 
-        // Layer 1: Semantic Model (Table Usage)
+        // Layer 1: Semantic Model
         if ($this->semanticModel) {
             $sections[] = $this->formatSection('DATABASE SCHEMA', $this->semanticModel);
         }
@@ -41,7 +44,7 @@ class Context extends Data
             $sections[] = $this->formatSection('SIMILAR QUERY EXAMPLES', $patterns);
         }
 
-        // Layer 5: Learnings
+        // Layer 4: Learnings
         if ($this->learnings->isNotEmpty()) {
             $learnings = $this->learnings
                 ->map(fn ($l) => "- {$l['title']}: {$l['description']}")
@@ -49,9 +52,21 @@ class Context extends Data
             $sections[] = $this->formatSection('RELEVANT LEARNINGS', $learnings);
         }
 
-        // Layer 6: Runtime Schema
-        if ($this->runtimeSchema) {
-            $sections[] = $this->formatSection('RUNTIME SCHEMA INSPECTION', $this->runtimeSchema);
+        // Layer 5: Custom Knowledge
+        if ($this->customKnowledge->isNotEmpty()) {
+            $knowledge = $this->customKnowledge
+                ->map(function (array $item) {
+                    $parts = [];
+                    foreach ($item as $key => $value) {
+                        if ($value !== null && $value !== '') {
+                            $parts[] = "{$key}: {$value}";
+                        }
+                    }
+
+                    return '- '.implode(' | ', $parts);
+                })
+                ->implode("\n");
+            $sections[] = $this->formatSection('ADDITIONAL KNOWLEDGE', $knowledge);
         }
 
         return implode("\n\n", $sections);
@@ -72,11 +87,6 @@ class Context extends Data
         return $this->learnings->isNotEmpty();
     }
 
-    public function hasRuntimeSchema(): bool
-    {
-        return ! empty($this->runtimeSchema);
-    }
-
     public function getQueryPatternCount(): int
     {
         return $this->queryPatterns->count();
@@ -93,6 +103,6 @@ class Context extends Data
             && empty($this->businessRules)
             && $this->queryPatterns->isEmpty()
             && $this->learnings->isEmpty()
-            && empty($this->runtimeSchema);
+            && $this->customKnowledge->isEmpty();
     }
 }

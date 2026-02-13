@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Data\TableSchema;
 use Knobik\SqlAgent\Models\TableMetadata;
 
@@ -16,19 +15,19 @@ class SemanticModelLoader
     ) {}
 
     /**
-     * Load table metadata from the configured source.
+     * Load table metadata from the database.
      *
      * @return Collection<int, TableSchema>
      */
     public function load(?string $connection = null, ?string $connectionName = null): Collection
     {
-        $source = config('sql-agent.knowledge.source');
+        $query = TableMetadata::query();
 
-        $tables = match ($source) {
-            'files' => $this->loadFromFiles($connection),
-            'database' => $this->loadFromDatabase($connection),
-            default => throw new \InvalidArgumentException("Unknown knowledge source: {$source}"),
-        };
+        if ($connection !== null) {
+            $query->forConnection($connection);
+        }
+
+        $tables = $query->get()->map(fn (TableMetadata $model) => $this->modelToTableSchema($model));
 
         return $this->applyAccessControl($tables, $connectionName);
     }
@@ -50,79 +49,6 @@ class SemanticModelLoader
     }
 
     /**
-     * Load table metadata from JSON files.
-     *
-     * @return Collection<int, TableSchema>
-     */
-    protected function loadFromFiles(?string $connection = null): Collection
-    {
-        $path = config('sql-agent.knowledge.path').'/tables';
-
-        if (! File::isDirectory($path)) {
-            return collect();
-        }
-
-        $files = File::glob("{$path}/*.json");
-
-        return collect($files)
-            ->map(fn (string $file) => $this->parseJsonFile($file))
-            ->filter()
-            ->filter(fn (TableSchema $table, $key) => $this->matchesConnection($table, $connection))
-            ->values();
-    }
-
-    /**
-     * Load table metadata from the database.
-     *
-     * @return Collection<int, TableSchema>
-     */
-    protected function loadFromDatabase(?string $connection = null): Collection
-    {
-        $query = TableMetadata::query();
-
-        if ($connection !== null) {
-            $query->forConnection($connection);
-        }
-
-        return $query->get()->map(fn (TableMetadata $model) => $this->modelToTableSchema($model));
-    }
-
-    /**
-     * Parse a JSON file into a TableSchema.
-     */
-    protected function parseJsonFile(string $filePath): ?TableSchema
-    {
-        try {
-            $data = json_decode(File::get($filePath), true, 512, JSON_THROW_ON_ERROR);
-
-            return $this->arrayToTableSchema($data);
-        } catch (\JsonException $e) {
-            report($e);
-
-            return null;
-        }
-    }
-
-    /**
-     * Convert an array to a TableSchema DTO.
-     */
-    protected function arrayToTableSchema(array $data): TableSchema
-    {
-        $columns = $data['columns'] ?? $data['table_columns'] ?? [];
-        $relationships = $data['relationships'] ?? [];
-
-        return new TableSchema(
-            tableName: $data['table'] ?? $data['table_name'] ?? '',
-            description: $data['description'] ?? $data['table_description'] ?? null,
-            columns: $columns,
-            relationships: $relationships,
-            dataQualityNotes: $data['data_quality_notes'] ?? [],
-            useCases: $data['use_cases'] ?? [],
-            connection: $data['connection'] ?? null,
-        );
-    }
-
-    /**
      * Convert a TableMetadata model to a TableSchema DTO.
      */
     protected function modelToTableSchema(TableMetadata $model): TableSchema
@@ -134,24 +60,6 @@ class SemanticModelLoader
             relationships: $model->relationships ?? [],
             dataQualityNotes: $model->data_quality_notes ?? [],
         );
-    }
-
-    /**
-     * Check if a table belongs to the specified connection.
-     *
-     * When a connection is specified, only tables with a matching `connection`
-     * field in their JSON file are included. Tables without a `connection`
-     * field default to "default" and are included for all connections.
-     */
-    protected function matchesConnection(TableSchema $table, ?string $connection): bool
-    {
-        if ($connection === null) {
-            return true;
-        }
-
-        $tableConnection = $table->connection ?? 'default';
-
-        return $tableConnection === $connection || $tableConnection === 'default';
     }
 
     /**

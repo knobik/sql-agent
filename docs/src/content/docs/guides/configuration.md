@@ -195,10 +195,16 @@ You can add custom indexes by providing an `index_mapping` array in the driver c
 'database' => [
     // ...
     'index_mapping' => [
-        'custom_index' => \App\Models\CustomModel::class,
+        'faq' => \App\Models\Faq::class,
     ],
 ],
 ```
+
+Custom indexes are fully integrated into the search system:
+
+- The `search_knowledge` tool automatically exposes custom indexes to the LLM as additional type options.
+- The `ContextBuilder` searches custom indexes and includes matching results as "Additional Knowledge" in the system prompt.
+- Both `database` and `pgvector` drivers support custom indexes identically.
 
 Each model referenced in `index_mapping` must extend `Illuminate\Database\Eloquent\Model` and implement the `Knobik\SqlAgent\Contracts\Searchable` interface, which requires two methods:
 
@@ -238,6 +244,22 @@ You can extend the agent with your own tools by listing class names in the `tool
 
 Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
 
+### MCP Server Tools (Relay)
+
+If you have [Prism Relay](https://github.com/prism-php/relay) installed, you can bring tools from MCP servers into the agent by listing server names from `config/relay.php`:
+
+```php
+'agent' => [
+    // ... other options ...
+    'relay' => [
+        'weather-server',
+        'filesystem-server',
+    ],
+],
+```
+
+The `relay` key is silently ignored when `prism-php/relay` is not installed. See the [Custom Tools](/sql-agent/guides/custom-tools/#mcp-server-tools-relay) guide for full setup instructions.
+
 ## Learning
 
 SqlAgent can automatically learn from SQL errors and improve over time:
@@ -265,21 +287,17 @@ Schedule::command('sql-agent:prune-learnings')->daily();
 
 ## Knowledge
 
-Configure where SqlAgent reads knowledge from at runtime:
+Configure the knowledge base path:
 
 ```php
 'knowledge' => [
     'path' => env('SQL_AGENT_KNOWLEDGE_PATH', resource_path('sql-agent/knowledge')),
-    'source' => env('SQL_AGENT_KNOWLEDGE_SOURCE', 'database'),
 ],
 ```
 
-The `path` option sets the directory containing your JSON knowledge files. This path is used both when loading knowledge via `sql-agent:load-knowledge` and when the `files` source reads directly from disk.
+The `path` option sets the directory containing your JSON knowledge files. This path is used by the `sql-agent:load-knowledge` command to import files into the database.
 
-The `source` option controls how the agent loads knowledge at runtime:
-
-- **`database`** (default, recommended) — Reads from the `sql_agent_table_metadata`, `sql_agent_business_rules`, and `sql_agent_query_patterns` tables. You must run `php artisan sql-agent:load-knowledge` to import your JSON files first. Supports full-text search over knowledge.
-- **`files`** — Reads directly from JSON files on disk. No import step needed, but full-text search is not available.
+Knowledge is always read from the database at runtime — from the `sql_agent_table_metadata`, `sql_agent_business_rules`, and `sql_agent_query_patterns` tables. You must run `php artisan sql-agent:load-knowledge` after creating or changing knowledge files.
 
 ## Web Interface
 

@@ -135,6 +135,63 @@ SqlAgent validates custom tools at boot time:
 
 These errors surface immediately when the application boots, not at query time, so misconfigurations are caught early.
 
+## MCP Server Tools (Relay)
+
+SqlAgent integrates with [Prism Relay](https://github.com/prism-php/relay) to bring tools from MCP (Model Context Protocol) servers into the agentic loop. This lets you connect external tool servers — filesystem access, API wrappers, code interpreters, or any MCP-compatible server — without writing custom PHP tool classes.
+
+### Installation
+
+Install the Relay package:
+
+```bash
+composer require prism-php/relay
+```
+
+Then publish and configure your MCP servers in `config/relay.php` following the [Relay documentation](https://github.com/prism-php/relay).
+
+### Registering MCP Server Tools
+
+List the MCP server names (as defined in `config/relay.php`) in the `agent.relay` array in `config/sql-agent.php`:
+
+```php
+'agent' => [
+    // ... other options ...
+    'tools' => [],
+
+    'relay' => [
+        'weather-server',
+        'filesystem-server',
+    ],
+],
+```
+
+At boot time, SqlAgent calls `Relay::tools($server)` for each configured server and registers all discovered tools alongside the built-in and custom tools. The LLM sees and can call all of them.
+
+:::tip
+Relay tools are dynamically discovered `Tool` instances — you don't need to create PHP classes for them. Just configure the MCP server in `config/relay.php` and reference it by name in the `relay` array.
+:::
+
+:::note
+If `prism-php/relay` is not installed, the `relay` config key is silently ignored. This means you can ship a config that references Relay servers without requiring the package — useful for shared config across environments where only some have Relay installed.
+:::
+
+### Combining Custom Tools and Relay
+
+Custom tools and Relay tools can be used together. They all end up in the same tool registry and are passed to the LLM equally:
+
+```php
+'agent' => [
+    'tools' => [
+        \App\SqlAgent\CurrentDateTimeTool::class,
+    ],
+    'relay' => [
+        'weather-server',
+    ],
+],
+```
+
+If a Relay tool has the same name as a built-in or custom tool, it will overwrite the previous registration (last write wins).
+
 ## Tips
 
 - **Keep tools focused.** Each tool should do one thing well. Prefer two small tools over one tool with a `mode` parameter.

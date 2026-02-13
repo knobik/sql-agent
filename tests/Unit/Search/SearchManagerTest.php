@@ -93,3 +93,49 @@ test('can create pgvector driver', function () {
 
     expect($driver)->toBeInstanceOf(PgvectorSearchDriver::class);
 });
+
+test('getRegisteredIndexes returns default indexes for database driver', function () {
+    $indexes = $this->manager->getRegisteredIndexes();
+
+    expect($indexes)->toContain('query_patterns');
+    expect($indexes)->toContain('learnings');
+});
+
+test('getRegisteredIndexes returns empty array for null driver', function () {
+    config(['sql-agent.search.default' => 'null']);
+
+    $manager = new SearchManager(app());
+    $indexes = $manager->getRegisteredIndexes();
+
+    expect($indexes)->toBe([]);
+});
+
+test('getCustomIndexes returns empty when no custom indexes configured', function () {
+    $customIndexes = $this->manager->getCustomIndexes();
+
+    expect($customIndexes)->toBe([]);
+});
+
+test('getCustomIndexes excludes built-in indexes', function () {
+    config(['sql-agent.search.drivers.database.index_mapping' => [
+        'my_custom_index' => \Knobik\SqlAgent\Models\QueryPattern::class,
+    ]]);
+
+    $manager = new SearchManager(app());
+    $customIndexes = $manager->getCustomIndexes();
+
+    expect($customIndexes)->toBe(['my_custom_index']);
+});
+
+test('getRegisteredIndexes includes custom indexes', function () {
+    config(['sql-agent.search.drivers.database.index_mapping' => [
+        'my_custom_index' => \Knobik\SqlAgent\Models\QueryPattern::class,
+    ]]);
+
+    $manager = new SearchManager(app());
+    $indexes = $manager->getRegisteredIndexes();
+
+    expect($indexes)->toContain('query_patterns');
+    expect($indexes)->toContain('learnings');
+    expect($indexes)->toContain('my_custom_index');
+});

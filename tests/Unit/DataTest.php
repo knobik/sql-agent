@@ -216,7 +216,7 @@ describe('Context', function () {
             businessRules: 'Rules info',
             queryPatterns: collect(),
             learnings: collect(),
-            runtimeSchema: null,
+
         );
 
         expect($context->semanticModel)->toBe('Table info');
@@ -235,7 +235,6 @@ describe('Context', function () {
             businessRules: 'Rules here',
             queryPatterns: collect([$pattern]),
             learnings: collect([['title' => 'Learning 1', 'description' => 'Desc 1']]),
-            runtimeSchema: 'Runtime schema',
         );
 
         $prompt = $context->toPromptString();
@@ -245,7 +244,6 @@ describe('Context', function () {
         expect($prompt)->toContain('# BUSINESS RULES');
         expect($prompt)->toContain('# SIMILAR QUERY EXAMPLES');
         expect($prompt)->toContain('# RELEVANT LEARNINGS');
-        expect($prompt)->toContain('# RUNTIME SCHEMA INSPECTION');
     });
 
     it('detects empty context', function () {
@@ -254,7 +252,7 @@ describe('Context', function () {
             businessRules: '',
             queryPatterns: collect(),
             learnings: collect(),
-            runtimeSchema: null,
+
         );
 
         expect($emptyContext->isEmpty())->toBeTrue();
@@ -264,7 +262,7 @@ describe('Context', function () {
             businessRules: '',
             queryPatterns: collect(),
             learnings: collect(),
-            runtimeSchema: null,
+
         );
 
         expect($nonEmptyContext->isEmpty())->toBeFalse();
@@ -281,7 +279,7 @@ describe('Context', function () {
             learnings: collect([
                 ['title' => 'L1', 'description' => 'D1'],
             ]),
-            runtimeSchema: null,
+
         );
 
         expect($context->getQueryPatternCount())->toBe(2);

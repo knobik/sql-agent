@@ -60,7 +60,7 @@ describe('SearchKnowledgeTool', function () {
     it('searches query patterns', function () {
         $tool = app(SearchKnowledgeTool::class);
 
-        $result = json_decode($tool(query: 'users', type: 'patterns'), true);
+        $result = json_decode($tool(query: 'users', type: 'query_patterns'), true);
 
         expect($result['query_patterns'])->toHaveCount(1);
         expect($result['query_patterns'][0]['name'])->toBe('user_count');
@@ -105,7 +105,7 @@ describe('SearchKnowledgeTool', function () {
 
         $tool = app(SearchKnowledgeTool::class);
 
-        $result = json_decode($tool(query: 'users', type: 'patterns', limit: 3), true);
+        $result = json_decode($tool(query: 'users', type: 'query_patterns', limit: 3), true);
 
         expect($result['query_patterns'])->toHaveCount(3);
     });
@@ -124,5 +124,38 @@ describe('SearchKnowledgeTool', function () {
         expect($tool->parameters())->toHaveKey('type');
         expect($tool->parameters())->toHaveKey('limit');
         expect($tool->requiredParameters())->toContain('query');
+    });
+
+    it('includes registered indexes in type enum', function () {
+        $tool = app(SearchKnowledgeTool::class);
+
+        $params = $tool->parameters();
+        $typeSchema = $params['type'];
+
+        // The enum schema should contain the registered indexes
+        $json = json_encode($typeSchema);
+
+        expect($json)->toContain('all');
+        expect($json)->toContain('query_patterns');
+        expect($json)->toContain('learnings');
+    });
+
+    it('falls back to all for invalid type', function () {
+        $tool = app(SearchKnowledgeTool::class);
+
+        $result = json_decode($tool(query: 'user', type: 'nonexistent_index'), true);
+
+        expect($result)->toHaveKey('query_patterns');
+        expect($result)->toHaveKey('learnings');
+    });
+
+    it('skips learnings when learning is disabled', function () {
+        config(['sql-agent.learning.enabled' => false]);
+
+        $tool = app(SearchKnowledgeTool::class);
+
+        $result = json_decode($tool(query: 'user', type: 'all'), true);
+
+        expect($result['learnings'])->toBeEmpty();
     });
 });

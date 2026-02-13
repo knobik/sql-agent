@@ -214,5 +214,5 @@ php artisan sql-agent:load-knowledge --path=/custom/knowledge/path
 ```
 
 :::caution
-When using the default `database` knowledge source, you **must** run this command after creating or changing knowledge files. The agent reads from the database at runtime, not directly from disk.
+You **must** run this command after creating or changing knowledge files. The agent always reads knowledge from the database at runtime, not directly from disk.
 :::

@@ -47,9 +47,32 @@ $response->results; // [['name' => 'Lowell Boyer', 'total_spent' => 3930.15], ..
 
 ## How It Works
 
-1. **Context Assembly** — Before the LLM sees the question, the agent retrieves relevant table metadata, business rules, similar query patterns, and past learnings. This assembled context is injected into the system prompt.
-2. **Agentic Tool Loop** — The LLM enters a tool-calling loop where it can introspect live schema, search for additional knowledge, execute SQL, and refine results iteratively.
-3. **Self-Learning** — When queries fail and the agent recovers, it saves what it learned. When queries succeed, it saves them as reusable patterns. Both feed back into step 1 for future queries.
+```mermaid
+flowchart TD
+    A[User Question] --> B[Retrieve Knowledge + Learnings]
+    B --> C[Reason about intent]
+    C --> D[Generate grounded SQL]
+    D --> E[Execute and interpret]
+    E --> F{Result}
+    F -->|Success| G[Return insight]
+    F -->|Error| H[Diagnose & Fix]
+    H --> I[Save Learning]
+    I --> D
+    G --> J[Optionally save as Knowledge]
+```
+
+The agent uses six context layers to ground its SQL generation:
+
+| # | Layer | What it contains | Source |
+|---|-------|-----------------|--------|
+| 1 | Table Usage | Schema, columns, relationships | `knowledge/tables/*.json` |
+| 2 | Human Annotations | Metrics, definitions, business rules | `knowledge/business/*.json` |
+| 3 | Query Patterns | SQL known to work | `knowledge/queries/*.json` and `*.sql` |
+| 4 | Learnings | Error patterns and discovered fixes | `save_learning` tool (on-demand) |
+| 5 | Runtime Context | Live schema inspection | `introspect_schema` tool (on-demand) |
+| 6 | Institutional Knowledge | Docs, wikis, external references | Custom tools (`agent.tools` config) |
+
+Layers 1–3 are loaded from the knowledge base into the system prompt. Layer 4 is built up over time as the agent learns from errors. Layers 5 and 6 are available on-demand — the LLM calls them during the tool loop when it needs live schema details or external context.
 
 ## Features
 

@@ -174,14 +174,6 @@ describe('Knowledge Configuration', function () {
 
         expect(config('sql-agent.knowledge.path'))->toBe('/custom/path');
     });
-
-    it('knowledge source config supports files and database', function () {
-        config(['sql-agent.knowledge.source' => 'files']);
-        expect(config('sql-agent.knowledge.source'))->toBe('files');
-
-        config(['sql-agent.knowledge.source' => 'database']);
-        expect(config('sql-agent.knowledge.source'))->toBe('database');
-    });
 });
 
 describe('UI Configuration', function () {

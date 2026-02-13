@@ -100,7 +100,7 @@ Each connection can define its own table and column restrictions:
 Restrictions are enforced at every layer:
 
 - Schema introspection (listing tables, inspecting columns)
-- Semantic model loading (table metadata from files or database)
+- Semantic model loading (table metadata from database)
 - SQL execution (queries referencing denied tables are rejected)
 
 ## Web Interface
@@ -125,7 +125,7 @@ Each step is visible in the streaming UI as a separate tool call with its connec
 
 ## Knowledge Loading
 
-When using the `database` knowledge source (the default), table metadata is scoped per connection using the `connection` field in each JSON knowledge file. When you run `sql-agent:load-knowledge`, the loader reads the `connection` field from each table JSON file and stores it in the database alongside the metadata.
+Table metadata is scoped per connection using the `connection` field in each JSON knowledge file. When you run `sql-agent:load-knowledge`, the loader reads the `connection` field from each table JSON file and stores it in the database alongside the metadata.
 
 ### Tagging Knowledge Files
 
@@ -154,14 +154,6 @@ Files without a `connection` field default to `"default"` and are included for a
 
 :::tip
 Use the same logical names in your JSON files that you use as keys in the `database.connections` config. For example, if your config has `'crm' => [...]`, set `"connection": "crm"` in the corresponding knowledge files.
-:::
-
-### File-Based Knowledge Source
-
-When using the `files` knowledge source, you can also add a `connection` field to your JSON files. Tables with a matching connection (or no connection field) are included when building context for each database. Tables tagged with a different connection name are filtered out.
-
-:::caution
-For the best multi-database experience, use the `database` knowledge source. It provides full-text search support and precise per-connection filtering via the `connection` column.
 :::
 
 ## Limitations

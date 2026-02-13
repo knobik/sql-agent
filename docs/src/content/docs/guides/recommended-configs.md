@@ -34,9 +34,6 @@ SQL_AGENT_MAX_ITERATIONS=15
 # Learning — enabled with auto error capture
 SQL_AGENT_LEARNING_ENABLED=true
 SQL_AGENT_AUTO_SAVE_ERRORS=true
-
-# Knowledge — database source for full-text search
-SQL_AGENT_KNOWLEDGE_SOURCE=database
 ```
 
 ### pgvector Database Connection
@@ -92,9 +89,6 @@ SQL_AGENT_MAX_ITERATIONS=10
 # Learning — enabled
 SQL_AGENT_LEARNING_ENABLED=true
 SQL_AGENT_AUTO_SAVE_ERRORS=true
-
-# Knowledge — database source
-SQL_AGENT_KNOWLEDGE_SOURCE=database
 ```
 
 No embeddings configuration is needed since the database search driver uses native full-text search instead of vector embeddings.

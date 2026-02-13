@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Data\BusinessRuleData;
 use Knobik\SqlAgent\Enums\BusinessRuleType;
 use Knobik\SqlAgent\Models\BusinessRule;
@@ -13,19 +12,13 @@ use Knobik\SqlAgent\Models\BusinessRule;
 class BusinessRulesLoader
 {
     /**
-     * Load business rules from the configured source.
+     * Load business rules from the database.
      *
      * @return Collection<int, BusinessRuleData>
      */
     public function load(): Collection
     {
-        $source = config('sql-agent.knowledge.source');
-
-        return match ($source) {
-            'files' => $this->loadFromFiles(),
-            'database' => $this->loadFromDatabase(),
-            default => throw new \InvalidArgumentException("Unknown knowledge source: {$source}"),
-        };
+        return BusinessRule::all()->map(fn (BusinessRule $model) => $this->modelToBusinessRuleData($model));
     }
 
     /**
@@ -64,103 +57,6 @@ class BusinessRulesLoader
         }
 
         return implode("\n\n", $sections);
-    }
-
-    /**
-     * Load business rules from JSON files.
-     *
-     * @return Collection<int, BusinessRuleData>
-     */
-    protected function loadFromFiles(): Collection
-    {
-        $path = config('sql-agent.knowledge.path').'/business';
-
-        if (! File::isDirectory($path)) {
-            return collect();
-        }
-
-        $files = File::glob("{$path}/*.json");
-
-        return collect($files)
-            ->flatMap(fn (string $file) => $this->parseJsonFile($file))
-            ->filter();
-    }
-
-    /**
-     * Load business rules from the database.
-     *
-     * @return Collection<int, BusinessRuleData>
-     */
-    protected function loadFromDatabase(): Collection
-    {
-        return BusinessRule::all()->map(fn (BusinessRule $model) => $this->modelToBusinessRuleData($model));
-    }
-
-    /**
-     * Parse a JSON file into BusinessRuleData objects.
-     *
-     * @return Collection<int, BusinessRuleData>
-     */
-    protected function parseJsonFile(string $filePath): Collection
-    {
-        try {
-            $data = json_decode(File::get($filePath), true, 512, JSON_THROW_ON_ERROR);
-            $rules = collect();
-
-            // Parse metrics
-            foreach ($data['metrics'] ?? [] as $metric) {
-                $rules->push(new BusinessRuleData(
-                    name: $metric['name'],
-                    description: $metric['definition'] ?? $metric['description'] ?? '',
-                    type: BusinessRuleType::Metric,
-                    calculation: $metric['calculation'] ?? null,
-                    table: $metric['table'] ?? null,
-                ));
-            }
-
-            // Parse business rules (can be array of strings or objects)
-            foreach ($data['business_rules'] ?? $data['rules'] ?? [] as $rule) {
-                if (is_string($rule)) {
-                    $rules->push(new BusinessRuleData(
-                        name: 'Business Rule',
-                        description: $rule,
-                        type: BusinessRuleType::Rule,
-                    ));
-                } else {
-                    $rules->push(new BusinessRuleData(
-                        name: $rule['name'] ?? 'Business Rule',
-                        description: $rule['description'] ?? $rule['rule'] ?? '',
-                        type: BusinessRuleType::Rule,
-                        tablesAffected: $rule['tables_affected'] ?? [],
-                    ));
-                }
-            }
-
-            // Parse gotchas
-            foreach ($data['common_gotchas'] ?? $data['gotchas'] ?? [] as $gotcha) {
-                if (is_string($gotcha)) {
-                    $rules->push(new BusinessRuleData(
-                        name: 'Gotcha',
-                        description: $gotcha,
-                        type: BusinessRuleType::Gotcha,
-                    ));
-                } else {
-                    $rules->push(new BusinessRuleData(
-                        name: $gotcha['issue'] ?? $gotcha['name'] ?? 'Gotcha',
-                        description: $gotcha['description'] ?? $gotcha['issue'] ?? '',
-                        type: BusinessRuleType::Gotcha,
-                        tablesAffected: $gotcha['tables_affected'] ?? [],
-                        solution: $gotcha['solution'] ?? null,
-                    ));
-                }
-            }
-
-            return $rules;
-        } catch (\JsonException $e) {
-            report($e);
-
-            return collect();
-        }
     }
 
     /**
