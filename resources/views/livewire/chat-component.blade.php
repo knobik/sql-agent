@@ -164,6 +164,91 @@
                 </div>
             </div>
         </template>
+
+        {{-- Ask User Question Card --}}
+        <template x-if="askUserData">
+            <div class="flex gap-4 justify-start">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="max-w-[80%]">
+                    <div class="rounded-2xl px-5 py-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 shadow-sm">
+                        <p class="text-amber-800 dark:text-amber-200 font-medium mb-3" x-text="askUserData.question"></p>
+
+                        {{-- Multi-select hint --}}
+                        <template x-if="askUserData.multiple && askUserData.suggestions?.length > 0">
+                            <p class="text-xs text-amber-600 dark:text-amber-400 mb-2">Select one or more options, then click Submit.</p>
+                        </template>
+
+                        {{-- Suggestion buttons --}}
+                        <template x-if="askUserData.suggestions && askUserData.suggestions.length > 0">
+                            <div class="flex flex-col gap-2 mb-3">
+                                <template x-for="(suggestion, index) in askUserData.suggestions" :key="index">
+                                    <button
+                                        @click="askUserData.multiple ? toggleAskUserSelection(suggestion.label) : submitAskUserReply(suggestion.label)"
+                                        class="w-full text-left px-4 py-2.5 text-sm rounded-lg border transition-all shadow-sm"
+                                        :class="askUserSelected.includes(suggestion.label)
+                                            ? 'border-amber-500 dark:border-amber-400 bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-400 dark:ring-amber-500'
+                                            : 'border-amber-300 dark:border-amber-700 bg-white dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-400 dark:hover:border-amber-600'"
+                                    >
+                                        <div class="flex items-start gap-2">
+                                            {{-- Multi-select checkbox indicator --}}
+                                            <template x-if="askUserData.multiple">
+                                                <span class="flex-shrink-0 mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors"
+                                                    :class="askUserSelected.includes(suggestion.label)
+                                                        ? 'bg-amber-500 border-amber-500 text-white'
+                                                        : 'border-amber-400 dark:border-amber-600'"
+                                                >
+                                                    <svg x-show="askUserSelected.includes(suggestion.label)" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </span>
+                                            </template>
+                                            <div class="flex-1 min-w-0">
+                                                <span class="font-medium text-amber-800 dark:text-amber-200" x-text="suggestion.label"></span>
+                                                <template x-if="suggestion.description">
+                                                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5" x-text="suggestion.description"></p>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </template>
+
+                                {{-- Multi-select submit button --}}
+                                <template x-if="askUserData.multiple">
+                                    <button
+                                        @click="submitAskUserReply(askUserSelected.join(', '))"
+                                        :disabled="askUserSelected.length === 0"
+                                        class="mt-1 px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    >
+                                        Submit selection (<span x-text="askUserSelected.length"></span>)
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- Free-text input --}}
+                        <form @submit.prevent="submitAskUserReply(askUserInput)" class="flex gap-2">
+                            <input
+                                type="text"
+                                x-model="askUserInput"
+                                placeholder="Or type your own answer..."
+                                class="flex-1 px-3 py-2 text-sm rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 placeholder-amber-400 dark:placeholder-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
+                                x-ref="askUserInputField"
+                                x-effect="if (askUserData && !askUserData.suggestions?.length) $nextTick(() => $refs.askUserInputField?.focus())"
+                            />
+                            <button
+                                type="submit"
+                                :disabled="!askUserInput.trim()"
+                                class="px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                            >Reply</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 
     {{-- Input Area --}}
@@ -242,6 +327,9 @@ function chatStream() {
         pendingMessageId: null,
         conversationId: @json($conversationId),
         abortController: null,
+        askUserData: null,
+        askUserInput: '',
+        askUserSelected: [],
 
         // Show streaming UI while streaming or finishing
         get showStreamingUI() {
@@ -402,6 +490,43 @@ function chatStream() {
             this.isFinishing = false;
             this.streamedContent = '';
             this.pendingUserMessage = '';
+            this.askUserData = null;
+            this.askUserInput = '';
+            this.askUserSelected = [];
+        },
+
+        toggleAskUserSelection(label) {
+            const idx = this.askUserSelected.indexOf(label);
+            if (idx === -1) {
+                this.askUserSelected.push(label);
+            } else {
+                this.askUserSelected.splice(idx, 1);
+            }
+        },
+
+        async submitAskUserReply(answer) {
+            if (!this.askUserData || !answer.trim()) return;
+
+            const requestId = this.askUserData.request_id;
+            this.askUserData = null;
+            this.askUserInput = '';
+            this.askUserSelected = [];
+
+            try {
+                await fetch('{{ route("sql-agent.ask-user-reply") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        answer: answer,
+                    }),
+                });
+            } catch (error) {
+                console.error('Failed to submit ask-user reply:', error);
+            }
         },
 
         handleEvent(data) {
@@ -416,6 +541,10 @@ function chatStream() {
                 // Content event
                 this.streamedContent += data.text;
                 this.renderContent();
+                this.scrollToBottom();
+            } else if (data.request_id !== undefined) {
+                // Ask-user event
+                this.askUserData = data;
                 this.scrollToBottom();
             } else if (data.message !== undefined) {
                 // Error event

@@ -35,7 +35,7 @@ class RunSqlTool extends Tool
 
         $this
             ->as('run_sql')
-            ->for("Execute a SQL query against the database. Only {$allowed} statements are allowed. Returns query results as JSON.")
+            ->for("Execute a SQL query. Only {$allowed} statements allowed.")
             ->withStringParameter('sql', "The SQL query to execute. Must be a {$allowed} statement.")
             ->withEnumParameter(
                 'connection',

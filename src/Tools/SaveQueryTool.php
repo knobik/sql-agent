@@ -15,7 +15,7 @@ class SaveQueryTool extends Tool
     {
         $this
             ->as('save_validated_query')
-            ->for('Save a validated query pattern to the knowledge base. Use this when you have successfully executed a SQL query that correctly answers a user question. This helps future queries by providing proven patterns.')
+            ->for('Save a successful query pattern for reuse. Use when a query correctly answers a common question.')
             ->withStringParameter('name', 'A short, descriptive name for the query pattern (max 100 characters).')
             ->withStringParameter('question', 'The natural language question this query answers.')
             ->withStringParameter('sql', 'The validated SQL query that correctly answers the question.')

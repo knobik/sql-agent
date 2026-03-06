@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Knobik\SqlAgent\Http\Controllers\AskUserReplyController;
 use Knobik\SqlAgent\Http\Controllers\QueryController;
 use Knobik\SqlAgent\Http\Controllers\StreamController;
 
@@ -23,5 +24,8 @@ if (config('sql-agent.ui.enabled', true)) {
 
             // On-demand query execution
             Route::post('/query/execute', QueryController::class)->name('query.execute');
+
+            // Ask-user reply endpoint
+            Route::post('/ask-user-reply', AskUserReplyController::class)->name('ask-user-reply');
         });
 }

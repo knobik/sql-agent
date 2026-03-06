@@ -14,6 +14,7 @@ class ToolLabelResolver
         'search_knowledge' => 'Searching knowledge base',
         'save_learning' => 'Saving learning',
         'save_validated_query' => 'Saving query pattern',
+        'ask_user' => 'Asking for clarification',
     ];
 
     protected const TYPES = [
@@ -22,6 +23,7 @@ class ToolLabelResolver
         'search_knowledge' => 'search',
         'save_learning' => 'save',
         'save_validated_query' => 'save',
+        'ask_user' => 'ask',
     ];
 
     public function getLabel(string $toolName): string

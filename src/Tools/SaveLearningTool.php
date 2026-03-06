@@ -20,7 +20,7 @@ class SaveLearningTool extends Tool
 
         $this
             ->as('save_learning')
-            ->for('Save a new learning to the knowledge base. Use this when you discover something important about the database schema, business logic, or query patterns that would be useful for future queries.')
+            ->for('Save a discovery to the knowledge base (type errors, date formats, column quirks, business logic).')
             ->withStringParameter('title', 'A short, descriptive title for the learning (max 100 characters).')
             ->withStringParameter('description', 'A detailed description of what was learned and why it matters.')
             ->withEnumParameter('category', 'The category of this learning.', $categories)

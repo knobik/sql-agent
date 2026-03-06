@@ -5,7 +5,8 @@ use Prism\Prism\Tool;
 
 describe('Custom Tool Registration', function () {
     it('registers custom tools from config', function () {
-        config()->set('sql-agent.agent.tools', [FakeCustomTool::class]);
+        $tools = array_merge(config('sql-agent.agent.tools'), [FakeCustomTool::class]);
+        config()->set('sql-agent.agent.tools', $tools);
 
         $registry = app(ToolRegistry::class);
 
@@ -14,7 +15,8 @@ describe('Custom Tool Registration', function () {
     });
 
     it('custom tools appear alongside built-in tools', function () {
-        config()->set('sql-agent.agent.tools', [FakeCustomTool::class]);
+        $tools = array_merge(config('sql-agent.agent.tools'), [FakeCustomTool::class]);
+        config()->set('sql-agent.agent.tools', $tools);
 
         $registry = app(ToolRegistry::class);
 
@@ -24,16 +26,18 @@ describe('Custom Tool Registration', function () {
         expect($registry->has('save_learning'))->toBeTrue();
         expect($registry->has('save_validated_query'))->toBeTrue();
         expect($registry->has('search_knowledge'))->toBeTrue();
+        expect($registry->has('ask_user'))->toBeTrue();
 
         // Custom tool should also be present
         expect($registry->has('fake_custom'))->toBeTrue();
-        expect($registry->all())->toHaveCount(6);
+        expect($registry->all())->toHaveCount(7);
     });
 
     it('resolves custom tools with constructor dependencies from the container', function () {
         $this->app->bind(FakeDependency::class, fn () => new FakeDependency('injected'));
 
-        config()->set('sql-agent.agent.tools', [FakeCustomToolWithDependency::class]);
+        $tools = array_merge(config('sql-agent.agent.tools'), [FakeCustomToolWithDependency::class]);
+        config()->set('sql-agent.agent.tools', $tools);
 
         $registry = app(ToolRegistry::class);
 
@@ -44,13 +48,27 @@ describe('Custom Tool Registration', function () {
         config()->set('sql-agent.agent.tools', ['App\\NonExistent\\ToolClass']);
 
         app(ToolRegistry::class);
-    })->throws(InvalidArgumentException::class, 'Custom tool class [App\\NonExistent\\ToolClass] does not exist.');
+    })->throws(InvalidArgumentException::class, 'Tool class [App\\NonExistent\\ToolClass] does not exist.');
 
     it('throws exception for tool class that does not extend Tool', function () {
         config()->set('sql-agent.agent.tools', [NotATool::class]);
 
         app(ToolRegistry::class);
     })->throws(InvalidArgumentException::class, 'must extend');
+
+    it('allows disabling built-in tools by removing from config', function () {
+        // Remove AskUserTool from the tools array
+        $tools = array_filter(
+            config('sql-agent.agent.tools'),
+            fn ($t) => $t !== \Knobik\SqlAgent\Tools\AskUserTool::class,
+        );
+        config()->set('sql-agent.agent.tools', $tools);
+
+        $registry = app(ToolRegistry::class);
+
+        expect($registry->has('ask_user'))->toBeFalse();
+        expect($registry->has('run_sql'))->toBeTrue();
+    });
 });
 
 // Test fixtures

@@ -470,6 +470,138 @@ If a query pattern with the same question already exists, the tool returns an er
 
 ---
 
+## `ask_user`
+
+Ask the user a clarifying question when their request is ambiguous. The agent pauses and presents a question card in the web UI. The card can include clickable suggestion buttons with optional descriptions, supports multi-select mode, and always includes a free-text input so the user can type a custom answer. Once the user responds, the agent continues with that answer in context.
+
+**Description sent to LLM:**
+> Ask the user a clarifying question when their request is ambiguous. Use this when you need more information before proceeding. You may provide suggested options with optional descriptions. Set multiple=true to let the user pick more than one option. The user can always type a custom free-text response instead of picking a suggestion.
+
+:::note
+Included in the default `agent.tools` config. Remove `AskUserTool::class` from the array to disable it. In non-streaming mode (`run()`), the tool returns a fallback message instructing the LLM to make its best guess.
+:::
+
+### Parameters
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "question": {
+      "type": "string",
+      "description": "The clarifying question to ask the user."
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "The short label for this suggestion (displayed on the button)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional longer description explaining this option."
+          }
+        },
+        "required": ["label"]
+      },
+      "description": "Optional list of suggested answers. Each has a label and optional description."
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "Set to true to allow the user to select multiple suggestions. Defaults to false."
+    }
+  },
+  "required": ["question"]
+}
+```
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `question` | string | Yes | — | The clarifying question to display. |
+| `suggestions` | object[] | No | `[]` | Suggested answers, each with a `label` (string, required) and `description` (string, optional). |
+| `multiple` | boolean | No | `false` | When `true`, the user can select multiple suggestions before submitting. |
+
+### Return Value
+
+The tool returns a plain string to the LLM:
+
+- `"User answered: <answer>"` — when the user clicks a suggestion, submits a multi-selection, or types a custom answer.
+- A fallback message when the user doesn't respond in time or the connection is lost.
+
+For multi-select, the answer is a comma-separated list of selected labels (e.g., `"User answered: Revenue trends, Customer segments"`).
+
+### How It Works
+
+1. The LLM calls `ask_user` with a question, optional suggestions, and an optional `multiple` flag.
+2. An `ask_user` SSE event is sent to the frontend with the question, suggestions, multiple flag, and a unique request ID.
+3. The frontend renders a question card:
+   - **Single-select** (default): clicking a suggestion immediately submits it.
+   - **Multi-select** (`multiple: true`): suggestions have checkboxes that toggle on/off. A "Submit selection" button sends all selected labels.
+   - Suggestions with a `description` show the description text below the label.
+   - A free-text input is always available at the bottom.
+4. The user's answer POSTs to `/ask-user-reply` and writes to the cache.
+5. The tool polls the cache, picks up the answer, and returns it to the LLM.
+6. The LLM continues with the user's answer in context.
+
+### Configuration
+
+The timeout for waiting on a user reply is configurable:
+
+```php
+'agent' => [
+    'ask_user_timeout' => env('SQL_AGENT_ASK_USER_TIMEOUT', 300), // seconds
+],
+```
+
+### Example Tool Calls
+
+**Simple single-select:**
+
+```json
+{
+  "question": "Which time period are you interested in?",
+  "suggestions": [
+    { "label": "Last 7 days" },
+    { "label": "Last 30 days" },
+    { "label": "Last quarter" },
+    { "label": "All time" }
+  ]
+}
+```
+
+**With descriptions:**
+
+```json
+{
+  "question": "What kind of analysis would you like?",
+  "suggestions": [
+    { "label": "Revenue trends", "description": "Monthly revenue breakdown with growth rates" },
+    { "label": "Customer segments", "description": "RFM analysis grouping customers by behavior" },
+    { "label": "Product performance", "description": "Sales volume and margin by product category" }
+  ]
+}
+```
+
+**Multi-select:**
+
+```json
+{
+  "question": "Which metrics should I include in the report?",
+  "suggestions": [
+    { "label": "Total revenue", "description": "Sum of all completed orders" },
+    { "label": "Order count", "description": "Number of orders placed" },
+    { "label": "Average order value" },
+    { "label": "Customer count" }
+  ],
+  "multiple": true
+}
+```
+
+---
+
 ## Tool Availability
 
 Not all tools are available in every configuration:
@@ -481,7 +613,8 @@ Not all tools are available in every configuration:
 | `search_knowledge` | Yes | — |
 | `save_learning` | No | Requires `sql-agent.learning.enabled = true` |
 | `save_validated_query` | No | Requires `sql-agent.learning.enabled = true` |
+| `ask_user` | Yes | Remove from `agent.tools` to disable |
 
-When learning is disabled (`SQL_AGENT_LEARNING_ENABLED=false`), the `save_learning` and `save_validated_query` tools are not registered with the LLM, and the related instructions are removed from the system prompt.
+All tools are registered via the `agent.tools` config array. Remove any entry to disable that tool. When learning is disabled (`SQL_AGENT_LEARNING_ENABLED=false`), the `save_learning` and `save_validated_query` tools are automatically skipped even if present in the array.
 
-In addition to the built-in tools above, you can register your own tools via the `agent.tools` config option. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for details.
+You can also register your own tools by adding class names to the `agent.tools` array. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for details.

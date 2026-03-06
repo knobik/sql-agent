@@ -28,6 +28,10 @@ describe('getLabel', function () {
         expect($this->resolver->getLabel('save_validated_query'))->toBe('Saving query pattern');
     });
 
+    it('returns label for ask_user', function () {
+        expect($this->resolver->getLabel('ask_user'))->toBe('Asking for clarification');
+    });
+
     it('returns tool name for unknown tools', function () {
         expect($this->resolver->getLabel('custom_tool'))->toBe('custom_tool');
     });
@@ -48,6 +52,10 @@ describe('getType', function () {
 
     it('returns save type for save_learning', function () {
         expect($this->resolver->getType('save_learning'))->toBe('save');
+    });
+
+    it('returns ask type for ask_user', function () {
+        expect($this->resolver->getType('ask_user'))->toBe('ask');
     });
 
     it('returns default type for unknown tools', function () {
