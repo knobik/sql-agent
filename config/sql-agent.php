@@ -167,9 +167,20 @@ return [
         'default_limit' => env('SQL_AGENT_DEFAULT_LIMIT', 100),
         'chat_history_length' => env('SQL_AGENT_CHAT_HISTORY', 10),
 
-        // Custom tool class names resolved from the container, e.g.:
-        // [App\SqlAgent\MyCustomTool::class]
-        'tools' => [],
+        // Tool class names resolved from the container. Includes all built-in tools
+        // by default. Remove entries to disable specific tools, or add your own.
+        'tools' => array_merge([
+            \Knobik\SqlAgent\Tools\RunSqlTool::class,
+            \Knobik\SqlAgent\Tools\IntrospectSchemaTool::class,
+            \Knobik\SqlAgent\Tools\SearchKnowledgeTool::class,
+            \Knobik\SqlAgent\Tools\AskUserTool::class,
+        ], env('SQL_AGENT_LEARNING_ENABLED', true) ? [
+            \Knobik\SqlAgent\Tools\SaveLearningTool::class,
+            \Knobik\SqlAgent\Tools\SaveQueryTool::class,
+        ] : []),
+
+        // Timeout in seconds for the ask_user tool to wait for a user reply
+        'ask_user_timeout' => env('SQL_AGENT_ASK_USER_TIMEOUT', 300),
 
         // MCP server names (from config/relay.php) whose tools should be
         // available to the agent. Requires prism-php/relay to be installed.

@@ -20,7 +20,7 @@ class SearchKnowledgeTool extends Tool
 
         $this
             ->as('search_knowledge')
-            ->for('Search the knowledge base for relevant query patterns and learnings. Use this to find similar queries, understand business logic, or discover past learnings about the database.')
+            ->for('Search for relevant query patterns, learnings, and past discoveries about the database.')
             ->withStringParameter('query', 'The search query to find relevant knowledge.')
             ->withEnumParameter('type', "Filter results by index: 'all' (default) searches everything, or specify a specific index name.", $enumValues, required: false)
             ->withNumberParameter('limit', 'Maximum number of results to return.', required: false)

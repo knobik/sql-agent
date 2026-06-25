@@ -10,6 +10,7 @@ use Knobik\SqlAgent\Data\AgentResponse;
 use Knobik\SqlAgent\Llm\StreamChunk;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ContextBuilder;
+use Knobik\SqlAgent\Tools\AskUserTool;
 use Knobik\SqlAgent\Tools\RunSqlTool;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Streaming\Events\StepFinishEvent;
@@ -305,7 +306,7 @@ class SqlAgent implements Agent
         $context = $this->contextBuilder->build($question);
 
         $extra = [
-            'customTools' => $this->getCustomTools(),
+            'tools' => $this->getRegisteredTools(),
             'multiConnection' => true,
             'connections' => $this->connectionRegistry->all(),
         ];
@@ -335,7 +336,7 @@ class SqlAgent implements Agent
 
         // Reset tool state
         foreach ($this->toolRegistry->all() as $tool) {
-            if ($tool instanceof RunSqlTool) {
+            if ($tool instanceof RunSqlTool || $tool instanceof AskUserTool) {
                 $tool->reset();
             }
         }
@@ -358,16 +359,13 @@ class SqlAgent implements Agent
     }
 
     /**
-     * Get custom (non-built-in) tools from the registry.
+     * Get all registered tools for inclusion in the system prompt.
      *
      * @return Tool[]
      */
-    protected function getCustomTools(): array
+    protected function getRegisteredTools(): array
     {
-        return array_values(array_filter(
-            $this->toolRegistry->all(),
-            fn (Tool $tool): bool => ! str_starts_with($tool::class, 'Knobik\\SqlAgent\\Tools\\'),
-        ));
+        return $this->toolRegistry->all();
     }
 
     protected function collectToolCalls(): array

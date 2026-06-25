@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Http\Actions;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Knobik\SqlAgent\Agent\SqlAgent;
+use Knobik\SqlAgent\Agent\ToolRegistry;
 use Knobik\SqlAgent\Enums\MessageRole;
 use Knobik\SqlAgent\Services\ConversationService;
+use Knobik\SqlAgent\Tools\AskUserTool;
 
 class StreamAgentResponse
 {
     public function __construct(
         protected SqlAgent $agent,
         protected ConversationService $conversationService,
+        protected ToolRegistry $toolRegistry,
     ) {}
 
     public function __invoke(string $question, int $conversationId): void
@@ -23,6 +27,8 @@ class StreamAgentResponse
         }
 
         $this->sendEvent('conversation', ['id' => $conversationId]);
+
+        $this->configureAskUserTool();
 
         $history = $this->conversationService->getHistory($conversationId);
 
@@ -126,6 +132,22 @@ class StreamAgentResponse
         }
 
         $this->sendEvent('done', $donePayload);
+    }
+
+    protected function configureAskUserTool(): void
+    {
+        if (! $this->toolRegistry->has('ask_user')) {
+            return;
+        }
+
+        $tool = $this->toolRegistry->get('ask_user');
+
+        if (! $tool instanceof AskUserTool) {
+            return;
+        }
+
+        $tool->setRequestId(Str::uuid()->toString());
+        $tool->setSendCallback(fn (array $data) => $this->sendEvent('ask_user', $data));
     }
 
     protected function sendEvent(string $event, array $data): void

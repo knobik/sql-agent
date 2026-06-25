@@ -220,6 +220,7 @@ Control how the agentic loop operates:
     'max_iterations' => env('SQL_AGENT_MAX_ITERATIONS', 10),
     'default_limit' => env('SQL_AGENT_DEFAULT_LIMIT', 100),
     'chat_history_length' => env('SQL_AGENT_CHAT_HISTORY', 10),
+    'ask_user_timeout' => env('SQL_AGENT_ASK_USER_TIMEOUT', 300),
 ],
 ```
 
@@ -228,19 +229,28 @@ Control how the agentic loop operates:
 | `max_iterations` | Maximum number of tool-calling rounds before the agent stops | `10` |
 | `default_limit` | `LIMIT` applied to queries that don't specify one | `100` |
 | `chat_history_length` | Number of previous messages included for conversational context | `10` |
+| `ask_user_timeout` | Seconds to wait for a user reply when the `ask_user` tool is invoked | `300` |
 
 ### Custom Tools
 
-You can extend the agent with your own tools by listing class names in the `tools` array:
+All agent tools — including built-in ones — are registered via the `tools` array. You can add your own tools, remove built-in ones you don't need, or reorder them:
 
 ```php
 'agent' => [
     // ... other options ...
-    'tools' => [
-        \App\SqlAgent\CurrentDateTimeTool::class,
-    ],
+    'tools' => array_merge([
+        \Knobik\SqlAgent\Tools\RunSqlTool::class,
+        \Knobik\SqlAgent\Tools\IntrospectSchemaTool::class,
+        \Knobik\SqlAgent\Tools\SearchKnowledgeTool::class,
+        \Knobik\SqlAgent\Tools\AskUserTool::class,
+    ], env('SQL_AGENT_LEARNING_ENABLED', true) ? [
+        \Knobik\SqlAgent\Tools\SaveLearningTool::class,
+        \Knobik\SqlAgent\Tools\SaveQueryTool::class,
+    ] : []),
 ],
 ```
+
+To disable a tool, simply remove its entry from the array. For example, remove `AskUserTool::class` to prevent the LLM from asking clarifying questions. The learning tools (`SaveLearningTool`, `SaveQueryTool`) are automatically included or excluded based on the `SQL_AGENT_LEARNING_ENABLED` environment variable.
 
 Each class must extend `Prism\Prism\Tool` and is resolved from the Laravel container with full dependency injection support. See the [Custom Tools](/sql-agent/guides/custom-tools/) guide for detailed examples and best practices.
 

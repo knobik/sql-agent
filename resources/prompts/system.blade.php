@@ -31,31 +31,11 @@ You have access to multiple databases. When using `run_sql` or `introspect_schem
 You cannot JOIN across databases. Run separate queries and combine results in your response.
 
 ## Available Tools
-
-### run_sql
-Execute a SQL query. Specify the `connection` parameter to choose which database to query. Only {{ implode(' and ', config('sql-agent.sql.allowed_statements', ['SELECT', 'WITH'])) }} statements allowed.
-
-### introspect_schema
-Get detailed schema information about tables, columns, relationships, and data types. Specify the `connection` parameter to choose which database to inspect.
-
-### search_knowledge
-Search for relevant query patterns, learnings, and past discoveries about the database.
-
-@if(config('sql-agent.learning.enabled', true))
-### save_learning
-Save a discovery to the knowledge base (type errors, date formats, column quirks, business logic).
-
-### save_validated_query
-Save a successful query pattern for reuse. Use when a query correctly answers a common question.
-@endif
-@if(!empty($customTools))
-{{-- Custom tools registered via config('sql-agent.agent.tools') --}}
-@foreach($customTools as $tool)
+@foreach($tools as $tool)
 
 ### {{ $tool->name() }}
 {{ $tool->description() }}
 @endforeach
-@endif
 
 ## Workflow
 
