@@ -139,7 +139,7 @@ class SearchManager extends Manager implements SearchDriver
      */
     public function getCustomIndexes(): array
     {
-        $builtIn = ['query_patterns', 'learnings'];
+        $builtIn = ['query_patterns', 'learnings', 'table_metadata'];
 
         return array_values(array_diff($this->getRegisteredIndexes(), $builtIn));
     }

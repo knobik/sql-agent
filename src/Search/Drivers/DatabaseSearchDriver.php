@@ -11,6 +11,7 @@ use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Contracts\SearchDriver;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Search\SearchResult;
 use Knobik\SqlAgent\Search\Strategies\MysqlFullTextStrategy;
 use Knobik\SqlAgent\Search\Strategies\PostgresFullTextStrategy;
@@ -31,6 +32,7 @@ class DatabaseSearchDriver implements SearchDriver
     protected array $defaultIndexMapping = [
         'query_patterns' => QueryPattern::class,
         'learnings' => Learning::class,
+        'table_metadata' => TableMetadata::class,
     ];
 
     /**

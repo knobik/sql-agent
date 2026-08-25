@@ -83,6 +83,26 @@ return [
         // Additional provider-specific options passed to Prism's withProviderOptions()
         // e.g. ['thinking' => true] for Ollama thinking mode
         'provider_options' => [],
+
+        /*
+        | Prompt caching (Anthropic only)
+        |
+        | The system prompt is sent as two blocks: a static prefix (instructions,
+        | tools, database schema, business rules) and a dynamic suffix (the
+        | current time plus search results for the question). Enabling this marks
+        | the static prefix as cacheable, so the provider reuses it across the
+        | steps of a tool-calling loop and across requests instead of
+        | re-processing it every time.
+        |
+        | Providers that do not support prompt caching ignore these options.
+        */
+        'cache_system_prompt' => (bool) env('SQL_AGENT_LLM_CACHE_SYSTEM_PROMPT', false),
+
+        // Cache type sent to the provider. Anthropic supports "ephemeral".
+        'cache_type' => env('SQL_AGENT_LLM_CACHE_TYPE', 'ephemeral'),
+
+        // Optional cache lifetime. Anthropic supports "5m" (default) and "1h".
+        'cache_ttl' => env('SQL_AGENT_LLM_CACHE_TTL'),
     ],
 
     /*
@@ -174,6 +194,13 @@ return [
         'default_limit' => env('SQL_AGENT_DEFAULT_LIMIT', 100),
         'chat_history_length' => env('SQL_AGENT_CHAT_HISTORY', 10),
 
+        // Instruct the agent to always call search_knowledge before writing SQL.
+        // The context already contains the query patterns and learnings matched
+        // to the question, so this extra round trip is usually redundant. Enable
+        // it if your knowledge base is large enough that the top matches are
+        // regularly insufficient.
+        'search_first' => (bool) env('SQL_AGENT_SEARCH_FIRST', false),
+
         // Tool class names resolved from the container. Includes all built-in tools
         // by default. Remove entries to disable specific tools, or add your own.
         'tools' => array_merge([
@@ -192,6 +219,45 @@ return [
         // MCP server names (from config/relay.php) whose tools should be
         // available to the agent. Requires prism-php/relay to be installed.
         'relay' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Controls how much table metadata is injected into the system prompt.
+    |
+    | "full" injects every table the agent may access. This is the most accurate
+    | option and the right default for small and medium schemas.
+    |
+    | "rag" retrieves only the tables relevant to the question through the
+    | configured search driver. Use it when a full schema dump is large enough to
+    | hurt latency and cost. Retrieval is never perfect, so validate the change
+    | against your evaluation suite before enabling it in production.
+    |
+    */
+    'schema' => [
+        'mode' => env('SQL_AGENT_SCHEMA_MODE', 'full'),
+
+        'rag' => [
+            // Number of tables retrieved per connection for the question.
+            'limit' => (int) env('SQL_AGENT_SCHEMA_RAG_LIMIT', 10),
+
+            // Tables always injected regardless of the question, e.g. ['users'].
+            'always_include' => [],
+
+            // Pull in tables referenced by the relationships of retrieved tables,
+            // so join targets are not missing from the prompt.
+            'expand_relationships' => (bool) env('SQL_AGENT_SCHEMA_RAG_EXPAND_RELATIONSHIPS', true),
+
+            // How many rounds of relationship expansion to perform.
+            'expansion_depth' => (int) env('SQL_AGENT_SCHEMA_RAG_EXPANSION_DEPTH', 1),
+
+            // List the names of the tables that were not injected, so the agent
+            // knows they exist and can reach for introspect_schema.
+            'include_table_list' => (bool) env('SQL_AGENT_SCHEMA_RAG_INCLUDE_TABLE_LIST', true),
+        ],
     ],
 
     /*

@@ -31,10 +31,16 @@ SQL_AGENT_EMBEDDINGS_DIMENSIONS=1536
 # Agent — more iterations for self-correction
 SQL_AGENT_MAX_ITERATIONS=15
 
+# Prompt caching — reuse the static prompt across the agent loop
+SQL_AGENT_LLM_CACHE_SYSTEM_PROMPT=true
+SQL_AGENT_LLM_CACHE_TTL=1h
+
 # Learning — enabled with auto error capture
 SQL_AGENT_LEARNING_ENABLED=true
 SQL_AGENT_AUTO_SAVE_ERRORS=true
 ```
+
+Prompt caching pays off most here: a high iteration count means the same static prompt is otherwise re-processed up to fifteen times per question.
 
 ### pgvector Database Connection
 

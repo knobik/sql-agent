@@ -23,6 +23,7 @@ use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\Text\Response as PrismResponse;
 use Prism\Prism\Tool;
+use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\ToolResult;
 use Prism\Prism\ValueObjects\Usage;
@@ -215,7 +216,7 @@ class SqlAgent implements Agent
     {
         $request = Prism::text()
             ->using(config('sql-agent.llm.provider'), config('sql-agent.llm.model'))
-            ->withSystemPrompt($loop->systemPrompt)
+            ->withSystemPrompts($loop->systemPrompts())
             ->withMaxSteps($loop->maxIterations)
             ->usingTemperature(config('sql-agent.llm.temperature'))
             ->withMaxTokens(config('sql-agent.llm.max_tokens'));
@@ -314,8 +315,13 @@ class SqlAgent implements Agent
             'connections' => $this->connectionRegistry->all(),
         ];
 
-        $systemPrompt = $this->promptRenderer->renderSystem(
-            $context->toPromptString(),
+        $staticPrompt = $this->promptRenderer->renderSystem(
+            $context->toStaticPromptString(),
+            $extra,
+        );
+
+        $dynamicPrompt = $this->promptRenderer->renderContext(
+            $context->toDynamicPromptString(),
             $extra,
         );
 
@@ -324,7 +330,39 @@ class SqlAgent implements Agent
         $tools = $this->prepareTools($question);
         $maxIterations = config('sql-agent.agent.max_iterations');
 
-        return new AgentLoopContext($systemPrompt, $messages, $tools, $maxIterations);
+        return new AgentLoopContext(
+            trim($staticPrompt."\n\n".$dynamicPrompt),
+            $messages,
+            $tools,
+            $maxIterations,
+            $this->buildSystemPrompts($staticPrompt, $dynamicPrompt),
+        );
+    }
+
+    /**
+     * Build the system blocks sent to the provider.
+     *
+     * The static prefix is kept in its own block so it can carry cache control:
+     * providers that support prompt caching then reuse it across the steps of
+     * the tool-calling loop instead of re-processing it on every step.
+     *
+     * @return SystemMessage[]
+     */
+    protected function buildSystemPrompts(string $staticPrompt, string $dynamicPrompt): array
+    {
+        $static = new SystemMessage($staticPrompt);
+
+        if (config('sql-agent.llm.cache_system_prompt')) {
+            $options = ['cacheType' => config('sql-agent.llm.cache_type')];
+
+            if (config('sql-agent.llm.cache_ttl')) {
+                $options['cacheTtl'] = config('sql-agent.llm.cache_ttl');
+            }
+
+            $static->withProviderOptions($options);
+        }
+
+        return [$static, new SystemMessage($dynamicPrompt)];
     }
 
     protected function reset(): void

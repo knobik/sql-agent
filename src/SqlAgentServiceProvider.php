@@ -17,6 +17,7 @@ use Knobik\SqlAgent\Livewire\ChatComponent;
 use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Livewire\Livewire;
@@ -94,7 +95,7 @@ class SqlAgentServiceProvider extends ServiceProvider
 
         // Views (includes prompts)
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sql-agent');
-        $this->loadViewsFrom(__DIR__.'/../resources/prompts', 'sql-agent-prompts');
+        $this->registerPromptViews();
 
         // Register embedding observers when pgvector driver is active
         $this->registerEmbeddingObservers();
@@ -148,6 +149,29 @@ class SqlAgentServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Register the prompt view namespace.
+     *
+     * `loadViewsFrom()` would only look for overrides in
+     * `resources/views/vendor/sql-agent-prompts`, but the `sql-agent-prompts`
+     * publish tag writes to `resources/views/vendor/sql-agent/prompts`. Both
+     * locations are registered here so published prompts actually take
+     * precedence over the package defaults.
+     */
+    protected function registerPromptViews(): void
+    {
+        $this->callAfterResolving('view', function ($view): void {
+            $paths = array_values(array_filter([
+                resource_path('views/vendor/sql-agent-prompts'),
+                resource_path('views/vendor/sql-agent/prompts'),
+            ], 'is_dir'));
+
+            $paths[] = __DIR__.'/../resources/prompts';
+
+            $view->addNamespace('sql-agent-prompts', $paths);
+        });
+    }
+
     protected function registerEmbeddingObservers(): void
     {
         if (! class_exists(Vector::class)) {
@@ -166,6 +190,7 @@ class SqlAgentServiceProvider extends ServiceProvider
 
         QueryPattern::observe(EmbeddingObserver::class);
         Learning::observe(EmbeddingObserver::class);
+        TableMetadata::observe(EmbeddingObserver::class);
     }
 
     protected function registerLivewireComponents(): void

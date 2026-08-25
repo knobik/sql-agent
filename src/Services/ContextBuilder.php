@@ -27,11 +27,12 @@ class ContextBuilder
     public function build(string $question): Context
     {
         return new Context(
-            semanticModel: $this->buildSemanticModel(),
+            semanticModel: $this->buildSemanticModel($question),
             businessRules: $this->rulesLoader->format(),
             queryPatterns: $this->searchQueryPatterns($question),
             learnings: $this->searchLearnings($question),
             customKnowledge: $this->searchCustomIndexes($question),
+            semanticModelIsDynamic: $this->schemaIsRetrieved(),
         );
     }
 
@@ -50,11 +51,12 @@ class ContextBuilder
         int $learningLimit = 5,
     ): Context {
         return new Context(
-            semanticModel: $includeSemanticModel ? $this->buildSemanticModel() : '',
+            semanticModel: $includeSemanticModel ? $this->buildSemanticModel($question) : '',
             businessRules: $includeBusinessRules ? $this->rulesLoader->format() : '',
             queryPatterns: $includeQueryPatterns ? $this->searchQueryPatterns($question, $queryPatternLimit) : collect(),
             learnings: $includeLearnings ? $this->searchLearnings($question, $learningLimit) : collect(),
             customKnowledge: $this->searchCustomIndexes($question),
+            semanticModelIsDynamic: $includeSemanticModel && $this->schemaIsRetrieved(),
         );
     }
 
@@ -134,14 +136,26 @@ class ContextBuilder
     }
 
     /**
+     * Whether the semantic model is retrieved per question rather than loaded whole.
+     */
+    protected function schemaIsRetrieved(): bool
+    {
+        return config('sql-agent.schema.mode') === 'rag';
+    }
+
+    /**
      * Build semantic model across all configured connections.
      */
-    protected function buildSemanticModel(): string
+    protected function buildSemanticModel(?string $question = null): string
     {
         $sections = [];
+        $retrieve = $question !== null && $this->schemaIsRetrieved();
 
         foreach ($this->connectionRegistry->all() as $name => $config) {
-            $semantic = $this->semanticLoader->format($config->connection, $name);
+            $semantic = $retrieve
+                ? $this->semanticLoader->formatRelevant($question, $config->connection, $name)
+                : $this->semanticLoader->format($config->connection, $name);
+
             if ($semantic && $semantic !== 'No table metadata available.') {
                 $sections[] = "## Connection: {$name} ({$config->label})\n{$config->description}\n\n{$semantic}";
             }

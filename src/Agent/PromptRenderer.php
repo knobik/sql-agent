@@ -24,11 +24,24 @@ class PromptRenderer
     }
 
     /**
-     * Render the system prompt with context.
+     * Render the system prompt with the static portion of the context.
      */
     public function renderSystem(string $context, array $extra = []): string
     {
         return $this->render('system', array_merge([
+            'context' => $context,
+        ], $extra));
+    }
+
+    /**
+     * Render the question-dependent portion of the context.
+     *
+     * Rendered separately from the system prompt so the static prefix can be
+     * cached by the provider.
+     */
+    public function renderContext(string $context, array $extra = []): string
+    {
+        return $this->render('context', array_merge([
             'context' => $context,
         ], $extra));
     }
