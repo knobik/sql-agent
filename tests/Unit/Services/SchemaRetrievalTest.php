@@ -2,8 +2,10 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Knobik\SqlAgent\Models\TableMetadata;
+use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Services\ContextBuilder;
 use Knobik\SqlAgent\Services\SemanticModelLoader;
+use Knobik\SqlAgent\Tools\SearchKnowledgeTool;
 
 uses(RefreshDatabase::class);
 
@@ -150,12 +152,12 @@ test('rag mode retrieves the schema and marks it as question-dependent', functio
 });
 
 test('table metadata is not leaked into the additional knowledge section', function () {
-    expect(app(\Knobik\SqlAgent\Search\SearchManager::class)->getCustomIndexes())
+    expect(app(SearchManager::class)->getCustomIndexes())
         ->not->toContain('table_metadata');
 });
 
 test('table metadata is searchable by name and description', function () {
-    $results = app(\Knobik\SqlAgent\Search\SearchManager::class)
+    $results = app(SearchManager::class)
         ->search('orders', 'table_metadata', 5);
 
     expect($results)->toHaveCount(1)
@@ -163,7 +165,7 @@ test('table metadata is searchable by name and description', function () {
 });
 
 test('search_knowledge leaves table metadata out of an all search', function () {
-    $results = json_decode(app(\Knobik\SqlAgent\Tools\SearchKnowledgeTool::class)('orders'), true);
+    $results = json_decode(app(SearchKnowledgeTool::class)('orders'), true);
 
     expect($results)->not->toHaveKey('table_metadata')
         ->and($results)->toHaveKey('query_patterns');
@@ -171,7 +173,7 @@ test('search_knowledge leaves table metadata out of an all search', function () 
 
 test('search_knowledge returns table metadata when asked for it', function () {
     $results = json_decode(
-        app(\Knobik\SqlAgent\Tools\SearchKnowledgeTool::class)('orders', 'table_metadata'),
+        app(SearchKnowledgeTool::class)('orders', 'table_metadata'),
         true,
     );
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Enums\BusinessRuleType;
 use Knobik\SqlAgent\Models\BusinessRule;
@@ -11,6 +12,7 @@ use Knobik\SqlAgent\Models\Embedding;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Support\TextAnalyzer;
+use Pgvector\Laravel\Vector;
 use Throwable;
 
 class KnowledgeLoader
@@ -32,11 +34,11 @@ class KnowledgeLoader
     /**
      * Remove the stored embeddings for the given models.
      *
-     * @param  array<class-string<\Illuminate\Database\Eloquent\Model>>  $modelClasses
+     * @param  array<class-string<Model>>  $modelClasses
      */
     protected function purgeEmbeddings(array $modelClasses): void
     {
-        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+        if (! class_exists(Vector::class)) {
             return;
         }
 

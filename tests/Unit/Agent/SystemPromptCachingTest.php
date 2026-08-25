@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Agent\AgentLoopContext;
 use Knobik\SqlAgent\Agent\PromptRenderer;
+use Knobik\SqlAgent\Agent\SqlAgent;
 use Knobik\SqlAgent\Data\Context;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 
@@ -163,8 +164,8 @@ test('the search-first instruction follows its config flag', function () {
  */
 function buildSystemPrompts(string $static, string $dynamic): array
 {
-    $agent = new ReflectionClass(\Knobik\SqlAgent\Agent\SqlAgent::class);
+    $agent = new ReflectionClass(SqlAgent::class);
     $method = $agent->getMethod('buildSystemPrompts');
 
-    return $method->invoke(app(\Knobik\SqlAgent\Agent\SqlAgent::class), $static, $dynamic);
+    return $method->invoke(app(SqlAgent::class), $static, $dynamic);
 }
