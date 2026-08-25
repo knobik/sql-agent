@@ -218,19 +218,30 @@ class SemanticModelLoader
     }
 
     /**
-     * Filter tables and columns through access control.
+     * Filter tables, columns and cross-table references through access control.
      *
      * @param  Collection<int, TableSchema>  $tables
      * @return Collection<int, TableSchema>
      */
     protected function applyAccessControl(Collection $tables, ?string $connectionName = null): Collection
     {
+        // Gathered before filtering: a table removed here can still be named by
+        // the relationships and notes of the tables that survive.
+        $disallowed = $this->tableAccessControl->getDisallowedTables(
+            $tables->map(fn (TableSchema $table) => $table->tableName)->all(),
+            $connectionName,
+        );
+
         return $tables
             ->filter(fn (TableSchema $table) => $this->tableAccessControl->isTableAllowed($table->tableName, $connectionName))
-            ->map(function (TableSchema $table) use ($connectionName) {
+            ->map(function (TableSchema $table) use ($connectionName, $disallowed) {
                 $filteredColumns = $this->tableAccessControl->filterColumns($table->tableName, $table->columns, $connectionName);
+                $relationships = $this->tableAccessControl->filterDescriptions($table->relationships, $disallowed);
+                $dataQualityNotes = $this->tableAccessControl->filterDescriptions($table->dataQualityNotes, $disallowed);
 
-                if ($filteredColumns === $table->columns) {
+                if ($filteredColumns === $table->columns
+                    && $relationships === $table->relationships
+                    && $dataQualityNotes === $table->dataQualityNotes) {
                     return $table;
                 }
 
@@ -238,8 +249,8 @@ class SemanticModelLoader
                     tableName: $table->tableName,
                     description: $table->description,
                     columns: $filteredColumns,
-                    relationships: $table->relationships,
-                    dataQualityNotes: $table->dataQualityNotes,
+                    relationships: $relationships,
+                    dataQualityNotes: $dataQualityNotes,
                     useCases: $table->useCases,
                 );
             })

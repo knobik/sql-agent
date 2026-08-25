@@ -489,8 +489,17 @@ SqlAgent includes configurable guardrails to prevent destructive SQL operations:
 
 Table and column restrictions are configured per connection in the `database.connections` map. Each connection can define its own `allowed_tables`, `denied_tables`, and `hidden_columns`. See the [Database Connections](/sql-agent/guides/multi-database/) guide for details.
 
+A restricted table is kept out of the prompt in more than one place. Its own entry is dropped from the schema, and so are the references to it that appear elsewhere:
+
+- Relationships and data quality notes on permitted tables that name it, matched on word boundaries so `users` does not strike `user_id`
+- Foreign keys discovered by `introspect_schema` that point at it, which also removes the `FK → table.column` annotations from the columns of the permitted table
+
 :::caution
 Table name extraction from SQL is regex-based and best-effort. It catches common patterns (`FROM`, `JOIN`) but may not detect every reference in complex queries. Always combine table restrictions with other safety measures such as database-level permissions.
+:::
+
+:::note
+A table's own `description` is not scrubbed, since it cannot be dropped without losing the description entirely. If your descriptions cross-reference other tables, keep restricted names out of them.
 :::
 
 ## Evaluation
