@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Enums\LearningCategory;
 use Knobik\SqlAgent\Models\Learning;
 
@@ -14,7 +15,7 @@ describe('Learning', function () {
     it('implements Searchable interface', function () {
         $learning = new Learning;
 
-        expect($learning)->toBeInstanceOf(\Knobik\SqlAgent\Contracts\Searchable::class);
+        expect($learning)->toBeInstanceOf(Searchable::class);
     });
 
     it('can be created', function () {

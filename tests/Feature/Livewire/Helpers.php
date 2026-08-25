@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Tests\Feature\Livewire;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 
 class Helpers
@@ -46,7 +47,7 @@ class TestUser
     }
 }
 
-class AuthenticatedTestUser implements \Illuminate\Contracts\Auth\Authenticatable
+class AuthenticatedTestUser implements Authenticatable
 {
     public int $id;
 

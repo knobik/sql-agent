@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Knobik\SqlAgent\Data\Context;
 use Knobik\SqlAgent\Services\BusinessRulesLoader;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
 use Knobik\SqlAgent\Services\ContextBuilder;
@@ -72,7 +73,7 @@ describe('SchemaIntrospector', function () {
         try {
             $schema = $introspector->introspectTable('nonexistent_table');
             expect($schema)->toBeNull();
-        } catch (\BadMethodCallException $e) {
+        } catch (BadMethodCallException $e) {
             // Doctrine DBAL not available for this driver
             expect(true)->toBeTrue();
         }
@@ -83,7 +84,7 @@ describe('SchemaIntrospector', function () {
 
         try {
             expect($introspector->tableExists('nonexistent_table'))->toBeFalse();
-        } catch (\BadMethodCallException $e) {
+        } catch (BadMethodCallException $e) {
             // Doctrine DBAL not available for this driver
             expect(true)->toBeTrue();
         }
@@ -127,14 +128,14 @@ describe('ContextBuilder', function () {
         $builder = app(ContextBuilder::class);
         $context = $builder->build('How many users?');
 
-        expect($context)->toBeInstanceOf(\Knobik\SqlAgent\Data\Context::class);
+        expect($context)->toBeInstanceOf(Context::class);
     });
 
     it('can build minimal context', function () {
         $builder = app(ContextBuilder::class);
         $context = $builder->buildMinimal();
 
-        expect($context)->toBeInstanceOf(\Knobik\SqlAgent\Data\Context::class);
+        expect($context)->toBeInstanceOf(Context::class);
         expect($context->queryPatterns)->toBeEmpty();
         expect($context->learnings)->toBeEmpty();
     });
@@ -182,7 +183,7 @@ describe('ContextBuilder', function () {
         $builder = app(ContextBuilder::class);
         $context = $builder->build('How many users?');
 
-        expect($context)->toBeInstanceOf(\Knobik\SqlAgent\Data\Context::class);
+        expect($context)->toBeInstanceOf(Context::class);
     });
 
     it('includes business rules and learnings globally in multi-connection mode', function () {
@@ -201,7 +202,7 @@ describe('ContextBuilder', function () {
 
         try {
             $context = $builder->build('test question');
-        } catch (\BadMethodCallException $e) {
+        } catch (BadMethodCallException $e) {
             $this->markTestSkipped('Schema introspection not available for this driver.');
         }
 

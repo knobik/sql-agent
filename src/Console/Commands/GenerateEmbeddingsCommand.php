@@ -13,6 +13,7 @@ use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Models\Embedding;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Pgvector\Laravel\Vector;
 
 class GenerateEmbeddingsCommand extends Command
 {
@@ -33,7 +34,7 @@ class GenerateEmbeddingsCommand extends Command
 
     public function handle(EmbeddingGenerator $generator, TextSerializer $serializer): int
     {
-        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+        if (! class_exists(Vector::class)) {
             $this->error('The pgvector/pgvector package is not installed. Install it with: composer require pgvector/pgvector');
 
             return self::FAILURE;

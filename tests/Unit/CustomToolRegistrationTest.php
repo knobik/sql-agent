@@ -1,6 +1,7 @@
 <?php
 
 use Knobik\SqlAgent\Agent\ToolRegistry;
+use Knobik\SqlAgent\Tools\AskUserTool;
 use Prism\Prism\Tool;
 
 describe('Custom Tool Registration', function () {
@@ -60,7 +61,7 @@ describe('Custom Tool Registration', function () {
         // Remove AskUserTool from the tools array
         $tools = array_filter(
             config('sql-agent.agent.tools'),
-            fn ($t) => $t !== \Knobik\SqlAgent\Tools\AskUserTool::class,
+            fn ($t) => $t !== AskUserTool::class,
         );
         config()->set('sql-agent.agent.tools', $tools);
 

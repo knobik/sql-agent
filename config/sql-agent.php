@@ -1,5 +1,12 @@
 <?php
 
+use Knobik\SqlAgent\Tools\AskUserTool;
+use Knobik\SqlAgent\Tools\IntrospectSchemaTool;
+use Knobik\SqlAgent\Tools\RunSqlTool;
+use Knobik\SqlAgent\Tools\SaveLearningTool;
+use Knobik\SqlAgent\Tools\SaveQueryTool;
+use Knobik\SqlAgent\Tools\SearchKnowledgeTool;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -170,13 +177,13 @@ return [
         // Tool class names resolved from the container. Includes all built-in tools
         // by default. Remove entries to disable specific tools, or add your own.
         'tools' => array_merge([
-            \Knobik\SqlAgent\Tools\RunSqlTool::class,
-            \Knobik\SqlAgent\Tools\IntrospectSchemaTool::class,
-            \Knobik\SqlAgent\Tools\SearchKnowledgeTool::class,
-            \Knobik\SqlAgent\Tools\AskUserTool::class,
+            RunSqlTool::class,
+            IntrospectSchemaTool::class,
+            SearchKnowledgeTool::class,
+            AskUserTool::class,
         ], env('SQL_AGENT_LEARNING_ENABLED', true) ? [
-            \Knobik\SqlAgent\Tools\SaveLearningTool::class,
-            \Knobik\SqlAgent\Tools\SaveQueryTool::class,
+            SaveLearningTool::class,
+            SaveQueryTool::class,
         ] : []),
 
         // Timeout in seconds for the ask_user tool to wait for a user reply

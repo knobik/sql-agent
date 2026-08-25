@@ -89,7 +89,7 @@ Layers 1–3 are loaded from the knowledge base into the system prompt. Layer 4 
 ## Requirements
 
 - PHP 8.2 or higher
-- Laravel 11.x or 12.x
+- Laravel 12.x or 13.x
 - [Prism PHP](https://prismphp.com) (installed automatically as a dependency)
 - An LLM API key or local Ollama installation
 - Optional: Livewire 3.x for the chat UI

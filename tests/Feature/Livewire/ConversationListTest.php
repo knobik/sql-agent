@@ -8,12 +8,13 @@ use Knobik\SqlAgent\Livewire\ConversationList;
 use Knobik\SqlAgent\Models\Conversation;
 use Knobik\SqlAgent\Models\Message;
 use Knobik\SqlAgent\Tests\Feature\Livewire\Helpers;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Skip tests if Livewire is not available
-    if (! class_exists(\Livewire\Livewire::class)) {
+    if (! class_exists(Livewire::class)) {
         $this->markTestSkipped('Livewire is not installed');
     }
 
@@ -24,7 +25,7 @@ it('can render conversation list', function () {
     $user = Helpers::createTestUser();
     Helpers::actingAs($user);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->assertStatus(200)
         ->assertSee('Conversations');
 });
@@ -33,7 +34,7 @@ it('shows empty state when no conversations', function () {
     $user = Helpers::createTestUser();
     Helpers::actingAs($user);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->assertSee('No conversations yet');
 });
 
@@ -53,7 +54,7 @@ it('lists user conversations', function () {
         'connection' => 'sqlite',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->assertSee('First Conversation')
         ->assertSee('Second Conversation');
 });
@@ -76,7 +77,7 @@ it('does not show conversations from other users', function () {
 
     Helpers::actingAs($user1);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->assertSee('User 1 Conversation')
         ->assertDontSee('User 2 Conversation');
 });
@@ -97,7 +98,7 @@ it('can search conversations', function () {
         'connection' => 'sqlite',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->set('search', 'Sales')
         ->assertSee('Sales Report Query')
         ->assertDontSee('User Analytics');
@@ -113,7 +114,7 @@ it('can select a conversation', function () {
         'connection' => 'sqlite',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->call('selectConversation', $conversation->id)
         ->assertSet('selectedConversationId', $conversation->id)
         ->assertDispatched('load-conversation', conversationId: $conversation->id);
@@ -123,7 +124,7 @@ it('can create new conversation', function () {
     $user = Helpers::createTestUser();
     Helpers::actingAs($user);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->call('newConversation')
         ->assertSet('selectedConversationId', null)
         ->assertDispatched('new-conversation');
@@ -139,7 +140,7 @@ it('can confirm delete conversation', function () {
         'connection' => 'sqlite',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->call('confirmDelete', $conversation->id)
         ->assertSet('deleteConversationId', $conversation->id)
         ->assertSet('showDeleteConfirm', true);
@@ -155,7 +156,7 @@ it('can cancel delete', function () {
         'connection' => 'sqlite',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->call('confirmDelete', $conversation->id)
         ->call('cancelDelete')
         ->assertSet('deleteConversationId', null)
@@ -178,7 +179,7 @@ it('can delete conversation', function () {
         'content' => 'Test message',
     ]);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->call('confirmDelete', $conversation->id)
         ->call('deleteConversation')
         ->assertSet('showDeleteConfirm', false);
@@ -199,7 +200,7 @@ it('cannot delete another users conversation', function () {
 
     Helpers::actingAs($user1);
 
-    \Livewire\Livewire::test(ConversationList::class)
+    Livewire::test(ConversationList::class)
         ->set('deleteConversationId', $conversation->id)
         ->set('showDeleteConfirm', true)
         ->call('deleteConversation');

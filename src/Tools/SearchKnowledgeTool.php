@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Tools;
 
+use Illuminate\Support\Collection;
 use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Search\SearchResult;
@@ -85,7 +86,7 @@ class SearchKnowledgeTool extends Tool
     /**
      * Format query pattern search results.
      *
-     * @param  \Illuminate\Support\Collection<int, SearchResult>  $results
+     * @param  Collection<int, SearchResult>  $results
      * @return array<int, array<string, mixed>>
      */
     protected function formatQueryPatterns($results): array
@@ -103,7 +104,7 @@ class SearchKnowledgeTool extends Tool
     /**
      * Format learning search results.
      *
-     * @param  \Illuminate\Support\Collection<int, SearchResult>  $results
+     * @param  Collection<int, SearchResult>  $results
      * @return array<int, array<string, mixed>>
      */
     protected function formatLearnings($results): array
@@ -120,7 +121,7 @@ class SearchKnowledgeTool extends Tool
     /**
      * Format custom index search results using toSearchableArray().
      *
-     * @param  \Illuminate\Support\Collection<int, SearchResult>  $results
+     * @param  Collection<int, SearchResult>  $results
      * @return array<int, array<string, mixed>>
      */
     protected function formatCustomIndex($results): array

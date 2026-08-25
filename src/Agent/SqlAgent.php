@@ -20,8 +20,11 @@ use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Prism\Prism\Streaming\Events\ThinkingEvent;
 use Prism\Prism\Streaming\Events\ToolCallEvent;
 use Prism\Prism\Streaming\Events\ToolResultEvent;
+use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\Text\Response as PrismResponse;
 use Prism\Prism\Tool;
+use Prism\Prism\ValueObjects\ToolCall;
+use Prism\Prism\ValueObjects\ToolResult;
 use Prism\Prism\ValueObjects\Usage;
 use Throwable;
 
@@ -208,7 +211,7 @@ class SqlAgent implements Agent
         return $this->lastUsage?->toArray();
     }
 
-    protected function buildPrismRequest(AgentLoopContext $loop): \Prism\Prism\Text\PendingRequest
+    protected function buildPrismRequest(AgentLoopContext $loop): PendingRequest
     {
         $request = Prism::text()
             ->using(config('sql-agent.llm.provider'), config('sql-agent.llm.model'))
@@ -252,7 +255,7 @@ class SqlAgent implements Agent
 
         foreach ($response->steps as $index => $step) {
             $toolCalls = array_map(
-                fn (\Prism\Prism\ValueObjects\ToolCall $tc) => [
+                fn (ToolCall $tc) => [
                     'name' => $tc->name,
                     'arguments' => $tc->arguments(),
                 ],
@@ -260,7 +263,7 @@ class SqlAgent implements Agent
             );
 
             $toolResults = array_map(
-                fn (\Prism\Prism\ValueObjects\ToolResult $tr) => [
+                fn (ToolResult $tr) => [
                     'tool' => $tr->toolCallId,
                     'success' => true,
                     'data' => $tr->result,

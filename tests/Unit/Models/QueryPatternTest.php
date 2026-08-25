@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Models\QueryPattern;
 
 uses(RefreshDatabase::class);
@@ -13,7 +14,7 @@ describe('QueryPattern', function () {
     it('implements Searchable interface', function () {
         $pattern = new QueryPattern;
 
-        expect($pattern)->toBeInstanceOf(\Knobik\SqlAgent\Contracts\Searchable::class);
+        expect($pattern)->toBeInstanceOf(Searchable::class);
     });
 
     it('can be created', function () {

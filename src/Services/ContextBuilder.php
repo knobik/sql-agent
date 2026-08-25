@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Data\Context;
 use Knobik\SqlAgent\Data\QueryPatternData;
 use Knobik\SqlAgent\Search\SearchManager;
@@ -124,7 +126,7 @@ class ContextBuilder
 
         return $this->searchManager->searchMultiple($question, $customIndexes, $limit)
             ->map(function (SearchResult $result) {
-                /** @var \Illuminate\Database\Eloquent\Model&\Knobik\SqlAgent\Contracts\Searchable $model */
+                /** @var Model&Searchable $model */
                 $model = $result->model;
 
                 return $model->toSearchableArray();

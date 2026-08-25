@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
+use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Embeddings\EmbeddingGenerator;
 use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Models\Learning;
@@ -66,7 +68,7 @@ test('index skips when serialized text is empty', function () {
     $driver = new PgvectorSearchDriver($this->generator, $serializer, []);
 
     // Create a mock that implements both Model and Searchable
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class, \Knobik\SqlAgent\Contracts\Searchable::class);
+    $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('toSearchableArray')->andReturn([]);
     $model->shouldReceive('getSearchableColumns')->andReturn([]);
 

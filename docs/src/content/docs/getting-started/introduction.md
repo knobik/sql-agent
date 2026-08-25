@@ -57,7 +57,7 @@ This architecture follows a retrieval-augmented generation (RAG) pattern — but
 ## Requirements
 
 - PHP 8.2 or higher
-- Laravel 11.x or 12.x
+- Laravel 12.x or 13.x
 - [Prism PHP](https://prismphp.com) (installed automatically as a dependency)
 - An LLM provider — any provider supported by Prism (OpenAI, Anthropic, Ollama, Gemini, Mistral, xAI, etc.)
 - Optional: Livewire 3.x for the chat UI

@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Knobik\SqlAgent\Enums\LearningCategory;
 use Knobik\SqlAgent\Models\Learning;
@@ -12,7 +13,7 @@ beforeEach(function () {
     $this->maintenance = app(LearningMaintenance::class);
 });
 
-function createLearningAt(array $attributes, \Carbon\Carbon $createdAt): Learning
+function createLearningAt(array $attributes, Carbon $createdAt): Learning
 {
     $learning = Learning::create($attributes);
     $learning->forceFill(['created_at' => $createdAt])->saveQuietly();

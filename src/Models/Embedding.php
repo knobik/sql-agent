@@ -7,6 +7,7 @@ namespace Knobik\SqlAgent\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use Pgvector\Laravel\HasNeighbors;
 use Pgvector\Laravel\Vector;
 
@@ -16,8 +17,8 @@ use Pgvector\Laravel\Vector;
  * @property int $embeddable_id
  * @property Vector|null $embedding
  * @property string $content_hash
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class Embedding extends EloquentModel
 {

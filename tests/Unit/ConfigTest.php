@@ -15,6 +15,7 @@ use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Search\Strategies\MysqlFullTextStrategy;
 use Knobik\SqlAgent\Search\Strategies\PostgresFullTextStrategy;
 use Knobik\SqlAgent\Services\LearningMachine;
+use Knobik\SqlAgent\Services\LearningMaintenance;
 
 uses(RefreshDatabase::class);
 
@@ -155,7 +156,7 @@ describe('Learning Configuration', function () {
     it('prune method reads from config', function () {
         config(['sql-agent.learning.prune_after_days' => 30]);
 
-        $maintenance = app(\Knobik\SqlAgent\Services\LearningMaintenance::class);
+        $maintenance = app(LearningMaintenance::class);
 
         // Call prune with null to use config
         // The prune method should use config default
