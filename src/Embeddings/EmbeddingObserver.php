@@ -34,14 +34,11 @@ class EmbeddingObserver
             return;
         }
 
-        // Only re-embed if searchable columns changed
-        $searchableColumns = $model->getSearchableColumns();
-        $changed = array_intersect($searchableColumns, array_keys($model->getDirty()));
-
-        if ($changed === []) {
-            return;
-        }
-
+        // The driver hashes the serialized text and skips unchanged content, so
+        // no embedding request is made when nothing meaningful changed. Deciding
+        // here from the dirty attributes would miss models whose embedded text
+        // draws on columns outside getSearchableColumns() — table metadata
+        // embeds its column list, for example.
         try {
             $this->driver->index($model);
         } catch (Throwable) {

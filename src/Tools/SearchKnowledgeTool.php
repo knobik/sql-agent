@@ -23,7 +23,7 @@ class SearchKnowledgeTool extends Tool
             ->as('search_knowledge')
             ->for('Search for relevant query patterns, learnings, and past discoveries about the database.')
             ->withStringParameter('query', 'The search query to find relevant knowledge.')
-            ->withEnumParameter('type', "Filter results by index: 'all' (default) searches everything, or specify a specific index name.", $enumValues, required: false)
+            ->withEnumParameter('type', "Filter results by index: 'all' (default) searches query patterns, learnings and any custom indexes. Pass 'table_metadata' to look up the schema of a table that is not described in the context.", $enumValues, required: false)
             ->withNumberParameter('limit', 'Maximum number of results to return.', required: false)
             ->using($this);
     }
@@ -47,6 +47,13 @@ class SearchKnowledgeTool extends Tool
 
         if ($type === 'all') {
             foreach ($registeredIndexes as $index) {
+                // Table metadata is large and already supplied as context. It
+                // stays available as an explicit type — useful when schema
+                // retrieval left a table out — but does not join the sweep.
+                if ($index === 'table_metadata') {
+                    continue;
+                }
+
                 $results[$index] = $this->searchIndex($query, $index, $limit);
             }
         } else {

@@ -71,6 +71,9 @@ SqlAgent uses [Prism PHP](https://prismphp.com) as its LLM abstraction layer. Pr
     'temperature' => (float) env('SQL_AGENT_LLM_TEMPERATURE', 0.3),
     'max_tokens' => (int) env('SQL_AGENT_LLM_MAX_TOKENS', 16384),
     'provider_options' => [],
+    'cache_system_prompt' => (bool) env('SQL_AGENT_LLM_CACHE_SYSTEM_PROMPT', false),
+    'cache_type' => env('SQL_AGENT_LLM_CACHE_TYPE', 'ephemeral'),
+    'cache_ttl' => env('SQL_AGENT_LLM_CACHE_TTL'),
 ],
 ```
 
@@ -81,6 +84,28 @@ SqlAgent uses [Prism PHP](https://prismphp.com) as its LLM abstraction layer. Pr
 | `temperature` | Sampling temperature (0.0 = deterministic, 1.0 = creative) | `0.3` |
 | `max_tokens` | Maximum tokens in the LLM response | `16384` |
 | `provider_options` | Additional provider-specific options passed to Prism's `withProviderOptions()` | `[]` |
+| `cache_system_prompt` | Mark the static part of the system prompt as cacheable | `false` |
+| `cache_type` | Cache type sent to the provider. Anthropic supports `ephemeral` | `ephemeral` |
+| `cache_ttl` | Cache lifetime. Anthropic supports `5m` (its default) and `1h` | `null` |
+
+### Prompt Caching
+
+The system prompt is sent as two blocks. The static prefix holds the instructions, the tool descriptions, the database schema, and the business rules — it is identical for every question. The dynamic suffix holds the current time and the query patterns and learnings retrieved for the question at hand.
+
+Setting `cache_system_prompt` marks the static prefix as cacheable, so the provider stores it after the first request and reuses it afterwards. This matters most in the agentic loop: without caching, a schema of tens of thousands of tokens is re-processed on every tool-calling round, which shows up as both latency and cost.
+
+```ini
+SQL_AGENT_LLM_CACHE_SYSTEM_PROMPT=true
+SQL_AGENT_LLM_CACHE_TTL=1h
+```
+
+:::note
+Prompt caching is an Anthropic feature. Other providers ignore these options, so leaving them enabled is harmless when you switch providers.
+:::
+
+:::caution
+Anthropic charges a write premium the first time a prefix is cached. The prefix must be stable to earn that back, so avoid putting per-request values into a published `system.blade.php` — a timestamp at the top of the prompt invalidates the cache on every request. Schema retrieval keeps the prefix stable by placing the retrieved schema in the dynamic block instead.
+:::
 
 Provider credentials (API keys, base URLs) are configured in Prism's own config file. Publish it with:
 
@@ -182,12 +207,15 @@ The `connection` must point to a PostgreSQL database with the pgvector extension
 
 ### Index Mapping
 
-Both the `database` and `pgvector` drivers support an `index_mapping` option that maps search index names to Eloquent model classes. By default, the drivers register two indexes:
+Both the `database` and `pgvector` drivers support an `index_mapping` option that maps search index names to Eloquent model classes. By default, the drivers register three indexes:
 
 | Index | Model |
 |-------|-------|
 | `query_patterns` | `Knobik\SqlAgent\Models\QueryPattern` |
 | `learnings` | `Knobik\SqlAgent\Models\Learning` |
+| `table_metadata` | `Knobik\SqlAgent\Models\TableMetadata` |
+
+The `table_metadata` index backs [schema retrieval](#schema-retrieval). It is a built-in index rather than a custom one, so its results are never included as "Additional Knowledge".
 
 You can add custom indexes by providing an `index_mapping` array in the driver config. Custom mappings are merged with the defaults, so you only need to specify additional indexes:
 
@@ -211,6 +239,68 @@ Each model referenced in `index_mapping` must extend `Illuminate\Database\Eloque
 - `getSearchableColumns()` — Returns the column names to index for search.
 - `toSearchableArray()` — Returns the searchable representation of the model.
 
+## Schema
+
+The `schema` option controls how much table metadata reaches the system prompt:
+
+```php
+'schema' => [
+    'mode' => env('SQL_AGENT_SCHEMA_MODE', 'full'),
+
+    'rag' => [
+        'limit' => (int) env('SQL_AGENT_SCHEMA_RAG_LIMIT', 10),
+        'always_include' => [],
+        'expand_relationships' => (bool) env('SQL_AGENT_SCHEMA_RAG_EXPAND_RELATIONSHIPS', true),
+        'expansion_depth' => (int) env('SQL_AGENT_SCHEMA_RAG_EXPANSION_DEPTH', 1),
+        'include_table_list' => (bool) env('SQL_AGENT_SCHEMA_RAG_INCLUDE_TABLE_LIST', true),
+    ],
+],
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `mode` | `full` describes every accessible table, `rag` describes only the tables retrieved for the question | `full` |
+| `rag.limit` | Number of tables retrieved per connection | `10` |
+| `rag.always_include` | Table names always described, whatever the question | `[]` |
+| `rag.expand_relationships` | Also describe the tables that the retrieved tables relate to | `true` |
+| `rag.expansion_depth` | How many rounds of relationship expansion to perform | `1` |
+| `rag.include_table_list` | List the names of the tables that were left out | `true` |
+
+In `full` mode, every table the agent may access is described on every request. This is the most accurate option and the right default: the model can see the whole data model at once.
+
+That stops being free once the schema is large. A hundred-table schema can run to tens of thousands of tokens, and in `full` mode you pay for them on every tool-calling round of every request.
+
+### Schema Retrieval
+
+Setting `mode` to `rag` describes only the tables relevant to the question. Table metadata is searched through the configured [search driver](/guides/drivers/), exactly like query patterns and learnings:
+
+```ini
+SQL_AGENT_SCHEMA_MODE=rag
+SQL_AGENT_SCHEMA_RAG_LIMIT=10
+```
+
+Retrieval alone tends to miss join targets — a question about revenue matches `orders`, not the `customers` table it joins to. Three settings close that gap:
+
+- `expand_relationships` adds the tables named in the relationships of the retrieved tables, so join targets come along.
+- `always_include` pins the tables that belong in every query, such as a tenants or users table.
+- `include_table_list` names the omitted tables without describing them, so the agent knows they exist and can reach for `introspect_schema`.
+
+When retrieval returns nothing — an unusual question, or embeddings that were never generated — the full semantic model is used instead. An incomplete schema produces wrong SQL, so the fallback errs toward the larger prompt.
+
+With the `pgvector` driver, generate embeddings for your table metadata before switching modes:
+
+```bash
+php artisan sql-agent:generate-embeddings --model=table_metadata
+```
+
+:::caution
+Retrieval trades accuracy for latency. A table that is not retrieved cannot be queried correctly, and the failure is quiet — the agent writes plausible SQL against the tables it was given. Run your [evaluation suite](/guides/evaluation/) in both modes before enabling this in production.
+:::
+
+:::note
+In `rag` mode the schema moves into the dynamic part of the system prompt, since it changes with every question. This keeps the cacheable prefix stable when `cache_system_prompt` is also enabled.
+:::
+
 ## Agent Behavior
 
 Control how the agentic loop operates:
@@ -220,6 +310,7 @@ Control how the agentic loop operates:
     'max_iterations' => env('SQL_AGENT_MAX_ITERATIONS', 10),
     'default_limit' => env('SQL_AGENT_DEFAULT_LIMIT', 100),
     'chat_history_length' => env('SQL_AGENT_CHAT_HISTORY', 10),
+    'search_first' => (bool) env('SQL_AGENT_SEARCH_FIRST', false),
     'ask_user_timeout' => env('SQL_AGENT_ASK_USER_TIMEOUT', 300),
 ],
 ```
@@ -229,7 +320,18 @@ Control how the agentic loop operates:
 | `max_iterations` | Maximum number of tool-calling rounds before the agent stops | `10` |
 | `default_limit` | `LIMIT` applied to queries that don't specify one | `100` |
 | `chat_history_length` | Number of previous messages included for conversational context | `10` |
+| `search_first` | Instruct the agent to always call `search_knowledge` before writing SQL | `false` |
 | `ask_user_timeout` | Seconds to wait for a user reply when the `ask_user` tool is invoked | `300` |
+
+### Search-First Behavior
+
+Every request already runs a search for the question and puts the matching query patterns and learnings into the context. With `search_first` disabled, the agent is told to read that context and reach for `search_knowledge` only when it proves insufficient — which saves a full round trip on most questions.
+
+Enable it when your knowledge base is large enough that the top matches regularly miss what the agent needs, and you would rather pay for the extra round trip than risk a worse query:
+
+```ini
+SQL_AGENT_SEARCH_FIRST=true
+```
 
 ### Custom Tools
 

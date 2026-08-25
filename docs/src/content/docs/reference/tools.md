@@ -235,8 +235,8 @@ Search the knowledge base for relevant query patterns and learnings. The agent c
     },
     "type": {
       "type": "string",
-      "description": "Filter results: 'all' (default), 'patterns' (saved query patterns), or 'learnings' (discovered fixes/gotchas).",
-      "enum": ["all", "patterns", "learnings"]
+      "description": "Filter results by index: 'all' (default) searches query patterns, learnings and any custom indexes. Pass 'table_metadata' to look up the schema of a table that is not described in the context.",
+      "enum": ["all", "query_patterns", "learnings", "table_metadata"]
     },
     "limit": {
       "type": "integer",
@@ -252,7 +252,7 @@ Search the knowledge base for relevant query patterns and learnings. The agent c
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `query` | string | Yes | — | The search query text. |
-| `type` | string | No | `all` | Filter by `all`, `patterns`, or `learnings`. |
+| `type` | string | No | `all` | Filter by index name, or `all`. The enum also lists any [custom indexes](/guides/configuration/#index-mapping) you register. |
 | `limit` | integer | No | `5` | Max results to return (1–20). |
 
 ### Return Value
@@ -286,14 +286,17 @@ Search the knowledge base for relevant query patterns and learnings. The agent c
 |-------|------|-------------|
 | `query_patterns` | array | Matching query patterns (from knowledge files and saved validated queries). |
 | `learnings` | array | Matching learnings (agent-discovered patterns). Only included when learning is enabled. |
-| `total_found` | integer | Total number of results across both types. |
+| `table_metadata` | array | Matching table schemas. Only included when `table_metadata` is requested explicitly. |
+| `total_found` | integer | Total number of results across the searched indexes. |
+
+The `table_metadata` index is left out of an `all` search: table schemas are large, and the relevant ones are already in the context. Requesting it explicitly is the escape hatch when [schema retrieval](/guides/configuration/#schema-retrieval) left out a table the agent needs.
 
 ### Example Tool Call
 
 ```json
 {
   "query": "monthly revenue calculation",
-  "type": "patterns",
+  "type": "query_patterns",
   "limit": 5
 }
 ```

@@ -17,22 +17,56 @@ class Context
         public Collection $learnings,
         /** @var Collection<int, array<string, mixed>> */
         public ?Collection $customKnowledge = null,
+        /**
+         * Whether the semantic model was retrieved for this question rather than
+         * loaded in full. Question-dependent schema belongs in the dynamic block
+         * so the cacheable prefix stays stable between requests.
+         */
+        public bool $semanticModelIsDynamic = false,
     ) {
         $this->customKnowledge ??= collect();
     }
 
     public function toPromptString(): string
     {
+        return implode("\n\n", array_filter([
+            $this->toStaticPromptString(),
+            $this->toDynamicPromptString(),
+        ]));
+    }
+
+    /**
+     * The portion of the context that does not depend on the question.
+     *
+     * Kept separate so it can form a stable, cacheable prompt prefix.
+     */
+    public function toStaticPromptString(): string
+    {
         $sections = [];
 
         // Layer 1: Semantic Model
-        if ($this->semanticModel) {
+        if ($this->semanticModel && ! $this->semanticModelIsDynamic) {
             $sections[] = $this->formatSection('DATABASE SCHEMA', $this->semanticModel);
         }
 
         // Layer 2: Business Rules
         if ($this->businessRules) {
             $sections[] = $this->formatSection('BUSINESS RULES & DEFINITIONS', $this->businessRules);
+        }
+
+        return implode("\n\n", $sections);
+    }
+
+    /**
+     * The portion of the context retrieved for the current question.
+     */
+    public function toDynamicPromptString(): string
+    {
+        $sections = [];
+
+        // Layer 1: Semantic Model, when retrieved for this question
+        if ($this->semanticModel && $this->semanticModelIsDynamic) {
+            $sections[] = $this->formatSection('DATABASE SCHEMA', $this->semanticModel);
         }
 
         // Layer 3: Query Patterns

@@ -13,12 +13,13 @@ use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Models\Embedding;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Knobik\SqlAgent\Models\TableMetadata;
 use Pgvector\Laravel\Vector;
 
 class GenerateEmbeddingsCommand extends Command
 {
     protected $signature = 'sql-agent:generate-embeddings
-                            {--model= : Only generate for a specific model (query_patterns or learnings)}
+                            {--model= : Only generate for a specific model (query_patterns, learnings or table_metadata)}
                             {--force : Regenerate embeddings even if they already exist}
                             {--batch-size=50 : Number of records to process per batch}';
 
@@ -30,6 +31,7 @@ class GenerateEmbeddingsCommand extends Command
     protected array $modelMapping = [
         'query_patterns' => QueryPattern::class,
         'learnings' => Learning::class,
+        'table_metadata' => TableMetadata::class,
     ];
 
     public function handle(EmbeddingGenerator $generator, TextSerializer $serializer): int

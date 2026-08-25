@@ -13,6 +13,7 @@ use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Models\Embedding;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
+use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Search\SearchResult;
 use Pgvector\Laravel\Distance;
 use RuntimeException;
@@ -27,6 +28,7 @@ class PgvectorSearchDriver implements SearchDriver
     protected array $defaultIndexMapping = [
         'query_patterns' => QueryPattern::class,
         'learnings' => Learning::class,
+        'table_metadata' => TableMetadata::class,
     ];
 
     /**

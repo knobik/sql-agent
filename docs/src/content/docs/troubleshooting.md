@@ -35,6 +35,9 @@ If the agent is taking too long to respond:
 1. Use a faster model (e.g., `gpt-4o-mini` instead of `gpt-4o`).
 2. Reduce `chat_history_length` to minimize the context sent to the LLM.
 3. Consider the `database` search driver for simpler setups — it avoids external service round-trips.
+4. On Anthropic, enable [prompt caching](/guides/configuration/#prompt-caching) with `SQL_AGENT_LLM_CACHE_SYSTEM_PROMPT=true`. The static prompt is otherwise re-processed on every round of the agent loop.
+5. Check how large your schema is. Every accessible table is described in the prompt by default, which on a large schema dominates everything else. `php artisan tinker --execute="echo strlen(app(Knobik\SqlAgent\Services\ContextBuilder::class)->build('test')->semanticModel);"` prints its size in characters — roughly four characters per token. Trim it with `allowed_tables` and `hidden_columns`, or switch on [schema retrieval](/guides/configuration/#schema-retrieval).
+6. Leave `search_first` disabled (the default). Enabling it costs a full round trip on every question, and the matching knowledge is already in the context.
 
 ## LLM API Errors
 

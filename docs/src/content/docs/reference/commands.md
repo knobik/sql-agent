@@ -119,12 +119,13 @@ Generate vector embeddings for existing knowledge base records. Required when sw
 ```bash
 php artisan sql-agent:generate-embeddings
 php artisan sql-agent:generate-embeddings --model=query_patterns
+php artisan sql-agent:generate-embeddings --model=table_metadata
 php artisan sql-agent:generate-embeddings --force --batch-size=100
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--model=<name>` | Only generate for a specific model (`query_patterns` or `learnings`) |
+| `--model=<name>` | Only generate for a specific model (`query_patterns`, `learnings` or `table_metadata`) |
 | `--force` | Regenerate embeddings even if they already exist |
 | `--batch-size=50` | Number of records to process per batch (default: 50) |
 

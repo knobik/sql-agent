@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Knobik\SqlAgent\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Knobik\SqlAgent\Enums\BusinessRuleType;
 use Knobik\SqlAgent\Models\BusinessRule;
+use Knobik\SqlAgent\Models\Embedding;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Models\TableMetadata;
 use Knobik\SqlAgent\Support\TextAnalyzer;
+use Pgvector\Laravel\Vector;
+use Throwable;
 
 class KnowledgeLoader
 {
@@ -21,6 +25,35 @@ class KnowledgeLoader
         TableMetadata::truncate();
         BusinessRule::truncate();
         QueryPattern::truncate();
+
+        // truncate() fires no model events, so the embeddings of the rows just
+        // removed would survive and keep taking up slots in search results.
+        $this->purgeEmbeddings([TableMetadata::class, QueryPattern::class]);
+    }
+
+    /**
+     * Remove the stored embeddings for the given models.
+     *
+     * @param  array<class-string<Model>>  $modelClasses
+     */
+    protected function purgeEmbeddings(array $modelClasses): void
+    {
+        if (! class_exists(Vector::class)) {
+            return;
+        }
+
+        if (! config('sql-agent.search.drivers.pgvector.connection')) {
+            return;
+        }
+
+        $morphClasses = array_map(fn (string $class) => (new $class)->getMorphClass(), $modelClasses);
+
+        try {
+            Embedding::query()->whereIn('embeddable_type', $morphClasses)->delete();
+        } catch (Throwable) {
+            // Embeddings are a search optimisation; failing to clear them must
+            // not abort a knowledge reload.
+        }
     }
 
     /**

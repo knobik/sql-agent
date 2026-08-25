@@ -109,19 +109,25 @@ php artisan sql-agent:prune-learnings --dry-run
 
 ## Customizing the System Prompt
 
-The agent's behavior is driven by a Blade template at `resources/prompts/system.blade.php`. This template defines the workflow, tool usage instructions, SQL rules, and response guidelines that the LLM follows.
+The agent's behavior is driven by two Blade templates. `resources/prompts/system.blade.php` defines the workflow, tool usage instructions, SQL rules, and response guidelines that the LLM follows, along with the schema and business rules. `resources/prompts/context.blade.php` renders the current time and the knowledge retrieved for the question being asked.
 
-To customize it, publish the prompt to your application:
+The split exists so the first template stays identical between requests and can be cached by the provider. See [prompt caching](/guides/configuration/#prompt-caching).
+
+To customize either one, publish the prompts to your application:
 
 ```bash
 php artisan vendor:publish --tag=sql-agent-prompts
 ```
 
-This copies the template to `resources/views/vendor/sql-agent/prompts/system.blade.php`. Your published version takes precedence over the package default — Laravel's view override mechanism handles this automatically.
+This copies the templates to `resources/views/vendor/sql-agent/prompts/`. Your published versions take precedence over the package defaults.
+
+:::caution
+Earlier releases published prompts to a directory the package never read from, so edits to them had no effect. If you published prompts before and wondered why nothing changed, they take effect now — re-check their contents before you deploy.
+:::
 
 ### What You Can Customize
 
-The system prompt is a standard Blade template with access to config values and a `$context` variable containing the assembled knowledge. Common customizations include:
+Both templates are standard Blade templates with access to config values and a `$context` variable containing the assembled knowledge. Common customizations include:
 
 - **Changing the agent's persona** — Modify the opening instructions to match your domain (e.g., "You are a financial data analyst" instead of the default)
 - **Adjusting the workflow** — Reorder or remove steps, add domain-specific instructions

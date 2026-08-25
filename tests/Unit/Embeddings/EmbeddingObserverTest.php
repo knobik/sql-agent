@@ -50,14 +50,27 @@ test('updated re-indexes when searchable columns changed', function () {
     $this->observer->updated($model);
 });
 
-test('updated skips when no searchable columns changed', function () {
+test('updated re-indexes when a column outside getSearchableColumns changed', function () {
+    // The embedded text can draw on columns the full-text driver does not index
+    // — table metadata embeds its column list. The driver skips unchanged
+    // content by hash, so re-indexing here costs nothing when nothing changed.
     $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('getSearchableColumns')->andReturn(['title', 'description']);
-    $model->shouldReceive('getDirty')->andReturn(['sql' => 'SELECT 1']);
+    $model->shouldReceive('getDirty')->andReturn(['columns' => ['id' => 'integer']]);
+
+    $this->driver->shouldReceive('index')->with($model)->once();
+
+    $this->observer->updated($model);
+});
+
+test('updated skips non-searchable models', function () {
+    $model = Mockery::mock(Model::class);
 
     $this->driver->shouldNotReceive('index');
 
     $this->observer->updated($model);
+
+    expect(true)->toBeTrue();
 });
 
 test('deleted removes the embedding', function () {

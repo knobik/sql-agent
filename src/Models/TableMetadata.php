@@ -6,6 +6,7 @@ namespace Knobik\SqlAgent\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
+use Knobik\SqlAgent\Contracts\Searchable;
 
 /**
  * @property int $id
@@ -18,7 +19,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-class TableMetadata extends Model
+class TableMetadata extends Model implements Searchable
 {
     use HasFactory;
 
@@ -39,6 +40,39 @@ class TableMetadata extends Model
             'columns' => 'array',
             'relationships' => 'array',
             'data_quality_notes' => 'array',
+        ];
+    }
+
+    /**
+     * Columns indexed by the database full-text search driver.
+     *
+     * @return array<string>
+     */
+    public function getSearchableColumns(): array
+    {
+        return ['table_name', 'description'];
+    }
+
+    /**
+     * Representation embedded by the pgvector driver.
+     *
+     * Column names and relationships are included so questions phrased in terms
+     * of the data ("revenue per customer") match the tables that hold it.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        $columns = [];
+        foreach ($this->columns ?? [] as $name => $description) {
+            $columns[] = $description ? "{$name} ({$description})" : $name;
+        }
+
+        return [
+            'table' => $this->table_name,
+            'description' => $this->description,
+            'columns' => $columns,
+            'relationships' => $this->relationships ?? [],
         ];
     }
 
