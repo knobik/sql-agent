@@ -91,7 +91,13 @@ class SchemaIntrospector
 
         $dbColumns = $schemaBuilder->getColumns($tableName);
         $indexes = $schemaBuilder->getIndexes($tableName);
-        $foreignKeys = $this->getForeignKeys($tableName, $connection);
+        // Foreign keys pointing at restricted tables are dropped up front, which
+        // keeps those table names out of both the column annotations and the
+        // relationship list below.
+        $foreignKeys = array_values(array_filter(
+            $this->getForeignKeys($tableName, $connection),
+            fn (array $fk) => $this->tableAccessControl->isTableAllowed($fk['foreign_table'], $connectionName),
+        ));
 
         // Find primary key columns
         $primaryKeyColumns = $this->getPrimaryKeyColumns($indexes);

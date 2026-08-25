@@ -24,6 +24,12 @@ composer analyse        # PHPStan
 
 4. Open a pull request
 
+### Tooling versions
+
+`composer.lock` is not committed, so every `composer install` resolves fresh. Pint, PHPStan and Larastan are therefore pinned to a patch range: they gate CI, and a new minor of any of them can add rules that fail the build with no code change.
+
+Run `composer install` rather than `composer update` before the quality checks, so you are running the same versions CI is. Upgrades to a new minor arrive as a Dependabot pull request, where any resulting reformat or new static analysis errors can be reviewed and fixed together.
+
 ## Pull Requests
 
 - Create an issue first for significant changes

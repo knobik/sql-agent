@@ -41,6 +41,70 @@ class TableAccessControl
     }
 
     /**
+     * Table names that must not be disclosed on this connection.
+     *
+     * Combines the configured deny list with any candidate the allow list
+     * excludes, so callers can scrub references to tables the agent cannot see.
+     *
+     * @param  array<string>  $candidates  table names that may be referenced
+     * @return array<string>
+     */
+    public function getDisallowedTables(array $candidates = [], ?string $connectionName = null): array
+    {
+        [, $deniedTables] = $this->resolveTableRules($connectionName);
+
+        $disallowed = $deniedTables;
+
+        foreach ($candidates as $candidate) {
+            if (! $this->isTableAllowed($candidate, $connectionName)) {
+                $disallowed[] = $candidate;
+            }
+        }
+
+        return array_values(array_unique($disallowed));
+    }
+
+    /**
+     * Drop the descriptions that name a table the agent may not access.
+     *
+     * Relationships and data quality notes are free text, so a restricted table
+     * can otherwise surface through the documentation of a permitted one.
+     *
+     * @param  array<string>  $descriptions
+     * @param  array<string>  $disallowedTables
+     * @return array<string>
+     */
+    public function filterDescriptions(array $descriptions, array $disallowedTables): array
+    {
+        if ($disallowedTables === []) {
+            return $descriptions;
+        }
+
+        return array_values(array_filter(
+            $descriptions,
+            fn (string $description) => ! $this->mentionsTable($description, $disallowedTables),
+        ));
+    }
+
+    /**
+     * Whether a piece of text names any of the given tables.
+     *
+     * Matched on word boundaries so "users" does not match "user_id".
+     *
+     * @param  array<string>  $tables
+     */
+    protected function mentionsTable(string $text, array $tables): bool
+    {
+        foreach ($tables as $table) {
+            if ($table !== '' && preg_match('/\b'.preg_quote($table, '/').'\b/i', $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Filter columns for a table, removing hidden ones.
      *
      * @param  array<string, mixed>  $columns  column name => description/info
