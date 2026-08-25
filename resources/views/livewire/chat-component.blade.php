@@ -168,18 +168,18 @@
         {{-- Ask User Question Card --}}
         <template x-if="askUserData">
             <div class="flex gap-4 justify-start">
-                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-sm">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div class="max-w-[80%]">
-                    <div class="rounded-2xl px-5 py-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 shadow-sm">
-                        <p class="text-amber-800 dark:text-amber-200 font-medium mb-3" x-text="askUserData.question"></p>
+                    <div class="rounded-2xl px-5 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <p class="text-gray-800 dark:text-gray-200 font-medium mb-3" x-text="askUserData.question"></p>
 
                         {{-- Multi-select hint --}}
                         <template x-if="askUserData.multiple && askUserData.suggestions?.length > 0">
-                            <p class="text-xs text-amber-600 dark:text-amber-400 mb-2">Select one or more options, then click Submit.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Select one or more options, then click Submit.</p>
                         </template>
 
                         {{-- Suggestion buttons --}}
@@ -190,16 +190,16 @@
                                         @click="askUserData.multiple ? toggleAskUserSelection(suggestion.label) : submitAskUserReply(suggestion.label)"
                                         class="w-full text-left px-4 py-2.5 text-sm rounded-lg border transition-all shadow-sm"
                                         :class="askUserSelected.includes(suggestion.label)
-                                            ? 'border-amber-500 dark:border-amber-400 bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-400 dark:ring-amber-500'
-                                            : 'border-amber-300 dark:border-amber-700 bg-white dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-400 dark:hover:border-amber-600'"
+                                            ? 'border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-400 dark:ring-primary-500'
+                                            : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700'"
                                     >
                                         <div class="flex items-start gap-2">
                                             {{-- Multi-select checkbox indicator --}}
                                             <template x-if="askUserData.multiple">
                                                 <span class="flex-shrink-0 mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors"
                                                     :class="askUserSelected.includes(suggestion.label)
-                                                        ? 'bg-amber-500 border-amber-500 text-white'
-                                                        : 'border-amber-400 dark:border-amber-600'"
+                                                        ? 'bg-primary-500 border-primary-500 text-white'
+                                                        : 'border-gray-300 dark:border-gray-500'"
                                                 >
                                                     <svg x-show="askUserSelected.includes(suggestion.label)" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -207,9 +207,9 @@
                                                 </span>
                                             </template>
                                             <div class="flex-1 min-w-0">
-                                                <span class="font-medium text-amber-800 dark:text-amber-200" x-text="suggestion.label"></span>
+                                                <span class="font-medium text-gray-700 dark:text-gray-200" x-text="suggestion.label"></span>
                                                 <template x-if="suggestion.description">
-                                                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5" x-text="suggestion.description"></p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="suggestion.description"></p>
                                                 </template>
                                             </div>
                                         </div>
@@ -221,7 +221,7 @@
                                     <button
                                         @click="submitAskUserReply(askUserSelected.join(', '))"
                                         :disabled="askUserSelected.length === 0"
-                                        class="mt-1 px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        class="mt-1 px-4 py-2 text-sm font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         Submit selection (<span x-text="askUserSelected.length"></span>)
                                     </button>
@@ -235,14 +235,14 @@
                                 type="text"
                                 x-model="askUserInput"
                                 placeholder="Or type your own answer..."
-                                class="flex-1 px-3 py-2 text-sm rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 placeholder-amber-400 dark:placeholder-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
+                                class="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 x-ref="askUserInputField"
                                 x-effect="if (askUserData && !askUserData.suggestions?.length) $nextTick(() => $refs.askUserInputField?.focus())"
                             />
                             <button
                                 type="submit"
                                 :disabled="!askUserInput.trim()"
-                                class="px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                class="px-4 py-2 text-sm font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >Reply</button>
                         </form>
                     </div>
