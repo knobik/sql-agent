@@ -12,6 +12,7 @@ use Knobik\SqlAgent\Embeddings\TextSerializer;
 use Knobik\SqlAgent\Search\Drivers\DatabaseSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\NullSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\PgvectorSearchDriver;
+use Pgvector\Laravel\Vector;
 
 /**
  * Search manager for managing search drivers.
@@ -40,7 +41,7 @@ class SearchManager extends Manager implements SearchDriver
      */
     public function createPgvectorDriver(): PgvectorSearchDriver
     {
-        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+        if (! class_exists(Vector::class)) {
             throw new \RuntimeException(
                 'The pgvector search driver requires the pgvector/pgvector package. Install it with: composer require pgvector/pgvector'
             );

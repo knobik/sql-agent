@@ -1,5 +1,7 @@
 <?php
 
+use Knobik\SqlAgent\Agent\SqlAgent;
+
 test('config is loaded', function () {
     expect(config('sql-agent'))->toBeArray();
     expect(config('sql-agent.name'))->toBe('SqlAgent');
@@ -34,5 +36,5 @@ test('eval command is registered', function () {
 });
 
 test('facade resolves correctly', function () {
-    expect(app('sql-agent'))->toBeInstanceOf(\Knobik\SqlAgent\Agent\SqlAgent::class);
+    expect(app('sql-agent'))->toBeInstanceOf(SqlAgent::class);
 });

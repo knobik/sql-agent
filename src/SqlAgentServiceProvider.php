@@ -19,7 +19,10 @@ use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Search\SearchManager;
 use Knobik\SqlAgent\Services\ConnectionRegistry;
+use Livewire\Livewire;
+use Pgvector\Laravel\Vector;
 use Prism\Prism\Tool;
+use Prism\Relay\Facades\Relay;
 
 class SqlAgentServiceProvider extends ServiceProvider
 {
@@ -56,9 +59,9 @@ class SqlAgentServiceProvider extends ServiceProvider
             }
 
             // Register tools from Relay MCP servers (if prism-php/relay is installed)
-            if (class_exists(\Prism\Relay\Facades\Relay::class)) {
+            if (class_exists(Relay::class)) {
                 foreach (config('sql-agent.agent.relay') as $server) {
-                    $relayTools = \Prism\Relay\Facades\Relay::tools($server);
+                    $relayTools = Relay::tools($server);
                     $registry->registerMany($relayTools);
                 }
             }
@@ -85,7 +88,7 @@ class SqlAgentServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // pgvector migrations — only loaded when the package is installed and a connection is configured
-        if (class_exists(\Pgvector\Laravel\Vector::class) && config('sql-agent.search.drivers.pgvector.connection')) {
+        if (class_exists(Vector::class) && config('sql-agent.search.drivers.pgvector.connection')) {
             $this->loadMigrationsFrom(__DIR__.'/../database/migrations/pgvector');
         }
 
@@ -125,7 +128,7 @@ class SqlAgentServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'sql-agent-migrations');
 
-            if (class_exists(\Pgvector\Laravel\Vector::class)) {
+            if (class_exists(Vector::class)) {
                 $this->publishes([
                     __DIR__.'/../database/migrations/pgvector' => database_path('migrations'),
                 ], 'sql-agent-pgvector-migrations');
@@ -147,7 +150,7 @@ class SqlAgentServiceProvider extends ServiceProvider
 
     protected function registerEmbeddingObservers(): void
     {
-        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+        if (! class_exists(Vector::class)) {
             return;
         }
 
@@ -167,7 +170,7 @@ class SqlAgentServiceProvider extends ServiceProvider
 
     protected function registerLivewireComponents(): void
     {
-        if (! class_exists(\Livewire\Livewire::class)) {
+        if (! class_exists(Livewire::class)) {
             return;
         }
 
@@ -175,7 +178,7 @@ class SqlAgentServiceProvider extends ServiceProvider
             return;
         }
 
-        \Livewire\Livewire::component('sql-agent-chat', ChatComponent::class);
-        \Livewire\Livewire::component('sql-agent-conversation-list', ConversationList::class);
+        Livewire::component('sql-agent-chat', ChatComponent::class);
+        Livewire::component('sql-agent-conversation-list', ConversationList::class);
     }
 }

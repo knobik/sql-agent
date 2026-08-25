@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
 use Knobik\SqlAgent\Contracts\Searchable;
 use Knobik\SqlAgent\Embeddings\EmbeddingObserver;
 use Knobik\SqlAgent\Search\Drivers\PgvectorSearchDriver;
@@ -10,7 +11,7 @@ beforeEach(function () {
 });
 
 test('created indexes the model', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class, Searchable::class);
+    $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('getSearchableColumns')->andReturn(['title']);
     $model->shouldReceive('toSearchableArray')->andReturn(['title' => 'test']);
 
@@ -20,7 +21,7 @@ test('created indexes the model', function () {
 });
 
 test('created skips non-searchable models', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class);
+    $model = Mockery::mock(Model::class);
 
     $this->driver->shouldNotReceive('index');
 
@@ -28,7 +29,7 @@ test('created skips non-searchable models', function () {
 });
 
 test('created catches exceptions silently', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class, Searchable::class);
+    $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('getSearchableColumns')->andReturn(['title']);
 
     $this->driver->shouldReceive('index')->andThrow(new RuntimeException('Embedding failed'));
@@ -40,7 +41,7 @@ test('created catches exceptions silently', function () {
 });
 
 test('updated re-indexes when searchable columns changed', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class, Searchable::class);
+    $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('getSearchableColumns')->andReturn(['title', 'description']);
     $model->shouldReceive('getDirty')->andReturn(['title' => 'new title']);
 
@@ -50,7 +51,7 @@ test('updated re-indexes when searchable columns changed', function () {
 });
 
 test('updated skips when no searchable columns changed', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class, Searchable::class);
+    $model = Mockery::mock(Model::class, Searchable::class);
     $model->shouldReceive('getSearchableColumns')->andReturn(['title', 'description']);
     $model->shouldReceive('getDirty')->andReturn(['sql' => 'SELECT 1']);
 
@@ -60,7 +61,7 @@ test('updated skips when no searchable columns changed', function () {
 });
 
 test('deleted removes the embedding', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class);
+    $model = Mockery::mock(Model::class);
 
     $this->driver->shouldReceive('delete')->with($model)->once();
 
@@ -68,7 +69,7 @@ test('deleted removes the embedding', function () {
 });
 
 test('deleted catches exceptions silently', function () {
-    $model = Mockery::mock(\Illuminate\Database\Eloquent\Model::class);
+    $model = Mockery::mock(Model::class);
 
     $this->driver->shouldReceive('delete')->andThrow(new RuntimeException('Delete failed'));
 

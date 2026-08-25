@@ -6,9 +6,6 @@ on:
       - main
       - master
   pull_request:
-    branches:
-      - main
-      - master
   schedule:
     # Run every Monday at 8am UTC
     - cron: '0 8 * * 1'

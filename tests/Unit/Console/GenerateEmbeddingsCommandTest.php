@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Models\QueryPattern;
 
@@ -43,13 +44,13 @@ test('warns when no records exist for a model', function () {
 });
 
 test('command is registered', function () {
-    $commands = \Illuminate\Support\Facades\Artisan::all();
+    $commands = Artisan::all();
 
     expect($commands)->toHaveKey('sql-agent:generate-embeddings');
 });
 
 test('command has correct signature options', function () {
-    $command = \Illuminate\Support\Facades\Artisan::all()['sql-agent:generate-embeddings'];
+    $command = Artisan::all()['sql-agent:generate-embeddings'];
     $definition = $command->getDefinition();
 
     expect($definition->hasOption('model'))->toBeTrue();

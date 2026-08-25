@@ -1,6 +1,7 @@
 <?php
 
 use Knobik\SqlAgent\Contracts\SearchDriver;
+use Knobik\SqlAgent\Models\QueryPattern;
 use Knobik\SqlAgent\Search\Drivers\DatabaseSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\NullSearchDriver;
 use Knobik\SqlAgent\Search\Drivers\PgvectorSearchDriver;
@@ -118,7 +119,7 @@ test('getCustomIndexes returns empty when no custom indexes configured', functio
 
 test('getCustomIndexes excludes built-in indexes', function () {
     config(['sql-agent.search.drivers.database.index_mapping' => [
-        'my_custom_index' => \Knobik\SqlAgent\Models\QueryPattern::class,
+        'my_custom_index' => QueryPattern::class,
     ]]);
 
     $manager = new SearchManager(app());
@@ -129,7 +130,7 @@ test('getCustomIndexes excludes built-in indexes', function () {
 
 test('getRegisteredIndexes includes custom indexes', function () {
     config(['sql-agent.search.drivers.database.index_mapping' => [
-        'my_custom_index' => \Knobik\SqlAgent\Models\QueryPattern::class,
+        'my_custom_index' => QueryPattern::class,
     ]]);
 
     $manager = new SearchManager(app());

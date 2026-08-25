@@ -4,6 +4,7 @@ namespace Knobik\SqlAgent\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
+use Pgvector\Laravel\Vector;
 
 class SetupPgvectorCommand extends Command
 {
@@ -13,7 +14,7 @@ class SetupPgvectorCommand extends Command
 
     public function handle(): int
     {
-        if (! class_exists(\Pgvector\Laravel\Vector::class)) {
+        if (! class_exists(Vector::class)) {
             $this->error('The pgvector/pgvector package is not installed. Install it with: composer require pgvector/pgvector');
 
             return self::FAILURE;

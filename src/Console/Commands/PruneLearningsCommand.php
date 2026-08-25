@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Knobik\SqlAgent\Console\Commands;
 
 use Illuminate\Console\Command;
+use Knobik\SqlAgent\Models\Learning;
 use Knobik\SqlAgent\Services\LearningMaintenance;
 
 class PruneLearningsCommand extends Command
@@ -104,7 +105,7 @@ class PruneLearningsCommand extends Command
 
         if ($dryRun) {
             // For dry run, we need to count what would be affected
-            $builder = \Knobik\SqlAgent\Models\Learning::where('created_at', '<', $cutoffDate);
+            $builder = Learning::where('created_at', '<', $cutoffDate);
 
             if ($keepUsed) {
                 $builder->whereNull('metadata->last_used_at');

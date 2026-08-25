@@ -2,21 +2,24 @@
 
 namespace Knobik\SqlAgent\Tests;
 
+use Knobik\SqlAgent\Facades\SqlAgent;
 use Knobik\SqlAgent\SqlAgentServiceProvider;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Prism\Prism\PrismServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
         $providers = [
-            \Prism\Prism\PrismServiceProvider::class,
+            PrismServiceProvider::class,
             SqlAgentServiceProvider::class,
         ];
 
         // Add Livewire provider if available
-        if (class_exists(\Livewire\LivewireServiceProvider::class)) {
-            $providers[] = \Livewire\LivewireServiceProvider::class;
+        if (class_exists(LivewireServiceProvider::class)) {
+            $providers[] = LivewireServiceProvider::class;
         }
 
         return $providers;
@@ -25,7 +28,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageAliases($app): array
     {
         return [
-            'SqlAgent' => \Knobik\SqlAgent\Facades\SqlAgent::class,
+            'SqlAgent' => SqlAgent::class,
         ];
     }
 
