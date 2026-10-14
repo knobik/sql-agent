@@ -23,7 +23,7 @@
         "pestphp/pest": "^3.0|^4.0|^5.0",
         "pestphp/pest-plugin-laravel": "^3.0|^4.0|^5.0",
         "pgvector/pgvector": "^0.2",
-        "phpstan/phpstan": "~2.2.0"
+        "phpstan/phpstan": "~2.3.1"
     },
     "suggest": {
         "livewire/livewire": "Required for the chat UI",
