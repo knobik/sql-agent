@@ -13,7 +13,7 @@
         "illuminate/support": "^12.0|^13.0",
         "illuminate/database": "^12.0|^13.0",
         "illuminate/console": "^12.0|^13.0",
-        "prism-php/prism": "^0.100"
+        "prism-php/prism": "^0.102"
     },
     "require-dev": {
         "larastan/larastan": "~3.12.2",
